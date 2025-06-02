@@ -1,0 +1,25 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/weather
+    username: postgres
+    password: 1234
+
+  cloud:
+    aws:
+      credentials:
+        access-key: test
+        secret-key: test
+      region:
+        static: ap-northeast-2
+
+oauth:
+  kakao:
+    public-key-info: https://kauth.kakao.com/.well-known/jwks.json
+  apple:
+    public-key-url: https://appleid.apple.com/auth/keys
