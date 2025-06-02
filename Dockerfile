@@ -1,5 +1,5 @@
 # CI/CD를 사용하지 않으므로 Docker Image 빌드 시 Gradle Build
-FROM gradle:8.8-jdk17-alpine AS builder
+FROM gradle:8.8-jdk17 AS builder
 WORKDIR /build
 
 # Gradle 파일 변경 시 의존성 다운로드
@@ -11,7 +11,7 @@ COPY . /build
 RUN gradle build -x test --parallel
 
 # Jdk Build - JRE로 Build해도 문제 없지만 기존 익숙한 방법으로 Build
-FROM openjdk:17-alpine
+FROM openjdk:17-oraclelinux8
 
 # alpine 이미지는 경량화로 인해 내부 패키지가 거의 없음 - timezone 설정을 위해 아래 명령어 작성
 # docker log로 타임존 변경 확인 및 rds timezone 확인 완료
