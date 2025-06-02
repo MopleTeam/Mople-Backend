@@ -8,7 +8,8 @@ RUN gradle build -x test --parallel --continue > /dev/null 2>&1 || true
 
 # Image 빌드 - 빌드 속도를 빠르게 하기 위해 Test Pass, 향후 Test 포함할지 결정
 COPY . /build
-RUN gradle build -x test --parallel
+RUN gradle build -x test --parallel && \
+    gradle --stop
 
 # Jdk Build - JRE로 Build해도 문제 없지만 기존 익숙한 방법으로 Build
 FROM openjdk:17-oraclelinux8
