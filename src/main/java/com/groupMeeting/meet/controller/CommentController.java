@@ -15,10 +15,9 @@ import jakarta.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Slice;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,10 +31,12 @@ public class CommentController {
             description = "모든 댓글을 조회합니다. 후기의 경우 후기의 ID가 아닌 Post Id를 Path Variable로 전송합니다."
     )
     @GetMapping("/{postId}")
-    public ResponseEntity<List<CommentClientResponse>> commentList(
-            @PathVariable Long postId
+    public ResponseEntity<Slice<CommentClientResponse>> commentList(
+            @PathVariable Long postId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
-        return ResponseEntity.ok(commentService.getCommentList(postId));
+        return ResponseEntity.ok(commentService.getCommentList(postId, page, size));
     }
 
     @Operation(
@@ -43,12 +44,14 @@ public class CommentController {
             description = "댓글을 작성하고 생성된 댓글 목록을 반환합니다."
     )
     @PostMapping("/{postId}")
-    public ResponseEntity<List<CommentClientResponse>> createComment(
+    public ResponseEntity<Slice<CommentClientResponse>> createComment(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
-            @Valid @RequestBody CommentCreateRequest commentCreateRequest
+            @Valid @RequestBody CommentCreateRequest commentCreateRequest,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
-        return ResponseEntity.ok(commentService.createComment(user.id(), postId, commentCreateRequest.contents()));
+        return ResponseEntity.ok(commentService.createComment(user.id(), postId, commentCreateRequest.contents(), page, size));
     }
 
     @Operation(
@@ -56,13 +59,16 @@ public class CommentController {
             description = "댓글 ID를 통해 댓글을 수정하고 댓글 목록을 반환합니다."
     )
     @PatchMapping("/{postId}/{commentId}")
-    public ResponseEntity<List<CommentClientResponse>> updateComment(
+    public ResponseEntity<Slice<CommentClientResponse>> updateComment(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
             @PathVariable Long commentId,
-            @RequestBody CommentCreateRequest commentCreateRequest
+            @RequestBody CommentCreateRequest commentCreateRequest,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
-        return ResponseEntity.ok(commentService.updateComment(user.id(), postId, commentId, commentCreateRequest.contents()));
+
+        return ResponseEntity.ok(commentService.updateComment(user.id(), postId, commentId, commentCreateRequest.contents(), page, size));
     }
 
     @Operation(

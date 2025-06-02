@@ -15,11 +15,13 @@ import com.groupMeeting.dto.request.meet.comment.CommentReportRequest;
 import com.groupMeeting.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import static com.groupMeeting.dto.client.CommentClientResponse.*;
 import static com.groupMeeting.global.enums.ExceptionReturnCode.*;
@@ -33,12 +35,16 @@ public class CommentService {
     private final EntityReader reader;
 
     @Transactional(readOnly = true)
-    public List<CommentClientResponse> getCommentList(Long postId) {
-        return ofComments(getComments(postId));
+    public Slice<CommentClientResponse> getCommentList(Long postId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        return ofComments(getComments(postId, pageable));
     }
 
     @Transactional
-    public List<CommentClientResponse> createComment(Long userId, Long postId, String content) {
+    public Slice<CommentClientResponse> createComment(Long userId, Long postId, String content, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
         User user = reader.findUser(userId);
 
         commentRepository.save(
@@ -53,11 +59,13 @@ public class CommentService {
                         .build()
         );
 
-        return ofComments(getComments(postId));
+        return ofComments(getComments(postId, pageable));
     }
 
     @Transactional
-    public List<CommentClientResponse> updateComment(Long userId, Long postId, Long commentId, String content) {
+    public Slice<CommentClientResponse> updateComment(Long userId, Long postId, Long commentId, String content, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
         PlanComment comment = commentRepository.findById(commentId).orElseThrow(
                 () -> new ResourceNotFoundException(NOT_FOUND_COMMENT)
         );
@@ -68,7 +76,7 @@ public class CommentService {
 
         comment.updateContent(content);
 
-        return ofComments(getComments(postId));
+        return ofComments(getComments(postId, pageable));
     }
 
     @Transactional
@@ -82,13 +90,14 @@ public class CommentService {
         commentRepository.deleteById(commentId);
     }
 
-    private List<CommentResponse> getComments(Long postId) {
-        return commentRepository.getComment(postId).stream().map(comment -> {
+    private Slice<CommentResponse> getComments(Long postId, Pageable pageable) {
+        return commentRepository.getComment(postId, pageable).map(comment -> {
                     User user = userRepository.findById(comment.getWriterId())
                             .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_MEMBER));
+
                     return new CommentResponse(comment, user.getNickname(), user.getProfileImg());
                 }
-        ).toList();
+        );
     }
 
     @Transactional
