@@ -20,7 +20,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 WORKDIR /work
 
 # gradle = builder 위에서 build한 jar file 복사 -> /work/groupMeet.jar
-COPY --from=builder /build/build/libs/*.jar groupMeet.jar
+COPY --from=builder /build/build/libs/GroupMeeting-0.0.1-SNAPSHOT.jar groupMeet.jar
 
 # 내부 포트는 고정할 것. Docker Port Binding에서 변경해도 무관
 EXPOSE 8284
