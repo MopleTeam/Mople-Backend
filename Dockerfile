@@ -15,9 +15,10 @@ FROM openjdk:17-oraclelinux8
 
 # alpine 이미지는 경량화로 인해 내부 패키지가 거의 없음 - timezone 설정을 위해 아래 명령어 작성
 # docker log로 타임존 변경 확인 및 rds timezone 확인 완료
-RUN apk --no-cache add tzdata && \
-        cp /usr/share/zoneinfo/Asia/Seoul /etc/localtime && \
-        echo "Asia/Seoul" > /etc/timezone
+RUN dnf install -y tzdata && \
+    ln -sf /usr/share/zoneinfo/Asia/Seoul /etc/localtime && \
+    echo "Asia/Seoul" > /etc/timezone && \
+    dnf clean all
 
 WORKDIR /work
 
