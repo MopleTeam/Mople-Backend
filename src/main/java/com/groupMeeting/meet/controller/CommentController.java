@@ -3,6 +3,7 @@ package com.groupMeeting.meet.controller;
 import com.groupMeeting.core.annotation.auth.SignUser;
 import com.groupMeeting.dto.client.CommentClientResponse;
 import com.groupMeeting.dto.request.user.AuthUserRequest;
+import com.groupMeeting.dto.response.pagination.CursorPageResponse;
 import com.groupMeeting.meet.service.CommentService;
 import com.groupMeeting.dto.request.meet.comment.CommentCreateRequest;
 import com.groupMeeting.dto.request.meet.comment.CommentReportRequest;
@@ -18,8 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/comment")
@@ -32,42 +31,46 @@ public class CommentController {
             description = "모든 댓글을 조회합니다. 후기의 경우 후기의 ID가 아닌 Post Id를 Path Variable로 전송합니다."
     )
     @GetMapping("/{postId}")
-    public ResponseEntity<List<CommentClientResponse>> commentList(
-            @PathVariable Long postId
+    public ResponseEntity<CursorPageResponse<CommentClientResponse>> commentList(
+            @PathVariable Long postId,
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "10") int size
     ) {
-        return ResponseEntity.ok(commentService.getCommentList(postId));
+        return ResponseEntity.ok(commentService.getCommentList(postId, cursor, size));
     }
 
     @Operation(
             summary = "일정 댓글 생성 API",
-            description = "댓글을 작성하고 생성된 댓글 목록을 반환합니다."
+            description = "댓글을 작성합니다."
     )
     @PostMapping("/{postId}")
-    public ResponseEntity<List<CommentClientResponse>> createComment(
+    public ResponseEntity<Void> createComment(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
             @Valid @RequestBody CommentCreateRequest commentCreateRequest
     ) {
-        return ResponseEntity.ok(commentService.createComment(user.id(), postId, commentCreateRequest.contents()));
+        commentService.createComment(user.id(), postId, commentCreateRequest.contents());
+        return ResponseEntity.ok().build();
     }
 
     @Operation(
             summary = "댓글 수정 - API",
-            description = "댓글 ID를 통해 댓글을 수정하고 댓글 목록을 반환합니다."
+            description = "댓글 ID를 통해 댓글을 수정합니다."
     )
     @PatchMapping("/{postId}/{commentId}")
-    public ResponseEntity<List<CommentClientResponse>> updateComment(
+    public ResponseEntity<Void> updateComment(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
             @PathVariable Long commentId,
             @RequestBody CommentCreateRequest commentCreateRequest
     ) {
-        return ResponseEntity.ok(commentService.updateComment(user.id(), postId, commentId, commentCreateRequest.contents()));
+        commentService.updateComment(user.id(), postId, commentId, commentCreateRequest.contents());
+        return ResponseEntity.ok().build();
     }
 
     @Operation(
             summary = "댓글 삭제 API",
-            description = "댓글을 삭제하고 댓글 목록을 반환합니다."
+            description = "댓글을 삭제합니다."
     )
     @DeleteMapping("/{commentId}")
     public ResponseEntity<Void> deleteReviewComment(
