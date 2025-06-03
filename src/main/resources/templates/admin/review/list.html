@@ -1,0 +1,22 @@
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{common/layout}"
+      layout:fragment="content"
+>
+<body>
+<th:block th:each="review : ${reviews}">
+    <div class="card text-center">
+        <div class="card-header">
+            신고 목록 [[${review.id}]]번
+        </div>
+        <div class="card-body">
+            <p class="card-text">신고 사유: [[${review.reason}]]</p>
+            <p class="card-text">신고자 ID: [[${review.userId}]]</p>
+            <p class="card-text">후기 ID: [[${review.reviewId}]]</p>
+            <a href="#" class="btn btn-danger">후기 삭제</a>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

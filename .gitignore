@@ -32,8 +32,6 @@ firebase.json
 
 *.p8
 
-/src/main/resources/templates/
-
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
