@@ -13,7 +13,7 @@ public record UserSignUpRequest(
         @NotBlank(message = "email을 입력해주세요") String email,
         @NotBlank
         @Pattern(
-                regexp = "^(?=.*[a-z0-9가-힣])[a-z0-9가-힣]{2,16}$",
+                regexp = "^(?=.*[a-zA-Z0-9가-힣])[a-zA-Z0-9가-힣]{2,16}$",
                 message = "닉네임은 2자 이상 16자 이하, 자음과 초성은 허용되지 않습니다."
         )
         String nickname,
