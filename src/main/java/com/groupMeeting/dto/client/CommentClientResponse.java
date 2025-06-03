@@ -5,9 +5,9 @@ import com.groupMeeting.dto.response.meet.comment.CommentUpdateResponse;
 
 import lombok.Builder;
 import lombok.Getter;
-import org.springframework.data.domain.Slice;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Builder
@@ -20,8 +20,8 @@ public class CommentClientResponse {
     private final String content;
     private final LocalDateTime time;
 
-    public static Slice<CommentClientResponse> ofComments(Slice<CommentResponse> commentResponses) {
-        return commentResponses.map(CommentClientResponse::ofComment);
+    public static List<CommentClientResponse> ofComments(List<CommentResponse> commentResponses) {
+        return commentResponses.stream().map(CommentClientResponse::ofComment).toList();
     }
 
     public static CommentClientResponse ofComment(CommentResponse commentResponse) {
