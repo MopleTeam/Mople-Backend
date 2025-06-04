@@ -8,7 +8,6 @@ import com.groupMeeting.dto.response.pagination.CursorPageResponse;
 import com.groupMeeting.dto.response.pagination.CursorPage;
 import com.groupMeeting.entity.meet.comment.CommentReport;
 import com.groupMeeting.entity.meet.comment.PlanComment;
-import com.groupMeeting.entity.meet.plan.MeetPlan;
 import com.groupMeeting.entity.user.User;
 import com.groupMeeting.global.enums.Status;
 import com.groupMeeting.global.utils.CursorUtils;
@@ -26,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static com.groupMeeting.dto.client.CommentClientResponse.ofComment;
 import static com.groupMeeting.global.enums.ExceptionReturnCode.*;
 
 @Service
@@ -57,10 +57,10 @@ public class CommentService {
     }
 
     @Transactional
-    public void createComment(Long userId, Long postId, String content) {
+    public CommentClientResponse createComment(Long userId, Long postId, String content) {
         User user = reader.findUser(userId);
 
-        commentRepository.save(
+        PlanComment comment = commentRepository.save(
                 PlanComment.builder()
                         .postId(postId)
                         .content(content)
@@ -71,19 +71,25 @@ public class CommentService {
                         .writerImg(user.getProfileImg())
                         .build()
         );
+
+        return ofComment(new CommentResponse(comment, user.getNickname(), user.getProfileImg()));
     }
 
     @Transactional
-    public void updateComment(Long userId, Long postId, Long commentId, String content) {
+    public CommentClientResponse updateComment(Long userId, Long postId, Long commentId, String content) {
         PlanComment comment = commentRepository.findById(commentId).orElseThrow(
                 () -> new ResourceNotFoundException(NOT_FOUND_COMMENT)
         );
 
-        if (comment.matchWriter(userId)) {
+        User user = reader.findUser(userId);
+
+        if (comment.matchWriter(user.getId())) {
             throw new ResourceNotFoundException(NOT_CREATOR);
         }
 
         comment.updateContent(content);
+
+        return ofComment(new CommentResponse(comment, user.getNickname(), user.getProfileImg()));
     }
 
     @Transactional

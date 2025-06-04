@@ -44,13 +44,12 @@ public class CommentController {
             description = "댓글을 작성합니다."
     )
     @PostMapping("/{postId}")
-    public ResponseEntity<Void> createComment(
+    public ResponseEntity<CommentClientResponse> createComment(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
             @Valid @RequestBody CommentCreateRequest commentCreateRequest
     ) {
-        commentService.createComment(user.id(), postId, commentCreateRequest.contents());
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(commentService.createComment(user.id(), postId, commentCreateRequest.contents()));
     }
 
     @Operation(
@@ -58,14 +57,13 @@ public class CommentController {
             description = "댓글 ID를 통해 댓글을 수정합니다."
     )
     @PatchMapping("/{postId}/{commentId}")
-    public ResponseEntity<Void> updateComment(
+    public ResponseEntity<CommentClientResponse> updateComment(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
             @PathVariable Long commentId,
             @RequestBody CommentCreateRequest commentCreateRequest
     ) {
-        commentService.updateComment(user.id(), postId, commentId, commentCreateRequest.contents());
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(commentService.updateComment(user.id(), postId, commentId, commentCreateRequest.contents()));
     }
 
     @Operation(
