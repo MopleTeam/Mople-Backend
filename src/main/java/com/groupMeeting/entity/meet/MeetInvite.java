@@ -37,7 +37,7 @@ public class MeetInvite {
         inviteCode = UUID.randomUUID().toString();
     }
 
-    public String getInviteUrl() {
-        return "\"" + "https://group-api.store/invite?code=" + inviteCode + "\"";
+    public String getInviteUrl(String inviteUrl) {
+        return "\"https://" + inviteUrl + "/invite?code=" + inviteCode + "\"";
     }
 }

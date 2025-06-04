@@ -15,8 +15,8 @@ import com.groupMeeting.meet.repository.*;
 
 import com.groupMeeting.meet.repository.plan.MeetPlanRepository;
 import com.groupMeeting.meet.repository.review.PlanReviewRepository;
-import lombok.RequiredArgsConstructor;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +28,6 @@ import static com.groupMeeting.dto.client.MeetClientResponse.*;
 import static com.groupMeeting.global.enums.ExceptionReturnCode.*;
 
 @Service
-@RequiredArgsConstructor
 public class MeetService {
     private final MeetRepository meetRepository;
     private final MeetMemberRepository meetMemberRepository;
@@ -39,6 +38,30 @@ public class MeetService {
     private final EntityReader reader;
 
     private final ApplicationEventPublisher publisher;
+
+    private final String inviteUrl;
+
+    public MeetService(
+            MeetRepository meetRepository,
+            MeetMemberRepository meetMemberRepository,
+            MeetInviteRepository meetInviteRepository,
+            MeetRepositorySupport meetRepositorySupport,
+            MeetPlanRepository meetPlanRepository,
+            PlanReviewRepository reviewRepository,
+            EntityReader reader,
+            ApplicationEventPublisher publisher,
+            @Value("${mople.url}") String  inviteUrl
+    ) {
+        this.meetRepository = meetRepository;
+        this.meetMemberRepository = meetMemberRepository;
+        this.meetInviteRepository = meetInviteRepository;
+        this.meetRepositorySupport = meetRepositorySupport;
+        this.meetPlanRepository = meetPlanRepository;
+        this.reviewRepository = reviewRepository;
+        this.reader = reader;
+        this.publisher = publisher;
+        this.inviteUrl = inviteUrl;
+    }
 
     @Transactional
     public MeetClientResponse createMeet(Long creatorId, MeetCreateRequest request) {
@@ -139,7 +162,7 @@ public class MeetService {
                                 .build()
                 );
 
-        return meetInvite.getInviteUrl();
+        return meetInvite.getInviteUrl(inviteUrl);
     }
 
     @Transactional
@@ -193,6 +216,7 @@ public class MeetService {
 
             return;
         }
+
         model.addAttribute("meetId", inviteMeet.getInviteCode());
         model.addAttribute("meetName", meet.getName());
         model.addAttribute("meetImage", meet.getMeetImage());
