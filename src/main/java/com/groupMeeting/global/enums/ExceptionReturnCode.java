@@ -24,6 +24,8 @@ public enum ExceptionReturnCode {
     EMPTY_VERSION("400", "버전이 존재하지 않습니다."),
     UNSUPPORTED_OS("400", "유효하지 않은 운영체제입니다."),
     UNSUPPORTED_VERSION("400", "유효하지 않은 버전입니다."),
+    NOT_FOUND_VERSION_POLICY("404", "버전 정책을 찾을 수 없습니다."),
+    NOT_FOUND_VERSION_INFO("404", "버전 정보를 확인할 수 없습니다."),
     FORCE_UPDATE("426", "업데이트가 필요합니다."),
 
     // Meet

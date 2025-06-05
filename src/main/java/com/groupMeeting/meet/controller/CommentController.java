@@ -1,6 +1,7 @@
 package com.groupMeeting.meet.controller;
 
 import com.groupMeeting.core.annotation.auth.SignUser;
+import com.groupMeeting.core.annotation.version.ApiVersion;
 import com.groupMeeting.dto.client.CommentClientResponse;
 import com.groupMeeting.dto.request.user.AuthUserRequest;
 import com.groupMeeting.dto.response.pagination.CursorPageResponse;
@@ -31,6 +32,7 @@ public class CommentController {
             description = "모든 댓글을 조회합니다. 후기의 경우 후기의 ID가 아닌 Post Id를 Path Variable로 전송합니다."
     )
     @GetMapping("/{postId}")
+    @ApiVersion("v1.5")
     public ResponseEntity<CursorPageResponse<CommentClientResponse>> commentList(
             @PathVariable Long postId,
             @RequestParam(required = false) String cursor,
@@ -44,6 +46,7 @@ public class CommentController {
             description = "댓글을 작성합니다."
     )
     @PostMapping("/{postId}")
+    @ApiVersion("v1_5")
     public ResponseEntity<CommentClientResponse> createComment(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
@@ -57,6 +60,7 @@ public class CommentController {
             description = "댓글 ID를 통해 댓글을 수정합니다."
     )
     @PatchMapping("/{postId}/{commentId}")
+    @ApiVersion("v1.5")
     public ResponseEntity<CommentClientResponse> updateComment(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
