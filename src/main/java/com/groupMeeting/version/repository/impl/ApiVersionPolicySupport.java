@@ -28,7 +28,9 @@ public class ApiVersionPolicySupport {
 
         return apiVersionPolicyList.stream()
                 .filter(policy -> requestUri.startsWith(policy.getUri()))
-                .max(Comparator.comparingInt(policy -> policy.getUri().length()));
+                .max(Comparator
+                        .comparingInt((ApiVersionPolicy policy) -> policy.getUri().length())
+                        .thenComparingInt(ApiVersionPolicy::getAppVersion));
     }
 
     public List<ApiVersionPolicy> findAllByOs(String os) {
