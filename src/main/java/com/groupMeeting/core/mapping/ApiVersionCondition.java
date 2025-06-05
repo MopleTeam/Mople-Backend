@@ -4,7 +4,6 @@ import com.groupMeeting.entity.version.ApiVersionPolicy;
 import com.groupMeeting.version.service.ApiVersionPolicyService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.servlet.mvc.condition.RequestCondition;
 
 @RequiredArgsConstructor
