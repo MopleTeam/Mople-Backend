@@ -1,4 +1,4 @@
-package com.groupMeeting.global.utils;
+package com.groupMeeting.global.utils.cursor;
 
 import com.groupMeeting.core.exception.custom.CursorException;
 import org.springframework.stereotype.Component;

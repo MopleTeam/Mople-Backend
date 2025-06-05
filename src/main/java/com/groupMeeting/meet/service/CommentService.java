@@ -10,7 +10,7 @@ import com.groupMeeting.entity.meet.comment.CommentReport;
 import com.groupMeeting.entity.meet.comment.PlanComment;
 import com.groupMeeting.entity.user.User;
 import com.groupMeeting.global.enums.Status;
-import com.groupMeeting.global.utils.CursorUtils;
+import com.groupMeeting.global.utils.cursor.CursorUtils;
 import com.groupMeeting.meet.reader.EntityReader;
 import com.groupMeeting.meet.repository.comment.CommentReportRepository;
 import com.groupMeeting.meet.repository.comment.PlanCommentRepository;
