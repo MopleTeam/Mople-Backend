@@ -19,6 +19,13 @@ public enum ExceptionReturnCode {
     DUPLICATE_NICKNAME("403", "중복된 닉네임입니다."),
     NOT_USER("404", "유저 정보가 없습니다."),
 
+    // 버전 관련
+    EMPTY_OS("400", "운영체제가 존재하지 않습니다."),
+    EMPTY_VERSION("400", "버전이 존재하지 않습니다."),
+    UNSUPPORTED_OS("400", "유효하지 않은 운영체제입니다."),
+    UNSUPPORTED_VERSION("400", "유효하지 않은 버전입니다."),
+    FORCE_UPDATE("426", "업데이트가 필요합니다."),
+
     // Meet
     NOT_CREATOR("401", "접근 권한이 없습니다."),
     NOT_FOUND_MEET("404", "모임을 찾을 수 없습니다."),
