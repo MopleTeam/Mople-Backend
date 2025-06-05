@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Force Update 정책 목록</title>
+</head>
+<body>
+<h1>Api Version 정책 목록</h1>
+<a href="/v1/admin/policy/api/add">정책 추가</a>
+<table border="1">
+  <thead>
+  <tr>
+    <th>ID</th>
+    <th>OS</th>
+    <th>컨트롤러 uri</th>
+    <th>앱 버전</th>
+    <th>api 버전</th>
+    <th>설명</th>
+    <th>수정</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr th:each="policy : ${policies}">
+    <td th:text="${policy.id}"></td>
+    <td th:text="${policy.os}"></td>
+    <td th:text="${policy.uri}"></td>
+    <td th:text="${policy.appVersion}"></td>
+    <td th:text="${policy.apiVersion}"></td>
+    <td th:text="${policy.description}"></td>
+    <td><a th:href="@{|/v1/admin/policy/api/edit/${policy.id}|}">수정</a></td>
+    <td>
+      <form th:action="@{|/v1/admin/policy/api/delete/${policy.id}|}" method="post" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+        <button type="submit">삭제</button>
+      </form>
+    </td>
+  </tr>
+  </tbody>
+</table>
+<hr>
+<div>
+  <a th:href="@{/v1/admin}">
+    홈으로 가기
+  </a>
+</div>
+</body>
+</html>

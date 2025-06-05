@@ -14,6 +14,17 @@
     <div th:unless="${nickname == null}">
         <h3>[[${nickname}]]님 환영합니다!</h3>
         <button th:onclick="|location.href='@{/{adminPath}/logout (adminPath=${adminPath})}'|">로그아웃</button>
+        <hr>
+        <div>
+            <a th:href="@{/v1/admin/policy/force}">
+                Force Update Policy 추가하기
+            </a>
+        </div>
+        <div>
+            <a th:href="@{/v1/admin/policy/api}">
+                Api Version Policy 추가하기
+            </a>
+        </div>
     </div>
 </div>
 </body>
