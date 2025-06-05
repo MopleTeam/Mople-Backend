@@ -1,15 +1,12 @@
 package com.groupMeeting.entity.version;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
 @Table(name = "api_version_policy")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ApiVersionPolicy {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
