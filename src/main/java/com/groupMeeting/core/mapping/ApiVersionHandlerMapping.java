@@ -1,6 +1,8 @@
 package com.groupMeeting.core.mapping;
 
 import com.groupMeeting.core.annotation.version.ApiVersion;
+import com.groupMeeting.version.service.ApiVersionPolicyService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.condition.RequestCondition;
@@ -10,7 +12,9 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import java.lang.reflect.Method;
 
 @Component
+@RequiredArgsConstructor
 public class ApiVersionHandlerMapping extends RequestMappingHandlerMapping {
+    private final ApiVersionPolicyService apiVersionPolicyService;
 
     @Override
     protected boolean isHandler(Class<?> beanType) {
@@ -30,7 +34,7 @@ public class ApiVersionHandlerMapping extends RequestMappingHandlerMapping {
         ApiVersion apiVersion = methodAnnotation != null ? methodAnnotation : classAnnotation;
 
         if (apiVersion != null) {
-            RequestCondition<?> condition = new ApiVersionCondition(apiVersion.value());
+            RequestCondition<?> condition = new ApiVersionCondition(apiVersionPolicyService, apiVersion.value());
 
             return RequestMappingInfo
                     .paths()

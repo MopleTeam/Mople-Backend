@@ -1,6 +1,5 @@
 package com.groupMeeting.core.config;
 
-import com.groupMeeting.core.interceptor.version.ApiVersionInterceptor;
 import com.groupMeeting.core.interceptor.version.ForceUpdateInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
@@ -11,7 +10,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @RequiredArgsConstructor
 public class ForceUpdateConfig implements WebMvcConfigurer {
     private final ForceUpdateInterceptor forceUpdateInterceptor;
-    private final ApiVersionInterceptor apiVersionInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
@@ -28,9 +26,5 @@ public class ForceUpdateConfig implements WebMvcConfigurer {
                 .excludePathPatterns("/v1/**")
                 // invite path
                 .excludePathPatterns("/invite/**","/user/removeTest");
-
-        registry.addInterceptor(apiVersionInterceptor)
-                .order(2)
-                .addPathPatterns("/comment/**");
     }
 }

@@ -1,47 +1,34 @@
 package com.groupMeeting.core.mapping;
 
-import com.groupMeeting.core.exception.custom.VersionException;
-import com.groupMeeting.core.interceptor.version.VersionContext;
-import com.groupMeeting.dto.version.VersionInfo;
+import com.groupMeeting.entity.version.ApiVersionPolicy;
+import com.groupMeeting.version.service.ApiVersionPolicyService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.servlet.mvc.condition.RequestCondition;
-
-import static com.groupMeeting.global.enums.ExceptionReturnCode.NOT_FOUND_VERSION_INFO;
 
 @RequiredArgsConstructor
 public class ApiVersionCondition implements RequestCondition<ApiVersionCondition> {
-    private final String apiVersion;
+    private final ApiVersionPolicyService apiVersionPolicyService;
+    private final String requiredVersion;
 
     @Override
     public ApiVersionCondition combine(ApiVersionCondition other) {
-        return new ApiVersionCondition(other.apiVersion != null ? other.apiVersion : this.apiVersion);
+        return this;
     }
 
     @Override
     public ApiVersionCondition getMatchingCondition(HttpServletRequest request) {
-        VersionInfo versionInfo = VersionContext.get();
+        String os = request.getHeader("os");
+        String appVersion = request.getHeader("version");
+        String uri = request.getRequestURI();
 
-        if (versionInfo == null) {
-            throw new VersionException(NOT_FOUND_VERSION_INFO);
-        }
-
-        if (versionInfo.apiVersion().equals(this.apiVersion)) {
-            return this;
-        }
-
-        return null;
+        ApiVersionPolicy apiVersionPolicy = apiVersionPolicyService.getApiVersionPolicy(os, uri, appVersion);
+        return apiVersionPolicy != null && requiredVersion.equals(apiVersionPolicy.getApiVersion()) ? this : null;
     }
 
     @Override
     public int compareTo(ApiVersionCondition other, HttpServletRequest request) {
-        try {
-            return Integer.compare(
-                    Integer.parseInt(other.apiVersion),
-                    Integer.parseInt(this.apiVersion)
-            );
-        } catch (NumberFormatException e) {
-            return 0;
-        }
+        return 0;
     }
 }
