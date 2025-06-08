@@ -1,14 +1,15 @@
-package com.groupMeeting.version.service;
+package com.groupMeeting.policy.service;
 
-import com.groupMeeting.core.exception.custom.VersionException;
+import com.groupMeeting.core.exception.custom.PolicyException;
 import com.groupMeeting.dto.client.ForceUpdatePolicyClientResponse;
-import com.groupMeeting.dto.response.version.ForceUpdatePolicyResponse;
-import com.groupMeeting.entity.version.ForceUpdatePolicy;
+import com.groupMeeting.dto.response.policy.ForceUpdatePolicyResponse;
+import com.groupMeeting.entity.policy.ForceUpdatePolicy;
 import com.groupMeeting.global.enums.ExceptionReturnCode;
 import com.groupMeeting.global.utils.version.VersionUtils;
-import com.groupMeeting.version.repository.ForceUpdatePolicyRepository;
+import com.groupMeeting.policy.repository.ForceUpdatePolicyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import static com.groupMeeting.dto.client.ForceUpdatePolicyClientResponse.ofForceUpdatePolicy;
 import static com.groupMeeting.global.enums.ExceptionReturnCode.*;
@@ -18,6 +19,7 @@ import static com.groupMeeting.global.enums.ExceptionReturnCode.*;
 public class ForceUpdatePolicyService {
     private final ForceUpdatePolicyRepository forceUpdatePolicyRepository;
 
+    @Transactional(readOnly = true)
     public ForceUpdatePolicyClientResponse getForceUpdatePolicy(String os, String version) {
         validateHeader(os, version);
         int versionCode = VersionUtils.convertToVersionCode(version);
@@ -33,16 +35,16 @@ public class ForceUpdatePolicyService {
 
     private void validateHeader(String os, String version) {
         if (os == null) {
-            throw new VersionException(EMPTY_OS);
+            throw new PolicyException(EMPTY_OS);
         }
         if (version == null) {
-            throw new VersionException(EMPTY_VERSION);
+            throw new PolicyException(EMPTY_VERSION);
         }
         VersionUtils.validateVersionFormat(version);
     }
 
     private ForceUpdatePolicy findForceUpdatePolicy(String os) {
         return forceUpdatePolicyRepository.findByOs(os)
-                .orElseThrow(() -> new VersionException(ExceptionReturnCode.UNSUPPORTED_OS));
+                .orElseThrow(() -> new PolicyException(ExceptionReturnCode.UNSUPPORTED_OS));
     }
 }

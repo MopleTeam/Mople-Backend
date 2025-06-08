@@ -3,8 +3,8 @@ package com.groupMeeting.admin.controller;
 import com.groupMeeting.admin.service.PolicyService;
 import com.groupMeeting.dto.response.admin.AdminApiVersionPolicyResponse;
 import com.groupMeeting.dto.response.admin.AdminForceUpdatePolicyResponse;
-import com.groupMeeting.entity.version.ApiVersionPolicy;
-import com.groupMeeting.entity.version.ForceUpdatePolicy;
+import com.groupMeeting.entity.policy.ApiVersionPolicy;
+import com.groupMeeting.entity.policy.ForceUpdatePolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -24,7 +24,7 @@ public class PolicyController {
 
     @GetMapping("/force/add")
     public String addForeUpdatePolicy(Model model) {
-        model.addAttribute("policy", new AdminForceUpdatePolicyResponse());
+        model.addAttribute("policy", new AdminForceUpdatePolicyResponse("", 0, 0, false, ""));
         return "admin/policy/force/add";
     }
 
@@ -61,7 +61,7 @@ public class PolicyController {
 
     @GetMapping("/api/add")
     public String addApiVersionPolicy(Model model) {
-        model.addAttribute("policy", new AdminApiVersionPolicyResponse());
+        model.addAttribute("policy", new AdminApiVersionPolicyResponse("", "", 0, "", ""));
         return "admin/policy/api/add";
     }
 

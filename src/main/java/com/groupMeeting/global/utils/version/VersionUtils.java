@@ -1,6 +1,6 @@
 package com.groupMeeting.global.utils.version;
 
-import com.groupMeeting.core.exception.custom.VersionException;
+import com.groupMeeting.core.exception.custom.PolicyException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -12,7 +12,7 @@ public class VersionUtils {
     private static final String VERSION_DELIMITER = "\\.";
 
     public static int convertToVersionCode(String version) {
-        String[] parts = version.split("\\.");
+        String[] parts = version.split(VERSION_DELIMITER);
 
         int major = parts.length > 0 ? Integer.parseInt(parts[0]) : 0;
         int minor = parts.length > 1 ? Integer.parseInt(parts[1]) : 0;
@@ -35,7 +35,7 @@ public class VersionUtils {
             try {
                 Integer.parseInt(part);
             } catch (NumberFormatException e) {
-                throw new VersionException(UNSUPPORTED_VERSION);
+                throw new PolicyException(UNSUPPORTED_VERSION);
             }
         }
     }
