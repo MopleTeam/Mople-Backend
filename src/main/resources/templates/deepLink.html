@@ -21,10 +21,13 @@
 <script th:inline="javascript">
     const meetId = [[${meetId}]]
 
-    const iosLink = meetId ? 'Mople://invite?code=' + meetId : 'Mople://default';
+    const iosScheme = window.location.hostname.startsWith('dev') ? 'mopleDev' : 'Mople'
+    const aosScheme = window.location.hostname.startsWith('dev') ? 'mopleDev' : 'mople'
+
+    const iosLink = meetId ? iosScheme + '://invite?code=' + meetId : iosScheme + '://default';
     const iosStoreLink = 'https://apps.apple.com/kr/app/%EB%AA%A8%ED%94%8C-%EB%AA%A8%EC%9E%84%ED%94%8C%EB%9E%98%EB%84%88/id6738402542'
 
-    const androidLink = meetId ? 'mople://invite?code=' + meetId : 'mople://default';
+    const androidLink = meetId ? aosScheme + '://invite?code=' + meetId : aosScheme + '://default';
     const androidStoreLink = 'https://play.google.com/store/apps/details?id=com.moim.moimtable'
 
     function getOS() {
