@@ -1,6 +1,8 @@
 package com.groupMeeting.admin.controller;
 
 import com.groupMeeting.admin.service.PolicyService;
+import com.groupMeeting.dto.response.admin.AdminApiVersionPolicyResponse;
+import com.groupMeeting.dto.response.admin.AdminForceUpdatePolicyResponse;
 import com.groupMeeting.entity.version.ApiVersionPolicy;
 import com.groupMeeting.entity.version.ForceUpdatePolicy;
 import lombok.RequiredArgsConstructor;
@@ -22,12 +24,12 @@ public class PolicyController {
 
     @GetMapping("/force/add")
     public String addForeUpdatePolicy(Model model) {
-        model.addAttribute("policy", new ForceUpdatePolicy());
+        model.addAttribute("policy", new AdminForceUpdatePolicyResponse());
         return "admin/policy/force/add";
     }
 
     @PostMapping("/force/add")
-    public String addForeUpdatePolicy(@ModelAttribute ForceUpdatePolicy policy) {
+    public String addForeUpdatePolicy(@ModelAttribute AdminForceUpdatePolicyResponse policy) {
         policyService.saveForceUpdatePolicy(policy);
         return "redirect:/v1/admin/policy/force";
     }
@@ -40,7 +42,7 @@ public class PolicyController {
     }
 
     @PostMapping("/force/edit/{id}")
-    public String updateForeUpdatePolicy(@PathVariable Long id, @ModelAttribute ForceUpdatePolicy updatedPolicy) {
+    public String updateForeUpdatePolicy(@PathVariable Long id, @ModelAttribute AdminForceUpdatePolicyResponse updatedPolicy) {
         policyService.updateForceUpdatePolicy(id, updatedPolicy);
         return "redirect:/v1/admin/policy/force";
     }
@@ -59,12 +61,12 @@ public class PolicyController {
 
     @GetMapping("/api/add")
     public String addApiVersionPolicy(Model model) {
-        model.addAttribute("policy", new ApiVersionPolicy());
+        model.addAttribute("policy", new AdminApiVersionPolicyResponse());
         return "admin/policy/api/add";
     }
 
     @PostMapping("/api/add")
-    public String addApiVersionPolicy(@ModelAttribute ApiVersionPolicy policy) {
+    public String addApiVersionPolicy(@ModelAttribute AdminApiVersionPolicyResponse policy) {
         policyService.saveApiVersionPolicy(policy);
         return "redirect:/v1/admin/policy/api";
     }
@@ -77,7 +79,7 @@ public class PolicyController {
     }
 
     @PostMapping("/api/edit/{id}")
-    public String updateApiVersionPolicy(@PathVariable Long id, @ModelAttribute ApiVersionPolicy updatedPolicy) {
+    public String updateApiVersionPolicy(@PathVariable Long id, @ModelAttribute AdminApiVersionPolicyResponse updatedPolicy) {
         policyService.updateApiVersionPolicy(id, updatedPolicy);
         return "redirect:/v1/admin/policy/api";
     }

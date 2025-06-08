@@ -1,5 +1,7 @@
 package com.groupMeeting.admin.service;
 
+import com.groupMeeting.dto.response.admin.AdminApiVersionPolicyResponse;
+import com.groupMeeting.dto.response.admin.AdminForceUpdatePolicyResponse;
 import com.groupMeeting.entity.version.ApiVersionPolicy;
 import com.groupMeeting.entity.version.ForceUpdatePolicy;
 import com.groupMeeting.version.repository.ApiVersionPolicyRepository;
@@ -15,7 +17,14 @@ public class PolicyService {
     private final ForceUpdatePolicyRepository forceUpdatePolicyRepository;
     private final ApiVersionPolicyRepository apiVersionPolicyRepository;
 
-    public void saveForceUpdatePolicy(ForceUpdatePolicy policy) {
+    public void saveForceUpdatePolicy(AdminForceUpdatePolicyResponse policyResponse) {
+        ForceUpdatePolicy policy = ForceUpdatePolicy.builder()
+                .os(policyResponse.getOs())
+                .minVersion(policyResponse.getMinVersion())
+                .currentVersion(policyResponse.getCurrentVersion())
+                .forceUpdate(policyResponse.isForceUpdate())
+                .build();
+
         forceUpdatePolicyRepository.save(policy);
     }
 
@@ -27,12 +36,14 @@ public class PolicyService {
         return forceUpdatePolicyRepository.findById(id).orElseThrow();
     }
 
-    public void updateForceUpdatePolicy(Long id, ForceUpdatePolicy updatedPolicy) {
+    public void updateForceUpdatePolicy(Long id, AdminForceUpdatePolicyResponse policyResponse) {
         ForceUpdatePolicy policy = findForceUpdatePolicyById(id);
-        policy.setOs(updatedPolicy.getOs());
-        policy.setMinVersion(updatedPolicy.getMinVersion());
-        policy.setCurrentVersion(updatedPolicy.getCurrentVersion());
-        policy.setForceUpdate(updatedPolicy.isForceUpdate());
+        policy.updatePolicy(
+                policyResponse.getOs(),
+                policyResponse.getMinVersion(),
+                policyResponse.getCurrentVersion(),
+                policyResponse.isForceUpdate()
+        );
 
         forceUpdatePolicyRepository.save(policy);
     }
@@ -41,7 +52,15 @@ public class PolicyService {
         forceUpdatePolicyRepository.deleteById(id);
     }
 
-    public void saveApiVersionPolicy(ApiVersionPolicy policy) {
+    public void saveApiVersionPolicy(AdminApiVersionPolicyResponse policyResponse) {
+        ApiVersionPolicy policy = ApiVersionPolicy.builder()
+                .os(policyResponse.getOs())
+                .uri(policyResponse.getUri())
+                .appVersion(policyResponse.getAppVersion())
+                .apiVersion(policyResponse.getApiVersion())
+                .description(policyResponse.getDescription())
+                .build();
+
         apiVersionPolicyRepository.save(policy);
     }
 
@@ -53,13 +72,15 @@ public class PolicyService {
         return apiVersionPolicyRepository.findById(id).orElseThrow();
     }
 
-    public void updateApiVersionPolicy(Long id, ApiVersionPolicy updatedPolicy) {
+    public void updateApiVersionPolicy(Long id, AdminApiVersionPolicyResponse policyResponse) {
         ApiVersionPolicy policy = findApiVersionPolicyById(id);
-        policy.setOs(updatedPolicy.getOs());
-        policy.setUri(updatedPolicy.getUri());
-        policy.setAppVersion(updatedPolicy.getAppVersion());
-        policy.setApiVersion(updatedPolicy.getApiVersion());
-        policy.setDescription(updatedPolicy.getDescription());
+        policy.updatePolicy(
+                policyResponse.getOs(),
+                policyResponse.getUri(),
+                policyResponse.getAppVersion(),
+                policyResponse.getApiVersion(),
+                policyResponse.getDescription()
+        );
 
         apiVersionPolicyRepository.save(policy);
     }
