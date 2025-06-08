@@ -25,18 +25,23 @@ public class ForceUpdatePolicy {
     @Column(name = "force_update", nullable = false)
     private boolean forceUpdate;
 
+    @Column(name = "message", nullable = false)
+    private String message;
+
     @Builder
-    public ForceUpdatePolicy(String os, int minVersion, int currentVersion, boolean forceUpdate) {
+    public ForceUpdatePolicy(String os, int minVersion, int currentVersion, boolean forceUpdate, String message) {
         this.os = os;
         this.minVersion = minVersion;
         this.currentVersion = currentVersion;
         this.forceUpdate = forceUpdate;
+        this.message = message;
     }
 
-    public void updatePolicy(String os, int minVersion, int currentVersion, boolean forceUpdate) {
+    public void updatePolicy(String os, int minVersion, int currentVersion, boolean forceUpdate, String message) {
         this.os = os;
         this.minVersion = minVersion;
         this.currentVersion = currentVersion;
         this.forceUpdate = forceUpdate;
+        this.message = message;
     }
 }

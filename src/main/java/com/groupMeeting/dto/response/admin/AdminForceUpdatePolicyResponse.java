@@ -10,4 +10,5 @@ public class AdminForceUpdatePolicyResponse {
     private int minVersion;
     private int currentVersion;
     private boolean forceUpdate;
+    private String message;
 }

@@ -15,6 +15,7 @@
         <th>최소 버전</th>
         <th>현재 버전</th>
         <th>강제 업데이트</th>
+        <th>업데이트 문구</th>
         <th>수정</th>
     </tr>
     </thead>
@@ -25,6 +26,7 @@
         <td th:text="${policy.minVersion}"></td>
         <td th:text="${policy.currentVersion}"></td>
         <td th:text="${policy.forceUpdate}"></td>
+        <td th:text="${policy.message}"></td>
         <td><a th:href="@{|/v1/admin/policy/force/edit/${policy.id}|}">수정</a></td>
         <td>
             <form th:action="@{|/v1/admin/policy/force/delete/${policy.id}|}" method="post" onsubmit="return confirm('정말 삭제하시겠습니까?');">

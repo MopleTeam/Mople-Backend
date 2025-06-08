@@ -23,6 +23,7 @@ public class PolicyService {
                 .minVersion(policyResponse.getMinVersion())
                 .currentVersion(policyResponse.getCurrentVersion())
                 .forceUpdate(policyResponse.isForceUpdate())
+                .message(policyResponse.getMessage())
                 .build();
 
         forceUpdatePolicyRepository.save(policy);
@@ -42,7 +43,8 @@ public class PolicyService {
                 policyResponse.getOs(),
                 policyResponse.getMinVersion(),
                 policyResponse.getCurrentVersion(),
-                policyResponse.isForceUpdate()
+                policyResponse.isForceUpdate(),
+                policyResponse.getMessage()
         );
 
         forceUpdatePolicyRepository.save(policy);
