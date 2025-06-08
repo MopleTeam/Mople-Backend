@@ -1,7 +1,7 @@
 package com.groupMeeting.core.mapping;
 
-import com.groupMeeting.entity.version.ApiVersionPolicy;
-import com.groupMeeting.version.service.ApiVersionPolicyService;
+import com.groupMeeting.entity.policy.ApiVersionPolicy;
+import com.groupMeeting.policy.service.ApiVersionPolicyService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.servlet.mvc.condition.RequestCondition;

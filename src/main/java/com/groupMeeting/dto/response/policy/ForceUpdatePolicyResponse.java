@@ -1,4 +1,4 @@
-package com.groupMeeting.dto.response.version;
+package com.groupMeeting.dto.response.policy;
 
 public record ForceUpdatePolicyResponse(
         boolean forceUpdate,

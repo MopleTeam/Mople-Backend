@@ -1,6 +1,6 @@
 package com.groupMeeting.dto.client;
 
-import com.groupMeeting.dto.response.version.ForceUpdatePolicyResponse;
+import com.groupMeeting.dto.response.policy.ForceUpdatePolicyResponse;
 import lombok.Builder;
 import lombok.Getter;
 

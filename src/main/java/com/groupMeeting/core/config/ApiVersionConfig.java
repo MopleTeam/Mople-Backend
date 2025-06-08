@@ -1,7 +1,7 @@
 package com.groupMeeting.core.config;
 
 import com.groupMeeting.core.mapping.ApiVersionHandlerMapping;
-import com.groupMeeting.version.service.ApiVersionPolicyService;
+import com.groupMeeting.policy.service.ApiVersionPolicyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcRegistrations;
 import org.springframework.context.annotation.Configuration;

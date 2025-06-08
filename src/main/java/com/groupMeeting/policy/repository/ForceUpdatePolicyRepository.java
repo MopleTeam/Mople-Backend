@@ -1,6 +1,6 @@
-package com.groupMeeting.version.repository;
+package com.groupMeeting.policy.repository;
 
-import com.groupMeeting.entity.version.ForceUpdatePolicy;
+import com.groupMeeting.entity.policy.ForceUpdatePolicy;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 

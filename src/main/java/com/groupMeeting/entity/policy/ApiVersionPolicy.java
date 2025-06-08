@@ -1,4 +1,4 @@
-package com.groupMeeting.entity.version;
+package com.groupMeeting.entity.policy;
 
 import jakarta.persistence.*;
 import lombok.*;

@@ -1,7 +1,7 @@
-package com.groupMeeting.version.repository.impl;
+package com.groupMeeting.policy.repository.impl;
 
-import com.groupMeeting.entity.version.ApiVersionPolicy;
-import com.groupMeeting.entity.version.QApiVersionPolicy;
+import com.groupMeeting.entity.policy.ApiVersionPolicy;
+import com.groupMeeting.entity.policy.QApiVersionPolicy;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;

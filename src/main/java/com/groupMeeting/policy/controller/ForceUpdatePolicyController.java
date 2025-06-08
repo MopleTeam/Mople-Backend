@@ -1,7 +1,7 @@
-package com.groupMeeting.version.controller;
+package com.groupMeeting.policy.controller;
 
 import com.groupMeeting.dto.client.ForceUpdatePolicyClientResponse;
-import com.groupMeeting.version.service.ForceUpdatePolicyService;
+import com.groupMeeting.policy.service.ForceUpdatePolicyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

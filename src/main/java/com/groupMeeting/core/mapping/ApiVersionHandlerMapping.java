@@ -1,7 +1,7 @@
 package com.groupMeeting.core.mapping;
 
 import com.groupMeeting.core.annotation.version.ApiVersion;
-import com.groupMeeting.version.service.ApiVersionPolicyService;
+import com.groupMeeting.policy.service.ApiVersionPolicyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.stereotype.Component;
