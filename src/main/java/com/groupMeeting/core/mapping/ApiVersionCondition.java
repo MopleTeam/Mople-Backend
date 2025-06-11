@@ -1,6 +1,7 @@
 package com.groupMeeting.core.mapping;
 
 import com.groupMeeting.entity.policy.ApiVersionPolicy;
+import com.groupMeeting.global.enums.Os;
 import com.groupMeeting.policy.service.ApiVersionPolicyService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ public class ApiVersionCondition implements RequestCondition<ApiVersionCondition
 
     @Override
     public ApiVersionCondition getMatchingCondition(HttpServletRequest request) {
-        String os = request.getHeader("os");
+        Os os = Os.from(request.getHeader("os"));
         String appVersion = request.getHeader("version");
         String uri = request.getRequestURI();
 
