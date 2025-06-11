@@ -33,6 +33,21 @@ public class ApiVersionPolicySupport {
                         .thenComparingInt(ApiVersionPolicy::getAppVersion));
     }
 
+    public Optional<ApiVersionPolicy> findDefaultPolicyForUri(String requestUri) {
+        QApiVersionPolicy apiVersionPolicy = QApiVersionPolicy.apiVersionPolicy;
+
+        List<ApiVersionPolicy> apiVersionPolicyList = queryFactory
+                .selectFrom(apiVersionPolicy)
+                .where(
+                        apiVersionPolicy.apiVersion.eq("v1")
+                )
+                .fetch();
+
+        return apiVersionPolicyList.stream()
+                .filter(policy -> requestUri.startsWith(policy.getUri()))
+                .max(Comparator.comparingInt(policy -> policy.getUri().length()));
+    }
+
     public List<ApiVersionPolicy> findAllByOs(String os) {
         QApiVersionPolicy apiVersionPolicy = QApiVersionPolicy.apiVersionPolicy;
 
