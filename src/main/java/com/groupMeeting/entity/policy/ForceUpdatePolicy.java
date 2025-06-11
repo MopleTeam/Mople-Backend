@@ -8,7 +8,10 @@ import lombok.*;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ForceUpdatePolicy {
-    private static final String DEFAULT_MESSAGE = "해당 사항 없음";
+    private static final boolean DEFAULT_REQUIRED_FORCE_UPDATE = true;
+    private static final String DEFAULT_REQUIRED_MIN_VERSION = null;
+    private static final String DEFAULT_REQUIRED_MESSAGE = "보다 좋은 서비스를 위해 최신 버전으로 업데이트가 필요합니다.";
+    private static final String NO_REQUIRED_MESSAGE = "해당 사항 없음";
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -51,7 +54,19 @@ public class ForceUpdatePolicy {
         return userVersion < minVersion && forceUpdate;
     }
 
-    public String getUpdateMessage(int userVersion) {
-        return isForceUpdateRequired(userVersion) ? message : DEFAULT_MESSAGE;
+    public String getForceUpdateMessage(int userVersion) {
+        return isForceUpdateRequired(userVersion) ? message : NO_REQUIRED_MESSAGE;
+    }
+
+    public static boolean getDefaultForceUpdate() {
+        return DEFAULT_REQUIRED_FORCE_UPDATE;
+    }
+
+    public static String getDefaultMinVersion() {
+        return DEFAULT_REQUIRED_MIN_VERSION;
+    }
+
+    public static String getDefaultMessage() {
+        return DEFAULT_REQUIRED_MESSAGE;
     }
 }
