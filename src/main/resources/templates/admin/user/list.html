@@ -1,0 +1,20 @@
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{common/layout}"
+      layout:fragment="content"
+>
+<body>
+<th:block th:each="user : ${users}">
+    <div class="card text-center">
+        <div class="card-header">
+            유저 ID:  [[${plan.id}]]
+        </div>
+        <div class="card-body">
+            <p class="card-text">신고 대상 횟수: [[${user.count}]]</p>
+            <a href="#" class="btn btn-danger">유저 영구 삭제</a>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

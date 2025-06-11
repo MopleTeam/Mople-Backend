@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Force Update 정책 추가</title>
+</head>
+<body>
+<h1>Api Version 정책 추가</h1>
+<form th:action="@{/v1/admin/policy/api/add}" th:object="${policy}" method="post">
+    <label>OS:
+        <input type="text" th:field="*{os}" required/>
+    </label><br/>
+    <label>컨트롤러 uri:
+        <input type="text" th:field="*{uri}" required/>
+    </label><br/>
+    <label>앱 버전:
+        <input type="number" th:field="*{appVersion}" required/>
+    </label><br/>
+    <label>api 버전:
+        <input type="text" th:field="*{apiVersion}" required/>
+    </label><br/>
+    <label>설명:
+        <input type="text" th:field="*{description}"/>
+    </label><br/>
+    <button type="submit">추가</button>
+</form>
+</body>
+</html>

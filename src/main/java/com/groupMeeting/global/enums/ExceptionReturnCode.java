@@ -19,6 +19,15 @@ public enum ExceptionReturnCode {
     DUPLICATE_NICKNAME("403", "중복된 닉네임입니다."),
     NOT_USER("404", "유저 정보가 없습니다."),
 
+    // 정책 관련
+    EMPTY_OS("400", "운영체제가 존재하지 않습니다."),
+    EMPTY_VERSION("400", "버전이 존재하지 않습니다."),
+    UNSUPPORTED_OS("400", "유효하지 않은 운영체제입니다."),
+    UNSUPPORTED_VERSION("400", "유효하지 않은 버전입니다."),
+    NOT_FOUND_FORCE_UPDATE_POLICY("404", "강제 업데이트 정책이 존재하지 않습니다."),
+    NOT_FOUND_API_VERSION_POLICY("404", "API 버전 정책이 존재하지 않습니다."),
+    FORCE_UPDATE("426", "업데이트가 필요합니다."),
+
     // Meet
     NOT_CREATOR("401", "접근 권한이 없습니다."),
     NOT_FOUND_MEET("404", "모임을 찾을 수 없습니다."),
@@ -42,6 +51,10 @@ public enum ExceptionReturnCode {
 
     // comment
     NOT_FOUND_COMMENT("404", "댓글을 찾을 수 없습니다."),
+
+    // cursor
+    INVALID_CURSOR("400", "잘못된 커서입니다."),
+    NOT_FOUND_CURSOR("404", "커서를 찾을 수 없습니다."),
 
     // report
     CURRENT_REPORT("400", "이미 신고가 존재합니다."),

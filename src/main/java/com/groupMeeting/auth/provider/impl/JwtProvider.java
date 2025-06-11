@@ -9,9 +9,7 @@ import com.groupMeeting.core.exception.custom.JwtException;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.jackson.io.JacksonDeserializer;
 import io.jsonwebtoken.security.InvalidKeyException;
 
 import lombok.extern.slf4j.Slf4j;

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Force Update 정책 수정</title>
+</head>
+<body>
+<h1>Force Update 정책 수정</h1>
+<form th:action="@{|/v1/admin/policy/force/edit/${policy.id}|}" th:object="${policy}" method="post">
+    <label>OS:
+        <input type="text" th:field="*{os}" required/>
+    </label><br/>
+    <label>최소 버전:
+        <input type="number" th:field="*{minVersion}" required/>
+    </label><br/>
+    <label>현재 버전:
+        <input type="number" th:field="*{currentVersion}" required/>
+    </label><br/>
+    <label>강제 업데이트:
+        <input type="checkbox" th:field="*{forceUpdate}"/>
+    </label><br/>
+    <label>업데이트 문구:
+        <input type="text" th:field="*{message}"/>
+    </label><br/>
+    <button type="submit">수정 완료</button>
+</form>
+</body>
+</html>
