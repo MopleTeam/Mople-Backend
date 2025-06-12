@@ -29,6 +29,7 @@ application-prod.yml
 application-container.yml
 
 firebase.json
+firebase_dev.json
 
 *.p8
 

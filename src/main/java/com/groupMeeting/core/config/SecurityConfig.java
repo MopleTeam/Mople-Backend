@@ -59,6 +59,8 @@ public class SecurityConfig {
                 .requestMatchers("/v1/**").permitAll()
                 // invite path
                 .requestMatchers("/invite/**","/user/removeTest").permitAll()
+                // policy path
+                .requestMatchers("/policy/**").permitAll()
                 // others
                 .anyRequest().authenticated();
     }

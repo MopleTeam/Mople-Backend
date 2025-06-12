@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Nullable;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/policy")
@@ -21,8 +23,8 @@ public class ForceUpdatePolicyController {
     )
     @GetMapping("/force-update/status")
     public ResponseEntity<ForceUpdatePolicyClientResponse> checkForceUpdateStatus(
-            @RequestHeader("os") String os,
-            @RequestHeader("version") String version
+            @Nullable @RequestHeader("os") String os,
+            @Nullable @RequestHeader("version") String version
     ) {
         return ResponseEntity.ok(forceUpdatePolicyService.getForceUpdatePolicy(os, version));
     }
