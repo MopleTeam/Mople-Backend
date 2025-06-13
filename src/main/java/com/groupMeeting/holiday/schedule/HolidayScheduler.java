@@ -48,6 +48,10 @@ public class HolidayScheduler {
                         .toInstant()
         );
 
+        if (holiday == null || holiday.events().isEmpty()) {
+            return;
+        }
+
         String date = today.toString();
         holidayRepository.deleteAll(holidayRepository.getHolidayByYearAndMonth(date.substring(0, 4), date.substring(5, 7)));
 
