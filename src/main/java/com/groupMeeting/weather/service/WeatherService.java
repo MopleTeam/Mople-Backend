@@ -7,8 +7,6 @@ import com.groupMeeting.dto.response.weather.OpenWeatherListResponse;
 import com.groupMeeting.dto.response.weather.OpenWeatherResponse;
 import com.groupMeeting.dto.response.weather.WeatherInfoResponse;
 
-import lombok.extern.slf4j.Slf4j;
-
 import okhttp3.*;
 
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +23,6 @@ import java.util.concurrent.CompletableFuture;
 
 import static java.util.Objects.isNull;
 
-@Slf4j
 @Service
 public class WeatherService {
     private final OkHttpClient httpClient;

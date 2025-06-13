@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- 프로파일별 로그 레벨 -->
+    <springProfile name="dev">
+        <root level="INFO"/>
+        <logger name="com.groupMeeting" level="DEBUG"/>
+<!--        <logger name="org.hibernate.SQL" level="DEBUG"/>-->
+<!--        <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE"/>-->
+    </springProfile>
+
+    <springProfile name="dev, prod">
+        <root level="INFO"/>
+        <logger name="com.groupMeeting" level="INFO"/>
+    </springProfile>
+
+    <!-- 콘솔 출력 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 내부 API 로그 파일 -->
+    <appender name="INTERNAL_API_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/internal-api.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/internal-api.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>2GB</totalSizeCap>
+        </rollingPolicy>
+
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <mdc>
+                    <includeMdcKeyName>feature</includeMdcKeyName>
+                    <includeMdcKeyName>requestId</includeMdcKeyName>
+                    <includeMdcKeyName>userInfo</includeMdcKeyName>
+                </mdc>
+                <timestamp>
+                    <fieldName>@timestamp</fieldName>
+                </timestamp>
+                <logLevel>
+                    <fieldName>level</fieldName>
+                </logLevel>
+                <pattern>
+                    <pattern>
+                        { "location": "%file:%line" }
+                    </pattern>
+                </pattern>
+                <pattern>
+                    <pattern>
+                        { "thread": "%thread" }
+                    </pattern>
+                </pattern>
+                <arguments/>
+                <message />
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- 외부 API 로그 파일 -->
+    <appender name="EXTERNAL_API_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/external-api.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/external-api.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>2GB</totalSizeCap>
+        </rollingPolicy>
+
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <mdc>
+                    <includeMdcKeyName>feature</includeMdcKeyName>
+                    <includeMdcKeyName>requestId</includeMdcKeyName>
+                    <includeMdcKeyName>userInfo</includeMdcKeyName>
+                </mdc>
+                <timestamp>
+                    <fieldName>@timestamp</fieldName>
+                </timestamp>
+                <logLevel>
+                    <fieldName>level</fieldName>
+                </logLevel>
+                <pattern>
+                    <pattern>
+                        { "location": "%file:%line" }
+                    </pattern>
+                </pattern>
+                <pattern>
+                    <pattern>
+                        { "thread": "%thread" }
+                    </pattern>
+                </pattern>
+                <arguments/>
+                <message />
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- 비즈니스 로직 로그 파일 -->
+    <appender name="BUSINESS_LOGIC_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/business-logic.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/business-logic.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>2GB</totalSizeCap>
+        </rollingPolicy>
+
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <mdc>
+                    <includeMdcKeyName>feature</includeMdcKeyName>
+                    <includeMdcKeyName>requestId</includeMdcKeyName>
+                    <includeMdcKeyName>userInfo</includeMdcKeyName>
+                </mdc>
+                <timestamp>
+                    <fieldName>@timestamp</fieldName>
+                </timestamp>
+                <logLevel>
+                    <fieldName>level</fieldName>
+                </logLevel>
+                <pattern>
+                    <pattern>
+                        { "location": "%file:%line" }
+                    </pattern>
+                </pattern>
+                <pattern>
+                    <pattern>
+                        { "thread": "%thread" }
+                    </pattern>
+                </pattern>
+                <arguments/>
+                <message />
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- 슬로우 쿼리 로그 파일 -->
+    <appender name="SLOW_QUERY_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/slow-query.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/slow-query.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <mdc>
+                    <includeMdcKeyName>feature</includeMdcKeyName>
+                    <includeMdcKeyName>requestId</includeMdcKeyName>
+                    <includeMdcKeyName>userInfo</includeMdcKeyName>
+                </mdc>
+                <timestamp>
+                    <fieldName>@timestamp</fieldName>
+                </timestamp>
+                <logLevel>
+                    <fieldName>level</fieldName>
+                </logLevel>
+                <pattern>
+                    <pattern>
+                        { "location": "%file:%line" }
+                    </pattern>
+                </pattern>
+                <pattern>
+                    <pattern>
+                        { "thread": "%thread" }
+                    </pattern>
+                </pattern>
+                <arguments/>
+                <message />
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- 예외 로그 파일 -->
+    <appender name="EXCEPTION_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/exception.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/exception.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>2GB</totalSizeCap>
+        </rollingPolicy>
+
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <mdc>
+                    <includeMdcKeyName>feature</includeMdcKeyName>
+                    <includeMdcKeyName>requestId</includeMdcKeyName>
+                    <includeMdcKeyName>userInfo</includeMdcKeyName>
+                </mdc>
+                <timestamp>
+                    <fieldName>@timestamp</fieldName>
+                </timestamp>
+                <logLevel>
+                    <fieldName>level</fieldName>
+                </logLevel>
+                <pattern>
+                    <pattern>
+                        { "location": "%file:%line" }
+                    </pattern>
+                </pattern>
+                <pattern>
+                    <pattern>
+                        { "thread": "%thread" }
+                    </pattern>
+                </pattern>
+                <arguments/>
+                <message />
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- 기본 로거 설정 -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+    <!-- 내부 API 로거 -->
+    <logger name="internal-api" level="INFO" additivity="false">
+        <appender-ref ref="INTERNAL_API_FILE"/>
+    </logger>
+
+    <!-- 외부 API 로거 -->
+    <logger name="external-api" level="INFO" additivity="false">
+        <appender-ref ref="EXTERNAL_API_FILE"/>
+    </logger>
+
+    <!-- 비즈니스 로직 로거 -->
+    <logger name="business-logic" level="INFO" additivity="false">
+        <appender-ref ref="BUSINESS_LOGIC_FILE"/>
+    </logger>
+
+    <!-- 슬로우 쿼리 로거 -->
+    <logger name="slow-query" level="INFO" additivity="false">
+        <appender-ref ref="SLOW_QUERY_FILE"/>
+    </logger>
+
+    <!-- 예외 로거 -->
+    <logger name="exception" level="INFO" additivity="false">
+        <appender-ref ref="EXCEPTION_FILE"/>
+    </logger>
+</configuration>

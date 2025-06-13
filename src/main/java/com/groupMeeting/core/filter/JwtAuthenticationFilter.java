@@ -1,9 +1,13 @@
 package com.groupMeeting.core.filter;
 
+import com.groupMeeting.auth.oauth.OAuthUserDetails;
 import com.groupMeeting.auth.provider.impl.JwtProvider;
 
+import com.groupMeeting.dto.request.user.AuthUserRequest;
 import com.groupMeeting.global.enums.ExceptionReturnCode;
 import com.groupMeeting.core.exception.custom.JwtException;
+import com.groupMeeting.global.logging.LoggingContextManager;
+import io.opencensus.trace.ContextManager;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,15 +32,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
     private final String ACCESS_HEADER;
     private final String GRANT_TYPE;
+    private final LoggingContextManager loggingContextManager;
 
     public JwtAuthenticationFilter(
             JwtProvider jwtProvider,
             @Value("${jwt.access-header}") String accessHeader,
-            @Value("${jwt.grant-type}") String grantType
+            @Value("${jwt.grant-type}") String grantType,
+            LoggingContextManager loggingContextManager
     ) {
+
         this.jwtProvider = jwtProvider;
         this.ACCESS_HEADER = accessHeader;
         this.GRANT_TYPE = grantType;
+        this.loggingContextManager = loggingContextManager;
     }
 
     @Override
@@ -50,6 +58,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         token.ifPresent(it -> {
             Authentication authentication = jwtProvider.getAuthentication(replaceBearerToBlank(it));
+
+            if (authentication.getPrincipal() instanceof OAuthUserDetails userDetails) {
+                AuthUserRequest user = userDetails.getUser();
+                loggingContextManager.setUserInfo(user.id());
+            }
 
             log.info("user in = {}", authentication.getPrincipal());
             SecurityContextHolder.getContext().setAuthentication(authentication);

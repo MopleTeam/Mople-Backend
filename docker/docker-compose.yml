@@ -1,0 +1,56 @@
+services:
+  # Vector - 로그 수집 및 전송
+  vector:
+    image: timberio/vector:0.34.0-alpine
+    container_name: mople-vector
+    volumes:
+      - ../logs:/etc/vector/logs:ro
+      - ./vector/vector.toml:/etc/vector/vector.toml:ro
+    command: ["-c", "/etc/vector/vector.toml"]
+    ports:
+      - "8686:8686"
+    depends_on:
+      - loki
+    restart: unless-stopped
+    networks:
+      - mople-logging
+
+  # Loki - 로그 저장소
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: mople-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    restart: unless-stopped
+    networks:
+      - mople-logging
+
+  # Grafana - 시각화
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: mople-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - loki
+    restart: unless-stopped
+    networks:
+      - mople-logging
+
+volumes:
+  loki-data:
+  grafana-data:
+
+networks:
+  mople-logging:
+    driver: bridge

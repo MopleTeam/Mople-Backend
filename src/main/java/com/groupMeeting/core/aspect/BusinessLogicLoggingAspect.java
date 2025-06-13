@@ -4,10 +4,11 @@ import com.groupMeeting.global.async.message.DiscordExceptionSender;
 import com.groupMeeting.global.event.data.exception.DiscordMessage;
 import com.groupMeeting.global.event.data.exception.DiscordMessagePayload;
 
+import com.groupMeeting.global.logging.LoggingContextManager;
+import com.groupMeeting.global.logging.logger.BusinessLogicLogger;
 import jakarta.servlet.http.HttpServletRequest;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -22,42 +23,33 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import java.util.Arrays;
 import java.util.List;
 
-@Slf4j
 @Aspect
 @Component
 @RequiredArgsConstructor
-public class LoggingAspect {
+public class BusinessLogicLoggingAspect {
+    private final BusinessLogicLogger businessLogicLogger;
+    private final LoggingContextManager loggingContextManager;
     private final DiscordExceptionSender exceptionSender;
 
-    @Around("@annotation(com.groupMeeting.core.annotation.log.ApiLogging)")
+    @Around("@annotation(com.groupMeeting.core.annotation.log.BusinessLogicLogging)")
     public Object processCustomAnnotation(ProceedingJoinPoint joinPoint) throws Throwable {
-        long start = System.currentTimeMillis();
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+        loggingContextManager.setRequestId();
 
-        // Log request
-        getInfo(request, joinPoint.getArgs());
+        long startTime = System.currentTimeMillis();
 
-        Object result = joinPoint.proceed();
+        try {
+            System.out.println("userInfo " + loggingContextManager.getUserInfo());
+            System.out.println("requestId " + loggingContextManager.getRequestId());
+            Object result = joinPoint.proceed();
 
-        // Log response
-        log.info(
-                "Response - Method: {} URI: {} Payload: {} Duration: {}ms",
-                request.getMethod(),
-                request.getRequestURI(),
-                result,
-                System.currentTimeMillis() - start
-        );
+            long executionTime = System.currentTimeMillis() - startTime;
+            businessLogicLogger.logComplete(executionTime);
 
-        return result;
-    }
-
-    private static void getInfo(HttpServletRequest request, Object[] joinPoint) {
-        log.info(
-                "Request - Method: {} URI: {} Payload: {}",
-                request.getMethod(),
-                request.getRequestURI(),
-                Arrays.toString(joinPoint)
-        );
+            return result;
+        } catch (Exception ex) {
+            businessLogicLogger.logError(ex.getMessage());
+            throw ex;
+        }
     }
 
     @AfterThrowing(pointcut = "execution(* com.groupMeeting.*.controller.*.*(..))", throwing = "ex")

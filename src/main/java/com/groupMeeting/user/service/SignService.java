@@ -17,14 +17,12 @@ import com.groupMeeting.global.enums.Status;
 import com.groupMeeting.notification.repository.FirebaseTokenRepository;
 import com.groupMeeting.user.repository.UserRepository;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 import static java.util.Objects.isNull;
 

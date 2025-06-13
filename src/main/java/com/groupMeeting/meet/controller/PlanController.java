@@ -1,7 +1,7 @@
 package com.groupMeeting.meet.controller;
 
 import com.groupMeeting.core.annotation.auth.SignUser;
-import com.groupMeeting.core.annotation.log.ApiLogging;
+import com.groupMeeting.core.annotation.log.BusinessLogicLogging;
 import com.groupMeeting.dto.client.PlanClientResponse;
 import com.groupMeeting.dto.request.meet.plan.PlanReportRequest;
 import com.groupMeeting.dto.request.user.AuthUserRequest;
@@ -60,7 +60,7 @@ public class PlanController {
             summary = "일정 수정 API",
             description = "일정 생성자는 일정을 수정할 수 있으며, 수정된 정보를 반환합니다."
     )
-    @ApiLogging
+    @BusinessLogicLogging
     @PatchMapping("/update")
     public ResponseEntity<PlanClientResponse> updatePlan(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
