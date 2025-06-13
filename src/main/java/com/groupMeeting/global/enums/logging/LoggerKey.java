@@ -6,7 +6,9 @@ public enum LoggerKey {
 
     EXECUTION_TIME("executionTime"),
     SUCCESS("success"),
-    ERROR_MESSAGE("errorMessage");
+    ERROR_MESSAGE("errorMessage"),
+    STATUS("status"),
+    STACK_TRACE("stackTrace");
 
     private final String key;
 
