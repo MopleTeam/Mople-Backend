@@ -8,7 +8,8 @@ public enum LoggerKey {
     SUCCESS("success"),
     ERROR_MESSAGE("errorMessage"),
     STATUS("status"),
-    STACK_TRACE("stackTrace");
+    STACK_TRACE("stackTrace"),
+    QUERY("query");
 
     private final String key;
 

@@ -98,6 +98,9 @@ dependencies {
     // property assist tool
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
+    // Datasource Proxy (슬로우 쿼리 측정하기 위해)
+    implementation 'net.ttddyy:datasource-proxy:1.8'
+
     // Logstash Logback Encoder (로그를 JSON 형태로 변환)
     implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
 
