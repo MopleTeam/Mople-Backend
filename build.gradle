@@ -98,6 +98,9 @@ dependencies {
     // property assist tool
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
+    // Logstash Logback Encoder (로그를 JSON 형태로 변환)
+    implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
+
     // firebase
     // io.netty 4.1.115 미만 windows dos 공격 취약점 spring netty 4.1.115 이상 지원할 때 변경 - spring 3.4.0에서 해결
     implementation 'com.google.firebase:firebase-admin:9.4.2'
