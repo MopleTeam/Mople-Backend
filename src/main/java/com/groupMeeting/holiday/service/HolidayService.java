@@ -12,7 +12,7 @@ import java.util.List;
 public class HolidayService {
     private final HolidayRepository holidayRepository;
 
-    public List<HolidayClientResponse> getHolidayMonth(String year) {
+    public List<HolidayClientResponse> getYearHolidays(String year) {
 
         return holidayRepository
                 .getHolidayByYear(year)

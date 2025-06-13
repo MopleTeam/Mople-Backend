@@ -1,6 +1,6 @@
 package com.groupMeeting.holiday.schedule;
 
-import com.groupMeeting.dto.response.holiday.HolidayResponse;
+import com.groupMeeting.dto.response.holiday.KakaoHolidayResponse;
 import com.groupMeeting.entity.holiday.Holiday;
 import com.groupMeeting.global.client.HolidayClient;
 import com.groupMeeting.holiday.repository.HolidayRepository;
@@ -36,7 +36,7 @@ public class HolidayScheduler {
     public void holidaySchedule() {
         LocalDate today = LocalDate.now();
 
-        HolidayResponse holiday = holidayClient.getHolidayKakao(
+        KakaoHolidayResponse holiday = holidayClient.getHolidayKakao(
                 requestKey,
                 today.with(TemporalAdjusters.firstDayOfMonth())
                         .atStartOfDay()
@@ -53,7 +53,7 @@ public class HolidayScheduler {
 
         List<Holiday> holidays = holiday.events()
                 .stream()
-                .filter(HolidayResponse.HolidayInfo::holiday)
+                .filter(KakaoHolidayResponse.HolidayInfo::holiday)
                 .map(h -> {
 
                     Instant instant = Instant.parse(h.time().startAt());

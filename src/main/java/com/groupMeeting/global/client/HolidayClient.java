@@ -1,6 +1,6 @@
 package com.groupMeeting.global.client;
 
-import com.groupMeeting.dto.response.holiday.HolidayResponse;
+import com.groupMeeting.dto.response.holiday.KakaoHolidayResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -12,7 +12,7 @@ import java.time.Instant;
 public interface HolidayClient {
 
     @GetMapping
-    HolidayResponse getHolidayKakao(
+    KakaoHolidayResponse getHolidayKakao(
             @RequestHeader("Authorization") String requestKey,
             @RequestParam("from") Instant from,
             @RequestParam("to") Instant to

@@ -26,8 +26,8 @@ public class HolidayController {
             description = "공휴일을 조회합니다. 파라미터를 통해 1년 단위 기준으로 조회합니다."
     )
     @GetMapping
-    public ResponseEntity<List<HolidayClientResponse>> getHoliday(@RequestParam String year) {
+    public ResponseEntity<List<HolidayClientResponse>> getHolidays(@RequestParam String year) {
 
-        return ResponseEntity.ok(holidayService.getHolidayMonth(year));
+        return ResponseEntity.ok(holidayService.getYearHolidays(year));
     }
 }

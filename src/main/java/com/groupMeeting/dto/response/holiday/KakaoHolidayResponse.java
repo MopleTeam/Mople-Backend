@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-public record HolidayResponse(
+public record KakaoHolidayResponse(
         List<HolidayInfo> events
 ) {
     @JsonIgnoreProperties(ignoreUnknown = true)

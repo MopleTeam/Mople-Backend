@@ -21,10 +21,15 @@ public class Holiday {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
+    @Column(length = 100)
     private String title;
+
     @Column(length = 10)
     private String year;
+
+    @Column(length = 10)
     private String month;
+
     private LocalDate date;
 
     @Builder
