@@ -12,6 +12,11 @@ public enum LoggerMessage {
     EXTERNAL_API_SLOW_RESPONSE("External API 느린 응답 감지"),
     EXTERNAL_API_FAIL("External API 응답 실패"),
 
+    // business logic 로그
+    BUSINESS_LOGIC_SUCCESS("Business logic 응답 성공"),
+    BUSINESS_LOGIC_SLOW_RESPONSE("Business logic 느린 응답 감지"),
+    BUSINESS_LOGIC_FAIL("Business logic 응답 실패"),
+
     // exception 로그
     EXCEPTION_CLIENT("Exception 클라이언트 오류 발생"),
     EXCEPTION_SERVER("Exception 서버 오류 발생");
