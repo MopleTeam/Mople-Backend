@@ -38,8 +38,6 @@ public class BusinessLogicLoggingAspect {
         long startTime = System.currentTimeMillis();
 
         try {
-            System.out.println("userInfo " + loggingContextManager.getUserInfo());
-            System.out.println("requestId " + loggingContextManager.getRequestId());
             Object result = joinPoint.proceed();
 
             long executionTime = System.currentTimeMillis() - startTime;

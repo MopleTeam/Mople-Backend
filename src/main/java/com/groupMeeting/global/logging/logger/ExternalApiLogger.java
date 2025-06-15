@@ -20,8 +20,7 @@ public class ExternalApiLogger implements LoggerAdapter {
         if (executionTime > 1000) {
             externalApiLogger.warn(EXTERNAL_API_SLOW_RESPONSE.getMessage(),
                     keyValue(EXECUTION_TIME.getKey(), executionTime),
-                    keyValue(SUCCESS.getKey(), true)
-            );
+                    keyValue(SUCCESS.getKey(), true));
         } else {
             externalApiLogger.info(EXTERNAL_API_SUCCESS.getMessage(),
                     keyValue(EXECUTION_TIME.getKey(), executionTime),
