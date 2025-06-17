@@ -24,13 +24,8 @@ bin/
 *.iml
 *.ipr
 
-application-dev.yml
-application-prod.yml
-application-container.yml
-
-firebase.json
-
-*.p8
+src/main/resources/application-*.yml
+firebase*.json
 
 out/
 !**/src/main/**/out/
