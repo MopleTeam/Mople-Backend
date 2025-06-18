@@ -27,6 +27,8 @@ bin/
 src/main/resources/application-*.yml
 firebase*.json
 
+docker/
+
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
