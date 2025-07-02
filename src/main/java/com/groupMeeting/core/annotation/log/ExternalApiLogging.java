@@ -6,4 +6,5 @@ import java.lang.annotation.Target;
 
 @Inherited
 @Target(ElementType.METHOD)
-public @interface ApiLogging {}
+public @interface ExternalApiLogging {
+}

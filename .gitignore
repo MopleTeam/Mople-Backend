@@ -24,13 +24,10 @@ bin/
 *.iml
 *.ipr
 
-application-dev.yml
-application-prod.yml
-application-container.yml
+src/main/resources/application-*.yml
+firebase*.json
 
-firebase.json
-
-*.p8
+docker/
 
 out/
 !**/src/main/**/out/
