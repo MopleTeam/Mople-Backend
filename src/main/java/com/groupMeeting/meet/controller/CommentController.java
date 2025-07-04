@@ -42,7 +42,22 @@ public class CommentController {
     }
 
     @Operation(
-            summary = "일정 댓글 생성 API",
+            summary = "답글 조회 API",
+            description = "모든 답글을 조회합니다. 후기의 경우 후기의 ID가 아닌 Post Id를 Path Variable로 전송합니다."
+    )
+    @GetMapping("/{postId}/{commentId}")
+    @ApiVersion("v1_5")
+    public ResponseEntity<CursorPageResponse<CommentClientResponse>> commentList(
+            @PathVariable Long postId,
+            @PathVariable Long commentId,
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(commentService.getCommentReplyList(postId, commentId, cursor, size));
+    }
+
+    @Operation(
+            summary = "댓글 생성 API",
             description = "댓글을 작성합니다."
     )
     @PostMapping("/{postId}")
@@ -52,12 +67,26 @@ public class CommentController {
             @PathVariable Long postId,
             @Valid @RequestBody CommentCreateRequest commentCreateRequest
     ) {
-        return ResponseEntity.ok(commentService.createComment(user.id(), postId, commentCreateRequest.contents()));
+        return ResponseEntity.ok(commentService.createComment(user.id(), postId, commentCreateRequest));
     }
 
     @Operation(
-            summary = "댓글 수정 - API",
-            description = "댓글 ID를 통해 댓글을 수정합니다."
+            summary = "답글 생성 API",
+            description = "답글을 작성합니다."
+    )
+    @PostMapping("/{postId}/{commentId}")
+    public ResponseEntity<CommentClientResponse> createCommentReply(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @PathVariable Long postId,
+            @PathVariable Long commentId,
+            @Valid @RequestBody CommentCreateRequest commentCreateRequest
+    ) {
+        return ResponseEntity.ok(commentService.createCommentReply(user.id(), postId, commentId, commentCreateRequest));
+    }
+
+    @Operation(
+            summary = "댓글/답글 수정 API",
+            description = "댓글 ID를 통해 댓글/답글을 수정합니다."
     )
     @PatchMapping("/{postId}/{commentId}")
     @ApiVersion("v1_5")
@@ -67,12 +96,12 @@ public class CommentController {
             @PathVariable Long commentId,
             @RequestBody CommentCreateRequest commentCreateRequest
     ) {
-        return ResponseEntity.ok(commentService.updateComment(user.id(), postId, commentId, commentCreateRequest.contents()));
+        return ResponseEntity.ok(commentService.updateComment(user.id(), commentId, commentCreateRequest));
     }
 
     @Operation(
-            summary = "댓글 삭제 API",
-            description = "댓글을 삭제합니다."
+            summary = "댓글/답글 삭제 API",
+            description = "댓글/답글을 삭제합니다."
     )
     @DeleteMapping("/{commentId}")
     public ResponseEntity<Void> deleteReviewComment(
@@ -84,8 +113,8 @@ public class CommentController {
     }
 
     @Operation(
-            summary = "댓글 신고 API",
-            description = "유저가 댓글을 신고하고 Admin Page에서 조회합니다."
+            summary = "댓글/답글 신고 API",
+            description = "유저가 댓글/답글을 신고하고 Admin Page에서 조회합니다."
     )
     @PostMapping("/report")
     public ResponseEntity<Void> reportComment(

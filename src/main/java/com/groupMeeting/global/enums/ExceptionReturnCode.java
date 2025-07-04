@@ -51,6 +51,7 @@ public enum ExceptionReturnCode {
 
     // comment
     NOT_FOUND_COMMENT("404", "댓글을 찾을 수 없습니다."),
+    NOT_PARENT_COMMENT("400", "부모 댓글이 아닙니다."),
 
     // cursor
     INVALID_CURSOR("400", "잘못된 커서입니다."),

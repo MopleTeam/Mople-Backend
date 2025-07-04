@@ -3,9 +3,12 @@ package com.groupMeeting.meet.service;
 import com.groupMeeting.core.exception.custom.CursorException;
 import com.groupMeeting.core.exception.custom.ResourceNotFoundException;
 import com.groupMeeting.dto.client.CommentClientResponse;
+import com.groupMeeting.dto.request.meet.comment.CommentCreateRequest;
 import com.groupMeeting.dto.response.meet.comment.CommentResponse;
+import com.groupMeeting.dto.response.meet.comment.CommentUpdateResponse;
 import com.groupMeeting.dto.response.pagination.CursorPageResponse;
 import com.groupMeeting.dto.response.pagination.CursorPage;
+import com.groupMeeting.entity.meet.comment.CommentMention;
 import com.groupMeeting.entity.meet.comment.CommentReport;
 import com.groupMeeting.entity.meet.comment.PlanComment;
 import com.groupMeeting.entity.user.User;
@@ -17,20 +20,23 @@ import com.groupMeeting.meet.repository.comment.PlanCommentRepository;
 import com.groupMeeting.dto.request.meet.comment.CommentReportRequest;
 
 import com.groupMeeting.meet.repository.impl.comment.CommentRepositorySupport;
+import com.groupMeeting.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static com.groupMeeting.dto.client.CommentClientResponse.ofComment;
+import static com.groupMeeting.dto.client.CommentClientResponse.*;
 import static com.groupMeeting.global.enums.ExceptionReturnCode.*;
 
 @Service
 @RequiredArgsConstructor
 public class CommentService {
+    private final UserRepository userRepository;
     private final PlanCommentRepository commentRepository;
     private final CommentRepositorySupport commentRepositorySupport;
     private final CommentReportRepository commentReportRepository;
@@ -39,7 +45,18 @@ public class CommentService {
     @Transactional(readOnly = true)
     public CursorPageResponse<CommentClientResponse> getCommentList(Long postId, String cursor, int size) {
         List<CommentResponse> commentResponses = getComments(postId, cursor, size);
+        return buildCursorPage(size, commentResponses);
+    }
 
+    @Transactional(readOnly = true)
+    public CursorPageResponse<CommentClientResponse> getCommentReplyList(Long postId, Long commentId, String cursor, int size) {
+        List<CommentResponse> commentResponses = getCommentReplies(postId, commentId, cursor, size);
+
+        return buildCursorPage(size, commentResponses);
+    }
+
+    @NotNull
+    private static CursorPageResponse<CommentClientResponse> buildCursorPage(int size, List<CommentResponse> commentResponses) {
         boolean hasNext = commentResponses.size() > size;
         commentResponses = hasNext ? commentResponses.subList(0, size) : commentResponses;
 
@@ -53,30 +70,59 @@ public class CommentService {
                 .size(commentResponses.size())
                 .build();
 
-        return CursorPageResponse.of(CommentClientResponse.ofComments(commentResponses), page);
+        return CursorPageResponse.of(ofComments(commentResponses), page);
     }
 
     @Transactional
-    public CommentClientResponse createComment(Long userId, Long postId, String content) {
-        User user = reader.findUser(userId);
+    public CommentClientResponse createComment(Long userId, Long postId, CommentCreateRequest request) {
+        User writer = reader.findUser(userId);
 
-        PlanComment comment = commentRepository.save(
-                PlanComment.builder()
-                        .postId(postId)
-                        .content(content)
-                        .writeTime(LocalDateTime.now())
-                        .status(Status.ACTIVE)
-                        .writerId(userId)
-                        .writerNickname(user.getNickname())
-                        .writerImg(user.getProfileImg())
-                        .build()
+        PlanComment comment = PlanComment.ofParent(
+                request.contents(),
+                postId,
+                LocalDateTime.now(),
+                Status.ACTIVE,
+                writer
         );
+        addMentions(request.mentions(), comment);
 
-        return ofComment(new CommentResponse(comment, user.getNickname(), user.getProfileImg()));
+        commentRepository.save(comment);
+
+        return ofComment(new CommentResponse(comment));
     }
 
     @Transactional
-    public CommentClientResponse updateComment(Long userId, Long postId, Long commentId, String content) {
+    public CommentClientResponse createCommentReply(Long userId, Long postId, Long commentId, CommentCreateRequest request) {
+        User writer = reader.findUser(userId);
+
+        validateParentComment(commentId);
+
+        PlanComment comment = PlanComment.ofChild(
+                request.contents(),
+                postId,
+                commentId,
+                LocalDateTime.now(),
+                Status.ACTIVE,
+                writer
+        );
+        addMentions(request.mentions(), comment);
+
+        commentRepository.save(comment);
+
+        return ofComment(new CommentResponse(comment));
+    }
+
+    private void validateParentComment(Long commentId) {
+        PlanComment parentComment = commentRepository.findById(commentId).orElseThrow(() ->
+                new ResourceNotFoundException(NOT_FOUND_COMMENT));
+
+        if (parentComment.getParentId() != null) {
+            throw new ResourceNotFoundException(NOT_PARENT_COMMENT);
+        }
+    }
+
+    @Transactional
+    public CommentClientResponse updateComment(Long userId, Long commentId, CommentCreateRequest request) {
         PlanComment comment = commentRepository.findById(commentId).orElseThrow(
                 () -> new ResourceNotFoundException(NOT_FOUND_COMMENT)
         );
@@ -87,9 +133,32 @@ public class CommentService {
             throw new ResourceNotFoundException(NOT_CREATOR);
         }
 
-        comment.updateContent(content);
+        comment.updateContent(request.contents());
+        updateMentions(request.mentions(), comment);
 
-        return ofComment(new CommentResponse(comment, user.getNickname(), user.getProfileImg()));
+        commentRepository.save(comment);
+
+        return ofUpdate(new CommentUpdateResponse(comment));
+    }
+
+    private void addMentions(List<Long> mentions, PlanComment comment) {
+        if (mentions == null) return;
+
+        for (Long id : mentions) {
+            User mentionedUser = userRepository.findById(id).orElseThrow(() ->
+                    new ResourceNotFoundException(NOT_USER));
+
+            CommentMention mention = CommentMention.builder()
+                    .mentionedUser(mentionedUser)
+                    .build();
+
+            comment.addMention(mention);
+        }
+    }
+
+    private void updateMentions(List<Long> mentions, PlanComment comment) {
+        comment.getMentions().clear();
+        addMentions(mentions, comment);
     }
 
     @Transactional
@@ -105,15 +174,28 @@ public class CommentService {
 
     private List<CommentResponse> getComments(Long postId, String encodedCursor, int size) {
         if (encodedCursor == null || encodedCursor.isEmpty()) {
-            return commentRepositorySupport.findFirstPage(postId, size);
+            return commentRepositorySupport.findCommentFirstPage(postId, size);
         }
 
         Long cursor = CursorUtils.decode(encodedCursor);
-        if (!commentRepositorySupport.isValidCursor(cursor)) {
+        if (commentRepositorySupport.validCursor(cursor)) {
             throw new CursorException(NOT_FOUND_CURSOR);
         }
 
-        return commentRepositorySupport.findNextPage(postId, cursor, size);
+        return commentRepositorySupport.findCommentNextPage(postId, cursor, size);
+    }
+
+    private List<CommentResponse> getCommentReplies(Long postId, Long commentId, String encodedCursor, int size) {
+        if (encodedCursor == null || encodedCursor.isEmpty()) {
+            return commentRepositorySupport.findCommentReplyFirstPage(postId, commentId, size);
+        }
+
+        Long cursor = CursorUtils.decode(encodedCursor);
+        if (commentRepositorySupport.validCursor(cursor)) {
+            throw new CursorException(NOT_FOUND_CURSOR);
+        }
+
+        return commentRepositorySupport.findCommentReplyNextPage(postId, commentId, cursor, size);
     }
 
     @Transactional
