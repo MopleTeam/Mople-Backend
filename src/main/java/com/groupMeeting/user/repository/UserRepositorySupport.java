@@ -63,7 +63,7 @@ public class UserRepositorySupport {
         queryFactory.delete(meet).where(meet.id.in(meets)).execute();
 
         // etc
-        queryFactory.delete(comment).where(comment.writerId.eq(userId)).execute();
+        queryFactory.delete(comment).where(comment.writer.id.eq(userId)).execute();
         queryFactory.delete(notification).where(notification.user.id.eq(userId)).execute();
         queryFactory.delete(token).where(token.userId.eq(userId)).execute();
 
