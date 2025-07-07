@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.groupMeeting.global.enums.Action.PENDING;
 import static com.groupMeeting.global.enums.ExceptionReturnCode.NOT_FOUND_PLAN;
@@ -60,6 +61,14 @@ public class NotificationSendService {
 
                     case REVIEW_UPDATE -> tokenRepositorySupport.getReviewPushToken(
                             toLong(data.get("userId")), id = toLong(data.get("reviewId")), notify.topic()
+                    );
+
+                    case COMMENT_REPLY -> tokenRepositorySupport.getCommentReplyPushToken(
+                            toLong(data.get("userId")), id = toLong(data.get("commentId")), notify.topic()
+                    );
+
+                    case COMMENT_MENTION -> tokenRepositorySupport.getCommentMentionPushToken(
+                            toLong(data.get("userId")), id = toLong(data.get("commentId")), notify.topic()
                     );
                 };
 
@@ -141,6 +150,9 @@ public class NotificationSendService {
 
                     case REVIEW_REMIND, REVIEW_UPDATE ->
                             getReviewNotifications(type, notify, sendRequest.users(), toLong(data.get("meetId")), toLong(data.get("reviewId")));
+
+                    case COMMENT_REPLY, COMMENT_MENTION ->
+                            getCommentNotifications(type, notify, sendRequest.users(), toLong(data.get("meetId")), toLong(data.get("planId")), toLong(data.get("reviewId")));
                 }
         );
     }
@@ -188,6 +200,39 @@ public class NotificationSendService {
     }
 
     private List<Notification> getReviewNotifications(NotifyType type, NotificationEvent notify, List<User> users, Long meetId, Long reviewId) {
+
+        return users.stream()
+                .map(u ->
+                        Notification.builder()
+                                .type(type)
+                                .action(Action.COMPLETE)
+                                .meetId(meetId)
+                                .reviewId(reviewId)
+                                .payload(notify.payload())
+                                .user(u)
+                                .build()
+                )
+                .toList();
+    }
+
+    private List<Notification> getCommentNotifications(NotifyType type, NotificationEvent notify, List<User> users, Long meetId, Long planId, Long reviewId) {
+
+        Optional<MeetPlan> maybePlan = meetPlanRepository.findById(planId);
+
+        if (maybePlan.isPresent()) {
+            return users.stream()
+                    .map(u ->
+                            Notification.builder()
+                                    .type(type)
+                                    .action(Action.COMPLETE)
+                                    .meetId(meetId)
+                                    .planId(planId)
+                                    .payload(notify.payload())
+                                    .user(u)
+                                    .build()
+                    )
+                    .toList();
+        }
 
         return users.stream()
                 .map(u ->

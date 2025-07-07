@@ -2,8 +2,9 @@ package com.groupMeeting.notification.repository.impl;
 
 import com.groupMeeting.dto.response.notification.NotifySendRequest;
 import com.groupMeeting.entity.meet.QMeetMember;
+import com.groupMeeting.entity.meet.comment.QCommentMention;
+import com.groupMeeting.entity.meet.comment.QPlanComment;
 import com.groupMeeting.entity.meet.plan.QPlanParticipant;
-import com.groupMeeting.entity.meet.review.QPlanReview;
 import com.groupMeeting.entity.notification.FirebaseToken;
 import com.groupMeeting.entity.notification.QFirebaseToken;
 import com.groupMeeting.entity.notification.QTopic;
@@ -35,17 +36,6 @@ public class TokenRepositorySupport {
                 allUser,
                 getPushToken(users)
         );
-    }
-
-    private List<User> getMeetAllUser(Long meetId, Long userId) {
-
-        QMeetMember meetMember = QMeetMember.meetMember;
-
-        return queryFactory
-                .select(meetMember.user)
-                .from(meetMember)
-                .where(meetMember.joinMeet.id.eq(meetId), meetMember.user.id.ne(userId))
-                .fetch();
     }
 
     public NotifySendRequest getPlanPushToken(Long userId, Long planId, PushTopic pushTopic) {
@@ -87,7 +77,6 @@ public class TokenRepositorySupport {
         );
     }
 
-
     public NotifySendRequest getReviewPushToken(Long userId, Long reviewId, PushTopic pushTopic) {
 
         List<User> allUser = getAllReviewUser(userId, reviewId);
@@ -99,6 +88,28 @@ public class TokenRepositorySupport {
         );
     }
 
+    public NotifySendRequest getCommentReplyPushToken(Long userId, Long commentId, PushTopic pushTopic) {
+
+        List<User> user = getParentCommentUser(userId, commentId);
+        List<Long> userToken = getAllTokenId(getAllUserId(user), pushTopic);
+
+        return new NotifySendRequest(
+                user,
+                getPushToken(userToken)
+        );
+    }
+
+    public NotifySendRequest getCommentMentionPushToken(Long userId, Long commentId, PushTopic pushTopic) {
+
+        List<User> mentionedUsers = getMentionedUsers(userId, commentId);
+        List<Long> usersTokens = getAllTokenId(getAllUserId(mentionedUsers), pushTopic);
+
+        return new NotifySendRequest(
+                mentionedUsers,
+                getPushToken(usersTokens)
+        );
+    }
+
     private List<FirebaseToken> getPushToken(List<Long> users) {
 
         QFirebaseToken token = QFirebaseToken.firebaseToken;
@@ -107,6 +118,17 @@ public class TokenRepositorySupport {
                 .select(token)
                 .from(token)
                 .where(token.userId.in(users), token.active.isTrue())
+                .fetch();
+    }
+
+    private List<User> getMeetAllUser(Long meetId, Long userId) {
+
+        QMeetMember meetMember = QMeetMember.meetMember;
+
+        return queryFactory
+                .select(meetMember.user)
+                .from(meetMember)
+                .where(meetMember.joinMeet.id.eq(meetId), meetMember.user.id.ne(userId))
                 .fetch();
     }
 
@@ -143,6 +165,34 @@ public class TokenRepositorySupport {
                 .fetch();
     }
 
+    private List<User> getParentCommentUser(Long userId, Long commentId) {
+
+        QPlanComment planComment = QPlanComment.planComment;
+        QUser user = QUser.user;
+
+        return queryFactory
+                .select(user)
+                .from(planComment)
+                .join(user).on(user.id.eq(planComment.writer.id))
+                .where(planComment.id.eq(commentId), user.id.ne(userId))
+                .fetch();
+    }
+
+    private List<User> getMentionedUsers(Long userId, Long commentId) {
+
+        QPlanComment planComment = QPlanComment.planComment;
+        QCommentMention mention = QCommentMention.commentMention;
+        QUser user = QUser.user;
+
+        return queryFactory
+                .select(user)
+                .from(planComment)
+                .join(planComment.mentions, mention)
+                .join(mention.mentionedUser, user)
+                .where(planComment.id.eq(commentId), user.id.ne(userId))
+                .fetch();
+    }
+
     private List<Long> getAllTokenId(List<Long> users, PushTopic pushTopic) {
 
         QTopic topic = QTopic.topic1;
@@ -153,7 +203,6 @@ public class TokenRepositorySupport {
                 .where(topic.userId.in(users), topic.topic.eq(pushTopic))
                 .fetch();
     }
-
 
     private List<Long> getAllUserId(List<User> users) {
 
