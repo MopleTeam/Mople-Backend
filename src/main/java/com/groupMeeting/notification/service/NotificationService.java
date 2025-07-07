@@ -5,12 +5,14 @@ import com.groupMeeting.core.exception.custom.ResourceNotFoundException;
 import com.groupMeeting.dto.request.notification.topic.PushTopicRequest;
 import com.groupMeeting.dto.response.notification.NotificationListResponse;
 import com.groupMeeting.entity.meet.plan.MeetPlan;
+import com.groupMeeting.entity.meet.review.PlanReview;
 import com.groupMeeting.entity.notification.Notification;
 import com.groupMeeting.entity.notification.Topic;
 import com.groupMeeting.entity.user.User;
 import com.groupMeeting.global.enums.Action;
 import com.groupMeeting.global.enums.PushTopic;
 import com.groupMeeting.meet.repository.plan.MeetPlanRepository;
+import com.groupMeeting.meet.repository.review.PlanReviewRepository;
 import com.groupMeeting.notification.repository.NotificationRepository;
 import com.groupMeeting.notification.repository.TopicRepository;
 import com.groupMeeting.user.repository.UserRepository;
@@ -20,7 +22,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -34,6 +38,7 @@ public class NotificationService {
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
     private final MeetPlanRepository planRepository;
+    private final PlanReviewRepository reviewRepository;
 
     @Transactional(readOnly = true)
     public List<PushTopic> getSubscribeList(Long userId) {
@@ -90,17 +95,30 @@ public class NotificationService {
                 .distinct()
                 .toList();
 
+        Map<Long, LocalDateTime> planMap = planRepository.findPlanAndTime(planIds)
+                .stream()
+                .collect(Collectors.toMap(
+                                MeetPlan::getId,
+                                MeetPlan::getPlanTime
+                        )
+                );
+
+        planMap.putAll(
+                reviewRepository.findReviewsByPostId(planIds)
+                        .stream()
+                        .collect(
+                                Collectors.toMap(
+                                        PlanReview::getPlanId,
+                                        PlanReview::getPlanTime
+                                )
+                        )
+        );
+
         return NotificationListResponse.of(
                 objectMapper,
                 notificationRepository
                         .getUserNotificationListLimit(userId, Action.COMPLETE),
-                planRepository.findPlanAndTime(planIds)
-                        .stream()
-                        .collect(Collectors.toMap(
-                                        MeetPlan::getId,
-                                        MeetPlan::getPlanTime
-                                )
-                        )
+                planMap
         );
     }
 
