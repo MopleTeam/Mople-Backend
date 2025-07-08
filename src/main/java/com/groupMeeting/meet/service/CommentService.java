@@ -238,6 +238,7 @@ public class CommentService {
                                     "postName", getPostName(comment.getPostId()),
                                     "userName", comment.getWriter().getNickname(),
                                     "userId", comment.getWriter().getId().toString(),
+                                    "parentCommentId", parentComment.getId().toString(),
                                     "commentId", comment.getId().toString()
                             ),
                             Map.of(

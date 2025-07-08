@@ -71,14 +71,14 @@ public class NotificationUserReader {
                 .fetch();
     }
 
-    public List<User> findParentCommentUser(Long senderId, Long commentId) {
+    public List<User> findParentCommentUser(Long senderId, Long parentCommentId) {
 
         QPlanComment planComment = QPlanComment.planComment;
 
         return queryFactory
                 .select(planComment.writer)
                 .from(planComment)
-                .where(planComment.id.eq(commentId), planComment.writer.id.ne(senderId))
+                .where(planComment.id.eq(parentCommentId), planComment.writer.id.ne(senderId))
                 .fetch();
     }
 

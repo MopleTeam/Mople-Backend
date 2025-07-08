@@ -71,9 +71,9 @@ public class NotifySendRequestFactory {
         );
     }
 
-    public NotifySendRequest getCommentReplyPushToken(Long userId, Long commentId, PushTopic pushTopic) {
+    public NotifySendRequest getCommentReplyPushToken(Long userId, Long parentCommentId, PushTopic pushTopic) {
 
-        List<User> user = userReader.findParentCommentUser(userId, commentId);
+        List<User> user = userReader.findParentCommentUser(userId, parentCommentId);
         List<Long> userToken = tokenReader.findAllTokenId(userReader.findAllUserId(user), pushTopic);
 
         return new NotifySendRequest(

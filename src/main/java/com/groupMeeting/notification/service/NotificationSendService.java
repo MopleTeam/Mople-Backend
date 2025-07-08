@@ -68,7 +68,7 @@ public class NotificationSendService {
                     );
 
                     case COMMENT_REPLY -> requestFactory.getCommentReplyPushToken(
-                            toLong(data.get("userId")), id = toLong(data.get("commentId")), notify.topic()
+                            toLong(data.get("userId")), id = toLong(data.get("parentCommentId")), notify.topic()
                     );
 
                     case COMMENT_MENTION -> requestFactory.getCommentMentionPushToken(
