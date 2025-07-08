@@ -4,10 +4,12 @@ import com.groupMeeting.core.exception.custom.AuthException;
 import com.groupMeeting.core.exception.custom.ResourceNotFoundException;
 import com.groupMeeting.dto.response.meet.MeetListFindMemberResponse;
 import com.groupMeeting.entity.meet.Meet;
+import com.groupMeeting.entity.meet.comment.PlanComment;
 import com.groupMeeting.entity.meet.plan.MeetPlan;
 import com.groupMeeting.entity.meet.review.PlanReview;
 import com.groupMeeting.entity.user.User;
 import com.groupMeeting.meet.repository.MeetRepository;
+import com.groupMeeting.meet.repository.comment.PlanCommentRepository;
 import com.groupMeeting.meet.repository.impl.MeetRepositorySupport;
 import com.groupMeeting.meet.repository.plan.MeetPlanRepository;
 import com.groupMeeting.meet.repository.review.PlanReviewRepository;
@@ -29,6 +31,7 @@ public class EntityReader {
     private final MeetPlanRepository planRepository;
     private final MeetRepositorySupport meetRepositorySupport;
     private final PlanReviewRepository planReviewRepository;
+    private final PlanCommentRepository commentRepository;
 
     public User findUser(Long userId) {
         return userRepository.findById(userId).orElseThrow(
@@ -62,5 +65,11 @@ public class EntityReader {
 
     public List<MeetListFindMemberResponse> findMeetListUseMember(Long userId) {
         return meetRepositorySupport.findMeetUseMember(userId);
+    }
+
+    public PlanComment findComment(Long commentId) {
+        return commentRepository.findById(commentId).orElseThrow(
+                () -> new ResourceNotFoundException(NOT_FOUND_COMMENT)
+        );
     }
 }

@@ -108,7 +108,7 @@ public class CommentController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long commentId
     ) {
-        commentService.deleteMeetingPlanComment(user.id(), commentId);
+        commentService.deleteComment(user.id(), commentId);
         return ResponseEntity.ok().build();
     }
 
