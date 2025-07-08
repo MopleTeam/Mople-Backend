@@ -210,7 +210,8 @@ public class CommentService {
                                     "postName", getPostName(comment.getPostId()),
                                     "userName", comment.getWriter().getNickname(),
                                     "userId", comment.getWriter().getId().toString(),
-                                    "commentId", comment.getId().toString()
+                                    "commentId", comment.getId().toString(),
+                                    "commentContent", comment.getContent()
                             ),
                             Map.of(
                                     "commentId", comment.getId().toString()
@@ -239,7 +240,8 @@ public class CommentService {
                                     "userName", comment.getWriter().getNickname(),
                                     "userId", comment.getWriter().getId().toString(),
                                     "parentCommentId", parentComment.getId().toString(),
-                                    "commentId", comment.getId().toString()
+                                    "commentId", comment.getId().toString(),
+                                    "commentContent", comment.getContent()
                             ),
                             Map.of(
                                     "commentId", comment.getId().toString()
