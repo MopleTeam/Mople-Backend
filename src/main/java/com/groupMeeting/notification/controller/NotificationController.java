@@ -10,6 +10,7 @@ import com.groupMeeting.notification.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/notification")
+@Tag(name = "NOTIFICATION", description = "알림 API")
 @RequiredArgsConstructor
 public class NotificationController {
     private final NotificationService service;
