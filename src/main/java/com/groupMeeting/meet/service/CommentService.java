@@ -303,9 +303,21 @@ public class CommentService {
             throw new ResourceNotFoundException(NOT_CREATOR);
         }
 
-        if (comment.getParentId() != null) {
+        boolean isParent = comment.getParentId() == null;
+
+        if (!isParent) {
             PlanComment parentComment = reader.findComment(comment.getParentId());
             parentComment.decreaseReplyCount();
+        }
+
+        if (isParent) {
+            List<Long> childCommentIds = commentRepository
+                    .findAllByParentId(comment.getId())
+                    .stream()
+                    .map(PlanComment::getId)
+                    .toList();
+
+            commentRepository.deleteByIdIn(childCommentIds);
         }
 
         commentRepository.deleteById(commentId);
