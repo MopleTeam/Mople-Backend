@@ -1,6 +1,5 @@
 package com.groupMeeting.entity.meet.comment;
 
-import com.groupMeeting.entity.user.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -17,21 +16,15 @@ public class CommentLike {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
+    @Column(name = "user_id")
+    private Long userId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "comment_id")
-    private PlanComment comment;
+    @Column(name = "comment_id")
+    private Long commentId;
 
     @Builder
-    public CommentLike(User user, PlanComment comment) {
-        this.comment = comment;
-        this.user = user;
-    }
-
-    public void updateComment(PlanComment comment) {
-        this.comment = comment;
+    public CommentLike(Long userId, Long commentId) {
+        this.userId = userId;
+        this.commentId = commentId;
     }
 }

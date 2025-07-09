@@ -1,6 +1,5 @@
 package com.groupMeeting.entity.meet.comment;
 
-import com.groupMeeting.entity.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,21 +13,15 @@ public class CommentMention {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "comment_id")
-    private PlanComment comment;
+    @Column(name = "user_id")
+    private Long userId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User mentionedUser;
+    @Column(name = "comment_id")
+    private Long commentId;
 
     @Builder
-    public CommentMention(PlanComment comment, User mentionedUser) {
-        this.comment = comment;
-        this.mentionedUser = mentionedUser;
-    }
-
-    public void updateComment(PlanComment comment) {
-        this.comment = comment;
+    public CommentMention(Long userId, Long commentId) {
+        this.userId = userId;
+        this.commentId = commentId;
     }
 }

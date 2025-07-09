@@ -4,7 +4,6 @@ import com.groupMeeting.dto.response.meet.comment.CommentResponse;
 import com.groupMeeting.dto.response.meet.comment.CommentUpdateResponse;
 
 import com.groupMeeting.dto.response.user.UserInfo;
-import com.groupMeeting.entity.meet.comment.CommentMention;
 import com.groupMeeting.entity.user.User;
 import lombok.Builder;
 import lombok.Getter;
@@ -61,22 +60,20 @@ public class CommentClientResponse {
     }
 
     private static UserInfo ofWriter(User writer) {
-        return UserInfo.builder()
-                .userId(writer.getId())
-                .nickname(writer.getNickname())
-                .image(writer.getProfileImg())
-                .build();
+        return buildUserInfo(writer);
     }
 
-    private static List<UserInfo> ofMentions(List<CommentMention> mentions) {
+    private static List<UserInfo> ofMentions(List<User> mentions) {
         return mentions.stream()
-                .map((mention) ->
-                        UserInfo.builder()
-                                .userId(mention.getMentionedUser().getId())
-                                .nickname(mention.getMentionedUser().getNickname())
-                                .image(mention.getMentionedUser().getProfileImg())
-                                .build()
-                )
+                .map(CommentClientResponse::buildUserInfo)
                 .toList();
+    }
+
+    private static UserInfo buildUserInfo(User user) {
+        return UserInfo.builder()
+                .userId(user.getId())
+                .nickname(user.getNickname())
+                .image(user.getProfileImg())
+                .build();
     }
 }

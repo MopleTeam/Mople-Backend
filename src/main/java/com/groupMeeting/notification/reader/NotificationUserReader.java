@@ -6,6 +6,7 @@ import com.groupMeeting.entity.meet.comment.QPlanComment;
 import com.groupMeeting.entity.meet.plan.QPlanParticipant;
 import com.groupMeeting.entity.user.QUser;
 import com.groupMeeting.entity.user.User;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -90,9 +91,16 @@ public class NotificationUserReader {
         return queryFactory
                 .select(user)
                 .distinct()
-                .from(mention)
-                .join(mention.mentionedUser, user)
-                .where(mention.comment.id.eq(commentId), user.id.ne(senderId))
+                .from(user)
+                .where(
+                        user.id.in(
+                                JPAExpressions
+                                        .select(mention.userId)
+                                        .from(mention)
+                                        .where(mention.commentId.eq(commentId))
+                        ),
+                        user.id.ne(senderId)
+                )
                 .fetch();
     }
 

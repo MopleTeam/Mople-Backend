@@ -86,10 +86,9 @@ public class CommentController {
             summary = "댓글/답글 수정 API",
             description = "댓글 ID를 통해 댓글/답글을 수정합니다."
     )
-    @PatchMapping("/{postId}/{commentId}")
+    @PatchMapping("/{commentId}")
     public ResponseEntity<CommentClientResponse> updateComment(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
-            @PathVariable Long postId,
             @PathVariable Long commentId,
             @RequestBody CommentCreateRequest commentCreateRequest
     ) {

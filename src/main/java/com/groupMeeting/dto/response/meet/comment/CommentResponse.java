@@ -16,10 +16,10 @@ public record CommentResponse(
         int likeCount,
         boolean likedByMe,
         User writer,
-        List<CommentMention> mentions,
+        List<User> mentions,
         LocalDateTime time
 ) {
-    public CommentResponse(PlanComment comment, boolean likedByMe) {
+    public CommentResponse(PlanComment comment, List<User> mentions, boolean likedByMe) {
         this(
                 comment.getId(),
                 comment.getContent(),
@@ -29,7 +29,7 @@ public record CommentResponse(
                 comment.getLikeCount(),
                 likedByMe,
                 comment.getWriter(),
-                comment.getMentions(),
+                mentions,
                 comment.getWriteTime()
         );
     }

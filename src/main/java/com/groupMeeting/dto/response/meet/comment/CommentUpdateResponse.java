@@ -1,6 +1,5 @@
 package com.groupMeeting.dto.response.meet.comment;
 
-import com.groupMeeting.entity.meet.comment.CommentMention;
 import com.groupMeeting.entity.meet.comment.PlanComment;
 import com.groupMeeting.entity.user.User;
 
@@ -16,11 +15,11 @@ public record CommentUpdateResponse(
         int likeCount,
         boolean likedByMe,
         User writer,
-        List<CommentMention> mentions,
+        List<User> mentions,
         LocalDateTime time,
         boolean update
 ) {
-    public CommentUpdateResponse(PlanComment comment, boolean likedByMe) {
+    public CommentUpdateResponse(PlanComment comment, List<User> mentions, boolean likedByMe) {
         this(
                 comment.getId(),
                 comment.getContent(),
@@ -30,7 +29,7 @@ public record CommentUpdateResponse(
                 comment.getLikeCount(),
                 likedByMe,
                 comment.getWriter(),
-                comment.getMentions(),
+                mentions,
                 comment.getWriteTime(),
                 true
         );
