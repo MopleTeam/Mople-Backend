@@ -8,8 +8,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "plan_comment")
@@ -43,12 +41,6 @@ public class PlanComment {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "writer_id")
     private User writer;
-
-    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CommentMention> mentions = new ArrayList<>();
-
-    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CommentLike> likes = new ArrayList<>();
 
     @Column(name = "like_count")
     private int likeCount = 0;
@@ -87,23 +79,6 @@ public class PlanComment {
                 .build();
     }
 
-    public void addMention(CommentMention mention) {
-        mention.updateComment(this);
-        this.mentions.add(mention);
-    }
-
-    public void addLike(CommentLike like) {
-        this.likeCount += 1;
-
-        like.updateComment(this);
-        this.likes.add(like);
-    }
-
-    public void deleteLike(CommentLike like) {
-        this.likeCount -= 1;
-        this.likes.remove(like);
-    }
-
     public boolean matchWriter(Long userId) {
         return !this.writer.getId().equals(userId);
     }
@@ -118,5 +93,13 @@ public class PlanComment {
 
     public void decreaseReplyCount() {
         this.replyCount -= 1;
+    }
+
+    public void increaseLikeCount() {
+        this.likeCount += 1;
+    }
+
+    public void decreaseLikeCount() {
+        this.likeCount -= 1;
     }
 }

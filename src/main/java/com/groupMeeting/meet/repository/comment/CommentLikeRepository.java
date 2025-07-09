@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public interface CommentLikeRepository extends JpaRepository<CommentLike, Long> {
 
-    @Query("select cl.comment.id from CommentLike cl where cl.user.id = :userId and cl.comment.id in :commentIds")
+    @Query("select cl.commentId from CommentLike cl where cl.userId = :userId and cl.commentId in :commentIds")
     List<Long> findLikedCommentIds(Long userId, List<Long> commentIds);
 
     Optional<CommentLike> findByUserIdAndCommentId(Long userId, Long commentId);

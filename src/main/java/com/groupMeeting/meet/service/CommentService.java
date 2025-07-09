@@ -19,6 +19,7 @@ import com.groupMeeting.global.event.data.notify.NotifyEventPublisher;
 import com.groupMeeting.global.utils.cursor.CursorUtils;
 import com.groupMeeting.meet.reader.EntityReader;
 import com.groupMeeting.meet.repository.comment.CommentLikeRepository;
+import com.groupMeeting.meet.repository.comment.CommentMentionRepository;
 import com.groupMeeting.meet.repository.comment.CommentReportRepository;
 import com.groupMeeting.meet.repository.comment.PlanCommentRepository;
 import com.groupMeeting.dto.request.meet.comment.CommentReportRequest;
@@ -47,6 +48,7 @@ public class CommentService {
     private final PlanCommentRepository commentRepository;
     private final CommentRepositorySupport commentRepositorySupport;
     private final CommentReportRepository commentReportRepository;
+    private final CommentMentionRepository mentionRepository;
     private final CommentLikeRepository likeRepository;
     private final MeetPlanRepository planRepository;
     private final PlanReviewRepository reviewRepository;
@@ -105,9 +107,11 @@ public class CommentService {
         List<Long> likedCommentIds = likeRepository.findLikedCommentIds(userId, commentIds);
 
         return comments.stream()
-                .map(c -> {
-                    boolean likedByMe = likedCommentIds.contains(c.getId());
-                    return new CommentResponse(c, likedByMe);
+                .map(comment -> {
+                    boolean likedByMe = likedCommentIds.contains(comment.getId());
+                    List<User> mentionedUsers = findMentionedUsers(comment.getId());
+
+                    return new CommentResponse(comment, mentionedUsers, likedByMe);
                 })
                 .toList();
     }
@@ -140,12 +144,15 @@ public class CommentService {
                 Status.ACTIVE,
                 writer
         );
-        addMentions(request.mentions(), comment);
         commentRepository.save(comment);
+        createMentions(request.mentions(), comment.getId());
 
-        publishMentionEvent(postId, request.mentions(), comment);
+        publishMentionEvent(request.mentions(), comment);
 
-        return ofComment(new CommentResponse(comment, likeRepository.existsByUserIdAndCommentId(userId, comment.getId())));
+        boolean likedByMe = likeRepository.existsByUserIdAndCommentId(userId, comment.getId());
+        List<User> mentionedUsers = findMentionedUsers(comment.getId());
+
+        return ofComment(new CommentResponse(comment, mentionedUsers, likedByMe));
     }
 
     @Transactional
@@ -162,15 +169,18 @@ public class CommentService {
                 Status.ACTIVE,
                 writer
         );
-        addMentions(request.mentions(), comment);
         commentRepository.save(comment);
+        createMentions(request.mentions(), comment.getId());
 
         parentComment.increaseReplyCount();
 
-        publishMentionEvent(postId, request.mentions(), comment);
-        publishReplyEvent(userId, request.mentions(), comment, parentComment);
+        publishMentionEvent(request.mentions(), comment);
+        publishReplyEvent(request.mentions(), comment, parentComment);
 
-        return ofComment(new CommentResponse(comment, likeRepository.existsByUserIdAndCommentId(userId, comment.getId())));
+        boolean likedByMe = likeRepository.existsByUserIdAndCommentId(userId, comment.getId());
+        List<User> mentionedUsers = findMentionedUsers(comment.getId());
+
+        return ofComment(new CommentResponse(comment, mentionedUsers, likedByMe));
     }
 
     private PlanComment validateParentComment(Long commentId) {
@@ -186,7 +196,6 @@ public class CommentService {
     @Transactional
     public CommentClientResponse updateComment(Long userId, Long commentId, CommentCreateRequest request) {
         PlanComment comment = reader.findComment(commentId);
-
         User user = reader.findUser(userId);
 
         if (comment.matchWriter(user.getId())) {
@@ -194,41 +203,44 @@ public class CommentService {
         }
 
         comment.updateContent(request.contents());
-        updateMentions(request.mentions(), comment);
+        updateMentions(request.mentions(), commentId);
 
         commentRepository.save(comment);
 
-        publishMentionEvent(comment.getPostId(), request.mentions(), comment);
+        publishMentionEvent(request.mentions(), comment);
 
-        return ofUpdate(new CommentUpdateResponse(comment, likeRepository.existsByUserIdAndCommentId(userId, comment.getId())));
+        boolean likedByMe = likeRepository.existsByUserIdAndCommentId(userId, comment.getId());
+        List<User> mentionedUsers = findMentionedUsers(comment.getId());
+
+        return ofUpdate(new CommentUpdateResponse(comment, mentionedUsers, likedByMe));
     }
 
-    private void addMentions(List<Long> mentions, PlanComment comment) {
+    private void createMentions(List<Long> mentions, Long commentId) {
         if (mentions == null) return;
 
-        for (Long id : mentions) {
-            User mentionedUser = reader.findUser(id);
+        for (Long userId : mentions) {
+            User mentionedUser = reader.findUser(userId);
 
             CommentMention mention = CommentMention.builder()
-                    .mentionedUser(mentionedUser)
+                    .userId(mentionedUser.getId())
+                    .commentId(commentId)
                     .build();
-
-            comment.addMention(mention);
+            mentionRepository.save(mention);
         }
     }
 
-    private void updateMentions(List<Long> mentions, PlanComment comment) {
-        comment.getMentions().clear();
-        addMentions(mentions, comment);
+    private void updateMentions(List<Long> mentions, Long commentId) {
+        mentionRepository.deleteByCommentId(commentId);
+        createMentions(mentions, commentId);
     }
 
-    private void publishMentionEvent(Long postId, List<Long> mentions, PlanComment comment) {
+    private void publishMentionEvent(List<Long> mentions, PlanComment comment) {
         if (mentions != null && !mentions.isEmpty()) {
 
             publisher.publishEvent(
                     NotifyEventPublisher.commentMention(
                             Map.of(
-                                    "postId", postId.toString(),
+                                    "postId", comment.getPostId().toString(),
                                     "postName", getPostName(comment.getPostId()),
                                     "userName", comment.getWriter().getNickname(),
                                     "userId", comment.getWriter().getId().toString(),
@@ -243,11 +255,11 @@ public class CommentService {
         }
     }
 
-    private void publishReplyEvent(Long userId, List<Long> mentions, PlanComment comment, PlanComment parentComment) {
+    private void publishReplyEvent(List<Long> mentions, PlanComment comment, PlanComment parentComment) {
         boolean parentIsMentioned = false;
 
         if (mentions != null && !mentions.isEmpty()) {
-            List<User> mentionedUsers = userReader.findMentionedUsers(userId, comment.getId());
+            List<User> mentionedUsers = userReader.findMentionedUsers(comment.getWriter().getId(), comment.getId());
             User parentCommentWriter = parentComment.getWriter();
 
             parentIsMentioned = mentionedUsers.stream().anyMatch(user -> user.getId().equals(parentCommentWriter.getId()));
@@ -302,24 +314,38 @@ public class CommentService {
     @Transactional
     public CommentClientResponse toggleLike(Long userId, Long commentId) {
         PlanComment comment = reader.findComment(commentId);
-        User writer = reader.findUser(userId);
+        reader.findUser(userId);
 
         Optional<CommentLike> existingLike = likeRepository.findByUserIdAndCommentId(userId, commentId);
         if (existingLike.isPresent()) {
-            comment.deleteLike(existingLike.get());
+            comment.decreaseLikeCount();
             likeRepository.delete(existingLike.get());
 
-            return ofComment(new CommentResponse(comment, likeRepository.existsByUserIdAndCommentId(userId, comment.getId())));
+            boolean likedByMe = likeRepository.existsByUserIdAndCommentId(userId, comment.getId());
+            List<User> mentionedUsers = findMentionedUsers(comment.getId());
+            return ofComment(new CommentResponse(comment, mentionedUsers, likedByMe));
         }
 
+        comment.increaseLikeCount();
         CommentLike like = CommentLike.builder()
-                .user(writer)
+                .userId(userId)
+                .commentId(commentId)
                 .build();
+        likeRepository.save(like);
 
-        comment.addLike(like);
-        commentRepository.save(comment);
+        boolean likedByMe = likeRepository.existsByUserIdAndCommentId(userId, commentId);
+        List<User> mentionedUsers = findMentionedUsers(comment.getId());
 
-        return ofComment(new CommentResponse(comment, likeRepository.existsByUserIdAndCommentId(userId, comment.getId())));
+        return ofComment(new CommentResponse(comment, mentionedUsers, likedByMe));
+    }
+
+    private List<User> findMentionedUsers(Long commentId) {
+        return mentionRepository
+                .findCommentMentionByCommentId(commentId)
+                .stream()
+                .map(CommentMention::getUserId)
+                .map(reader::findUser)
+                .toList();
     }
 
     @Transactional
