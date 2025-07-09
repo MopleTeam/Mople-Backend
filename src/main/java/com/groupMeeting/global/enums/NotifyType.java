@@ -6,4 +6,6 @@ public enum NotifyType {
     MEET_NEW_MEMBER,
 
     REVIEW_REMIND, REVIEW_UPDATE,
+
+    COMMENT_REPLY, COMMENT_MENTION
 }

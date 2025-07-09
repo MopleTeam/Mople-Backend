@@ -4,13 +4,10 @@ import com.google.firebase.messaging.*;
 
 import com.groupMeeting.dto.response.notification.NotificationPayload;
 
-import lombok.extern.slf4j.Slf4j;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
-@Slf4j
 public class TemplateMapper {
     public static NotificationPayload newMeetMember(Map<String, String> data) {
         return new NotificationPayload(
@@ -58,6 +55,20 @@ public class TemplateMapper {
         return new NotificationPayload(
                 data.get("meetName") + "의 일정은 어떠셨나요?",
                 data.get("reviewName") + "의 사진을 확인해보세요"
+        );
+    }
+
+    public static NotificationPayload commentReply(Map<String, String> data) {
+        return new NotificationPayload(
+                data.get("postName") + "의 댓글에 " + data.get("userName") + "님이 답글을 남겼어요!",
+                data.get("commentContent")
+        );
+    }
+
+    public static NotificationPayload commentMention(Map<String, String> data) {
+        return new NotificationPayload(
+                data.get("postName") + "에서 " + data.get("userName") + "님이 회원님을 멘션했어요!",
+                data.get("commentContent")
         );
     }
 

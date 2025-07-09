@@ -33,6 +33,11 @@ public class Topic {
     }
 
     public static List<Topic> ofNew(Long userId) {
-        return List.of(new Topic(userId, PushTopic.MEET), new Topic(userId, PushTopic.PLAN));
+        return List.of(
+                new Topic(userId, PushTopic.MEET),
+                new Topic(userId, PushTopic.PLAN),
+                new Topic(userId, PushTopic.REPLY),
+                new Topic(userId, PushTopic.MENTION)
+        );
     }
 }

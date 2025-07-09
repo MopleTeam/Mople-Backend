@@ -5,15 +5,17 @@ import com.google.firebase.messaging.*;
 import com.groupMeeting.core.exception.custom.ResourceNotFoundException;
 import com.groupMeeting.dto.response.notification.NotifySendRequest;
 import com.groupMeeting.entity.meet.plan.MeetPlan;
+import com.groupMeeting.entity.meet.review.PlanReview;
 import com.groupMeeting.entity.notification.Notification;
 import com.groupMeeting.entity.user.User;
 import com.groupMeeting.global.enums.Action;
 import com.groupMeeting.global.enums.NotifyType;
 import com.groupMeeting.global.event.data.notify.NotificationEvent;
 import com.groupMeeting.meet.repository.plan.MeetPlanRepository;
+import com.groupMeeting.meet.repository.review.PlanReviewRepository;
 import com.groupMeeting.notification.repository.NotificationRepository;
-import com.groupMeeting.notification.repository.impl.TokenRepositorySupport;
 
+import com.groupMeeting.notification.utils.NotifySendRequestFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,9 +24,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.groupMeeting.global.enums.Action.PENDING;
 import static com.groupMeeting.global.enums.ExceptionReturnCode.NOT_FOUND_PLAN;
+import static com.groupMeeting.global.enums.ExceptionReturnCode.NOT_FOUND_REVIEW;
 
 @Slf4j
 @Service
@@ -32,8 +36,9 @@ import static com.groupMeeting.global.enums.ExceptionReturnCode.NOT_FOUND_PLAN;
 public class NotificationSendService {
     private final FirebaseMessaging sender;
     private final NotificationRepository notificationRepository;
-    private final TokenRepositorySupport tokenRepositorySupport;
+    private final NotifySendRequestFactory requestFactory;
     private final MeetPlanRepository meetPlanRepository;
+    private final PlanReviewRepository reviewRepository;
 
     @Transactional
     public void sendMultiNotification(NotificationEvent notify, NotifyType type, Map<String, String> data) {
@@ -42,24 +47,32 @@ public class NotificationSendService {
 
         NotifySendRequest sendRequest =
                 switch (type) {
-                    case MEET_NEW_MEMBER, PLAN_CREATE -> tokenRepositorySupport.getMeetPushToken(
+                    case MEET_NEW_MEMBER, PLAN_CREATE -> requestFactory.getMeetPushToken(
                             toLong(data.get("userId")), id = toLong(data.get("meetId")), notify.topic()
                     );
 
-                    case PLAN_UPDATE, PLAN_DELETE -> tokenRepositorySupport.getPlanPushToken(
+                    case PLAN_UPDATE, PLAN_DELETE -> requestFactory.getPlanPushToken(
                             toLong(data.get("userId")), id = toLong(data.get("planId")), notify.topic()
                     );
 
-                    case PLAN_REMIND -> tokenRepositorySupport.getPlanRemindToken(
+                    case PLAN_REMIND -> requestFactory.getPlanRemindToken(
                             id = toLong(data.get("planId")), notify.topic()
                     );
 
-                    case REVIEW_REMIND -> tokenRepositorySupport.getReviewCreatorPushToken(
+                    case REVIEW_REMIND -> requestFactory.getReviewCreatorPushToken(
                             toLong(data.get("creatorId")), id = toLong(data.get("reviewId")), notify.topic()
                     );
 
-                    case REVIEW_UPDATE -> tokenRepositorySupport.getReviewPushToken(
+                    case REVIEW_UPDATE -> requestFactory.getReviewPushToken(
                             toLong(data.get("userId")), id = toLong(data.get("reviewId")), notify.topic()
+                    );
+
+                    case COMMENT_REPLY -> requestFactory.getCommentReplyPushToken(
+                            toLong(data.get("userId")), id = toLong(data.get("parentCommentId")), notify.topic()
+                    );
+
+                    case COMMENT_MENTION -> requestFactory.getCommentMentionPushToken(
+                            toLong(data.get("userId")), id = toLong(data.get("commentId")), notify.topic()
                     );
                 };
 
@@ -141,6 +154,9 @@ public class NotificationSendService {
 
                     case REVIEW_REMIND, REVIEW_UPDATE ->
                             getReviewNotifications(type, notify, sendRequest.users(), toLong(data.get("meetId")), toLong(data.get("reviewId")));
+
+                    case COMMENT_REPLY, COMMENT_MENTION ->
+                            getCommentNotifications(type, notify, sendRequest.users(), toLong(data.get("postId")));
                 }
         );
     }
@@ -196,6 +212,42 @@ public class NotificationSendService {
                                 .action(Action.COMPLETE)
                                 .meetId(meetId)
                                 .reviewId(reviewId)
+                                .payload(notify.payload())
+                                .user(u)
+                                .build()
+                )
+                .toList();
+    }
+
+    private List<Notification> getCommentNotifications(NotifyType type, NotificationEvent notify, List<User> users, Long postId) {
+
+        Optional<MeetPlan> maybePlan = meetPlanRepository.findById(postId);
+
+        if (maybePlan.isPresent()) {
+            return users.stream()
+                    .map(u ->
+                            Notification.builder()
+                                    .type(type)
+                                    .action(Action.COMPLETE)
+                                    .meetId(maybePlan.get().getMeet().getId())
+                                    .planId(maybePlan.get().getId())
+                                    .payload(notify.payload())
+                                    .user(u)
+                                    .build()
+                    )
+                    .toList();
+        }
+
+        PlanReview review = reviewRepository.findReviewByPostId(postId)
+                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_REVIEW));
+
+        return users.stream()
+                .map(u ->
+                        Notification.builder()
+                                .type(type)
+                                .action(Action.COMPLETE)
+                                .meetId(review.getMeet().getId())
+                                .reviewId(review.getId())
                                 .payload(notify.payload())
                                 .user(u)
                                 .build()

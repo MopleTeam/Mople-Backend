@@ -1,27 +1,36 @@
 package com.groupMeeting.dto.response.meet.comment;
 
+import com.groupMeeting.entity.meet.comment.CommentMention;
 import com.groupMeeting.entity.meet.comment.PlanComment;
+import com.groupMeeting.entity.user.User;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record CommentUpdateResponse(
         Long commentId,
-        Long postId,
-        Long writerId,
-        String writerName,
-        String writerImage,
         String content,
+        Long postId,
+        Long parentId,
+        Integer replyCount,
+        int likeCount,
+        boolean likedByMe,
+        User writer,
+        List<CommentMention> mentions,
         LocalDateTime time,
         boolean update
 ) {
-    public CommentUpdateResponse(PlanComment comment) {
+    public CommentUpdateResponse(PlanComment comment, boolean likedByMe) {
         this(
                 comment.getId(),
-                comment.getPostId(),
-                comment.getWriterId(),
-                comment.getWriterNickname(),
-                comment.getWriterImg(),
                 comment.getContent(),
+                comment.getPostId(),
+                comment.getParentId(),
+                comment.getReplyCount(),
+                comment.getLikeCount(),
+                likedByMe,
+                comment.getWriter(),
+                comment.getMentions(),
                 comment.getWriteTime(),
                 true
         );

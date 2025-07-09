@@ -50,6 +50,10 @@ public class NotificationEventListener {
                             new NotificationEvent(PLAN, TemplateMapper.remindReview(event.data()), event.body());
                     case REVIEW_UPDATE ->
                             new NotificationEvent(PLAN, TemplateMapper.updateReview(event.data()), event.body());
+                    case COMMENT_REPLY ->
+                            new NotificationEvent(REPLY, TemplateMapper.commentReply(event.data()), event.body());
+                    case COMMENT_MENTION ->
+                            new NotificationEvent(MENTION, TemplateMapper.commentMention(event.data()), event.body());
                 };
 
         service.sendMultiNotification(notify, event.type(), event.data());

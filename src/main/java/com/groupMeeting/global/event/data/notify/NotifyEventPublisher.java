@@ -38,4 +38,12 @@ public record NotifyEventPublisher(
     public static NotifyEventPublisher reviewUpdate(Map<String, String> data, Map<String, String> body) {
         return new NotifyEventPublisher(REVIEW_UPDATE, data, body);
     }
+
+    public static NotifyEventPublisher commentReply(Map<String, String> data, Map<String, String> body) {
+        return new NotifyEventPublisher(COMMENT_REPLY, data, body);
+    }
+
+    public static NotifyEventPublisher commentMention(Map<String, String> data, Map<String, String> body) {
+        return new NotifyEventPublisher(COMMENT_MENTION, data, body);
+    }
 }
