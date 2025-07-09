@@ -307,17 +307,22 @@ public class CommentService {
 
         if (!isParent) {
             PlanComment parentComment = reader.findComment(comment.getParentId());
+
+            likeRepository.deleteByCommentId(comment.getId());
+            mentionRepository.deleteByCommentId(comment.getId());
             parentComment.decreaseReplyCount();
         }
 
         if (isParent) {
-            List<Long> childCommentIds = commentRepository
+            List<Long> replyIds = commentRepository
                     .findAllByParentId(comment.getId())
                     .stream()
                     .map(PlanComment::getId)
                     .toList();
 
-            commentRepository.deleteByIdIn(childCommentIds);
+            likeRepository.deleteByCommentIdIn(replyIds);
+            mentionRepository.deleteByCommentIdIn(replyIds);
+            commentRepository.deleteByIdIn(replyIds);
         }
 
         commentRepository.deleteById(commentId);
