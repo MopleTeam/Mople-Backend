@@ -33,12 +33,6 @@ public class PlanComment {
     @Column(name = "reply_count")
     private Integer replyCount = null;
 
-    @Column(name = "like_count")
-    private int likeCount = 0;
-
-    @Column(name = "liked_by_me")
-    private boolean likedByMe = false;
-
     @Column(name = "write_at", nullable = false)
     private LocalDateTime writeTime;
 
@@ -52,6 +46,12 @@ public class PlanComment {
 
     @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommentMention> mentions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CommentLike> likes = new ArrayList<>();
+
+    @Column(name = "like_count")
+    private int likeCount = 0;
 
     @Builder
     private PlanComment(String content, Long postId, Long parentId, Integer replyCount,
@@ -92,6 +92,18 @@ public class PlanComment {
         this.mentions.add(mention);
     }
 
+    public void addLike(CommentLike like) {
+        this.likeCount += 1;
+
+        like.updateComment(this);
+        this.likes.add(like);
+    }
+
+    public void deleteLike(CommentLike like) {
+        this.likeCount -= 1;
+        this.likes.remove(like);
+    }
+
     public boolean matchWriter(Long userId) {
         return !this.writer.getId().equals(userId);
     }
@@ -106,24 +118,5 @@ public class PlanComment {
 
     public void decreaseReplyCount() {
         this.replyCount -= 1;
-    }
-
-    public void increaseLikeCount() {
-        this.likeCount += 1;
-    }
-
-    public void decreaseLikeCount() {
-        this.likeCount -= 1;
-    }
-
-    public void toggleLike() {
-        if (likedByMe) {
-            decreaseLikeCount();
-        }
-        if (!likedByMe) {
-            increaseLikeCount();
-        }
-
-        this.likedByMe = !likedByMe;
     }
 }

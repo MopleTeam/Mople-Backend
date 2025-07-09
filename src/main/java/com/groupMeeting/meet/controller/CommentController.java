@@ -34,11 +34,12 @@ public class CommentController {
     @GetMapping("/{postId}")
     @ApiVersion("v1_5")
     public ResponseEntity<CursorPageResponse<CommentClientResponse>> commentList(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return ResponseEntity.ok(commentService.getCommentList(postId, cursor, size));
+        return ResponseEntity.ok(commentService.getCommentList(user.id(), postId, cursor, size));
     }
 
     @Operation(
@@ -48,12 +49,13 @@ public class CommentController {
     @GetMapping("/{postId}/{commentId}")
     @ApiVersion("v1_5")
     public ResponseEntity<CursorPageResponse<CommentClientResponse>> commentList(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
             @PathVariable Long commentId,
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return ResponseEntity.ok(commentService.getCommentReplyList(postId, commentId, cursor, size));
+        return ResponseEntity.ok(commentService.getCommentReplyList(user.id(), postId, commentId, cursor, size));
     }
 
     @Operation(
@@ -110,6 +112,18 @@ public class CommentController {
     ) {
         commentService.deleteComment(user.id(), commentId);
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(
+            summary = "댓글/답글 좋아요 토글 API",
+            description = "댓글/답글에 좋아요를 추가하거나 취소합니다."
+    )
+    @PostMapping("/{commentId}/likes")
+    public ResponseEntity<CommentClientResponse> toggleCommentLike(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @PathVariable Long commentId
+    ) {
+        return ResponseEntity.ok(commentService.toggleLike(user.id(), commentId));
     }
 
     @Operation(

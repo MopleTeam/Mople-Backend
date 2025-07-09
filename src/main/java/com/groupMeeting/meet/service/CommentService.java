@@ -8,6 +8,7 @@ import com.groupMeeting.dto.response.meet.comment.CommentResponse;
 import com.groupMeeting.dto.response.meet.comment.CommentUpdateResponse;
 import com.groupMeeting.dto.response.pagination.CursorPageResponse;
 import com.groupMeeting.dto.response.pagination.CursorPage;
+import com.groupMeeting.entity.meet.comment.CommentLike;
 import com.groupMeeting.entity.meet.comment.CommentMention;
 import com.groupMeeting.entity.meet.comment.CommentReport;
 import com.groupMeeting.entity.meet.comment.PlanComment;
@@ -17,6 +18,7 @@ import com.groupMeeting.global.enums.Status;
 import com.groupMeeting.global.event.data.notify.NotifyEventPublisher;
 import com.groupMeeting.global.utils.cursor.CursorUtils;
 import com.groupMeeting.meet.reader.EntityReader;
+import com.groupMeeting.meet.repository.comment.CommentLikeRepository;
 import com.groupMeeting.meet.repository.comment.CommentReportRepository;
 import com.groupMeeting.meet.repository.comment.PlanCommentRepository;
 import com.groupMeeting.dto.request.meet.comment.CommentReportRequest;
@@ -27,7 +29,6 @@ import com.groupMeeting.meet.repository.review.PlanReviewRepository;
 import com.groupMeeting.notification.reader.NotificationUserReader;
 import lombok.RequiredArgsConstructor;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.groupMeeting.dto.client.CommentClientResponse.*;
 import static com.groupMeeting.global.enums.ExceptionReturnCode.*;
@@ -45,6 +47,7 @@ public class CommentService {
     private final PlanCommentRepository commentRepository;
     private final CommentRepositorySupport commentRepositorySupport;
     private final CommentReportRepository commentReportRepository;
+    private final CommentLikeRepository likeRepository;
     private final MeetPlanRepository planRepository;
     private final PlanReviewRepository reviewRepository;
 
@@ -53,14 +56,15 @@ public class CommentService {
     private final EntityReader reader;
 
     @Transactional(readOnly = true)
-    public CursorPageResponse<CommentClientResponse> getCommentList(Long postId, String cursor, int size) {
-        List<CommentResponse> commentResponses = getComments(postId, cursor, size);
+    public CursorPageResponse<CommentClientResponse> getCommentList(Long userId, Long postId, String cursor, int size) {
+        List<CommentResponse> commentResponses = getComments(userId, postId, cursor, size);
         return buildCursorPage(size, commentResponses);
     }
 
-    private List<CommentResponse> getComments(Long postId, String encodedCursor, int size) {
+    private List<CommentResponse> getComments(Long userId, Long postId, String encodedCursor, int size) {
         if (encodedCursor == null || encodedCursor.isEmpty()) {
-            return commentRepositorySupport.findCommentFirstPage(postId, size);
+            List<PlanComment> commentFirstPage = commentRepositorySupport.findCommentFirstPage(postId, size);
+            return getResponseAddedLikedByMe(userId, commentFirstPage);
         }
 
         Long cursor = CursorUtils.decode(encodedCursor);
@@ -68,19 +72,20 @@ public class CommentService {
             throw new CursorException(NOT_FOUND_CURSOR);
         }
 
-        return commentRepositorySupport.findCommentNextPage(postId, cursor, size);
+        List<PlanComment> commentNextPage = commentRepositorySupport.findCommentNextPage(postId, cursor, size);
+        return getResponseAddedLikedByMe(userId, commentNextPage);
     }
 
     @Transactional(readOnly = true)
-    public CursorPageResponse<CommentClientResponse> getCommentReplyList(Long postId, Long commentId, String cursor, int size) {
-        List<CommentResponse> commentResponses = getCommentReplies(postId, commentId, cursor, size);
-
+    public CursorPageResponse<CommentClientResponse> getCommentReplyList(Long userId, Long postId, Long commentId, String cursor, int size) {
+        List<CommentResponse> commentResponses = getCommentReplies(userId, postId, commentId, cursor, size);
         return buildCursorPage(size, commentResponses);
     }
 
-    private List<CommentResponse> getCommentReplies(Long postId, Long commentId, String encodedCursor, int size) {
+    private List<CommentResponse> getCommentReplies(Long userId, Long postId, Long commentId, String encodedCursor, int size) {
         if (encodedCursor == null || encodedCursor.isEmpty()) {
-            return commentRepositorySupport.findCommentReplyFirstPage(postId, commentId, size);
+            List<PlanComment> commentReplyFirstPage = commentRepositorySupport.findCommentReplyFirstPage(postId, commentId, size);
+            return getResponseAddedLikedByMe(userId, commentReplyFirstPage);
         }
 
         Long cursor = CursorUtils.decode(encodedCursor);
@@ -88,11 +93,26 @@ public class CommentService {
             throw new CursorException(NOT_FOUND_CURSOR);
         }
 
-        return commentRepositorySupport.findCommentReplyNextPage(postId, commentId, cursor, size);
+        List<PlanComment> commentReplyNextPage = commentRepositorySupport.findCommentReplyNextPage(postId, commentId, cursor, size);
+        return getResponseAddedLikedByMe(userId, commentReplyNextPage);
     }
 
-    @NotNull
-    private static CursorPageResponse<CommentClientResponse> buildCursorPage(int size, List<CommentResponse> commentResponses) {
+    private List<CommentResponse> getResponseAddedLikedByMe(Long userId, List<PlanComment> comments) {
+        List<Long> commentIds = comments.stream()
+                .map(PlanComment::getId)
+                .toList();
+
+        List<Long> likedCommentIds = likeRepository.findLikedCommentIds(userId, commentIds);
+
+        return comments.stream()
+                .map(c -> {
+                    boolean likedByMe = likedCommentIds.contains(c.getId());
+                    return new CommentResponse(c, likedByMe);
+                })
+                .toList();
+    }
+
+    private CursorPageResponse<CommentClientResponse> buildCursorPage(int size, List<CommentResponse> commentResponses) {
         boolean hasNext = commentResponses.size() > size;
         commentResponses = hasNext ? commentResponses.subList(0, size) : commentResponses;
 
@@ -125,7 +145,7 @@ public class CommentService {
 
         publishMentionEvent(postId, request.mentions(), comment);
 
-        return ofComment(new CommentResponse(comment));
+        return ofComment(new CommentResponse(comment, likeRepository.existsByUserIdAndCommentId(userId, comment.getId())));
     }
 
     @Transactional
@@ -145,10 +165,12 @@ public class CommentService {
         addMentions(request.mentions(), comment);
         commentRepository.save(comment);
 
+        parentComment.increaseReplyCount();
+
         publishMentionEvent(postId, request.mentions(), comment);
         publishReplyEvent(userId, request.mentions(), comment, parentComment);
 
-        return ofComment(new CommentResponse(comment));
+        return ofComment(new CommentResponse(comment, likeRepository.existsByUserIdAndCommentId(userId, comment.getId())));
     }
 
     private PlanComment validateParentComment(Long commentId) {
@@ -178,7 +200,7 @@ public class CommentService {
 
         publishMentionEvent(comment.getPostId(), request.mentions(), comment);
 
-        return ofUpdate(new CommentUpdateResponse(comment));
+        return ofUpdate(new CommentUpdateResponse(comment, likeRepository.existsByUserIdAndCommentId(userId, comment.getId())));
     }
 
     private void addMentions(List<Long> mentions, PlanComment comment) {
@@ -269,7 +291,35 @@ public class CommentService {
             throw new ResourceNotFoundException(NOT_CREATOR);
         }
 
+        if (comment.getParentId() != null) {
+            PlanComment parentComment = reader.findComment(comment.getParentId());
+            parentComment.decreaseReplyCount();
+        }
+
         commentRepository.deleteById(commentId);
+    }
+
+    @Transactional
+    public CommentClientResponse toggleLike(Long userId, Long commentId) {
+        PlanComment comment = reader.findComment(commentId);
+        User writer = reader.findUser(userId);
+
+        Optional<CommentLike> existingLike = likeRepository.findByUserIdAndCommentId(userId, commentId);
+        if (existingLike.isPresent()) {
+            comment.deleteLike(existingLike.get());
+            likeRepository.delete(existingLike.get());
+
+            return ofComment(new CommentResponse(comment, likeRepository.existsByUserIdAndCommentId(userId, comment.getId())));
+        }
+
+        CommentLike like = CommentLike.builder()
+                .user(writer)
+                .build();
+
+        comment.addLike(like);
+        commentRepository.save(comment);
+
+        return ofComment(new CommentResponse(comment, likeRepository.existsByUserIdAndCommentId(userId, comment.getId())));
     }
 
     @Transactional

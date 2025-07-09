@@ -1,6 +1,5 @@
 package com.groupMeeting.meet.repository.impl.comment;
 
-import com.groupMeeting.dto.response.meet.comment.CommentResponse;
 import com.groupMeeting.entity.meet.comment.PlanComment;
 import com.groupMeeting.entity.meet.comment.QPlanComment;
 import com.groupMeeting.entity.user.QUser;
@@ -16,24 +15,20 @@ import java.util.List;
 public class CommentRepositorySupport {
     private final JPAQueryFactory queryFactory;
 
-    public List<CommentResponse> findCommentFirstPage(Long postId, int size) {
+    public List<PlanComment> findCommentFirstPage(Long postId, int size) {
         QPlanComment comment = QPlanComment.planComment;
         QUser user = QUser.user;
 
-        List<PlanComment> comments = queryFactory
+        return queryFactory
                 .selectFrom(comment)
                 .join(comment.writer, user).fetchJoin()
                 .where(comment.postId.eq(postId), comment.parentId.isNull())
                 .orderBy(comment.writeTime.desc(), comment.id.desc())
                 .limit(size + 1)
                 .fetch();
-
-        return comments.stream()
-                .map(CommentResponse::new)
-                .toList();
     }
 
-    public List<CommentResponse> findCommentNextPage(Long postId, Long cursorId, int size) {
+    public List<PlanComment> findCommentNextPage(Long postId, Long cursorId, int size) {
         QPlanComment comment = QPlanComment.planComment;
         QUser user = QUser.user;
 
@@ -43,7 +38,7 @@ public class CommentRepositorySupport {
                 .where(comment.id.eq(cursorId))
                 .fetchOne();
 
-        List<PlanComment> comments = queryFactory
+        return queryFactory
                 .selectFrom(comment)
                 .join(comment.writer, user).fetchJoin()
                 .where(
@@ -58,30 +53,22 @@ public class CommentRepositorySupport {
                 .orderBy(comment.writeTime.desc(), comment.id.desc())
                 .limit(size + 1)
                 .fetch();
-
-        return comments.stream()
-                .map(CommentResponse::new)
-                .toList();
     }
 
-    public List<CommentResponse> findCommentReplyFirstPage(Long postId, Long commentId, int size) {
+    public List<PlanComment> findCommentReplyFirstPage(Long postId, Long commentId, int size) {
         QPlanComment comment = QPlanComment.planComment;
         QUser user = QUser.user;
 
-        List<PlanComment> comments = queryFactory
+        return queryFactory
                 .selectFrom(comment)
                 .join(comment.writer, user).fetchJoin()
                 .where(comment.postId.eq(postId), comment.parentId.eq(commentId))
                 .orderBy(comment.writeTime.asc(), comment.id.desc())
                 .limit(size + 1)
                 .fetch();
-
-        return comments.stream()
-                .map(CommentResponse::new)
-                .toList();
     }
 
-    public List<CommentResponse> findCommentReplyNextPage(Long postId, Long commentId, Long cursorId, int size) {
+    public List<PlanComment> findCommentReplyNextPage(Long postId, Long commentId, Long cursorId, int size) {
         QPlanComment comment = QPlanComment.planComment;
         QUser user = QUser.user;
 
@@ -91,7 +78,7 @@ public class CommentRepositorySupport {
                 .where(comment.id.eq(cursorId))
                 .fetchOne();
 
-        List<PlanComment> comments = queryFactory
+        return queryFactory
                 .selectFrom(comment)
                 .join(comment.writer, user).fetchJoin()
                 .where(
@@ -106,10 +93,6 @@ public class CommentRepositorySupport {
                 .orderBy(comment.writeTime.asc(), comment.id.desc())
                 .limit(size + 1)
                 .fetch();
-
-        return comments.stream()
-                .map(CommentResponse::new)
-                .toList();
     }
 
     public boolean validCursor(Long cursorId) {

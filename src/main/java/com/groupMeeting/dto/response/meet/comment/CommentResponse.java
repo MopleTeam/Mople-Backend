@@ -14,12 +14,12 @@ public record CommentResponse(
         Long parentId,
         Integer replyCount,
         int likeCount,
-        boolean likeByMe,
+        boolean likedByMe,
         User writer,
         List<CommentMention> mentions,
         LocalDateTime time
 ) {
-    public CommentResponse(PlanComment comment) {
+    public CommentResponse(PlanComment comment, boolean likedByMe) {
         this(
                 comment.getId(),
                 comment.getContent(),
@@ -27,7 +27,7 @@ public record CommentResponse(
                 comment.getParentId(),
                 comment.getReplyCount(),
                 comment.getLikeCount(),
-                comment.isLikedByMe(),
+                likedByMe,
                 comment.getWriter(),
                 comment.getMentions(),
                 comment.getWriteTime()
