@@ -1,6 +1,5 @@
 package com.groupMeeting.dto.response.meet.comment;
 
-import com.groupMeeting.entity.meet.comment.CommentMention;
 import com.groupMeeting.entity.meet.comment.PlanComment;
 import com.groupMeeting.entity.user.User;
 
@@ -13,7 +12,7 @@ public record CommentResponse(
         Long postId,
         Long parentId,
         Integer replyCount,
-        int likeCount,
+        Integer likeCount,
         boolean likedByMe,
         User writer,
         List<User> mentions,

@@ -19,7 +19,7 @@ public class CommentClientResponse {
     private final Long postId;
     private final Long parentId;
     private final Integer replyCount;
-    private final int likeCount;
+    private final Integer likeCount;
     private final boolean likeByMe;
     private final UserInfo writer;
     private final List<UserInfo> mentions;

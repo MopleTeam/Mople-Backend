@@ -12,7 +12,7 @@ public record CommentUpdateResponse(
         Long postId,
         Long parentId,
         Integer replyCount,
-        int likeCount,
+        Integer likeCount,
         boolean likedByMe,
         User writer,
         List<User> mentions,
