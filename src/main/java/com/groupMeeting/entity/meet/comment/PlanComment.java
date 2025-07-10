@@ -43,7 +43,7 @@ public class PlanComment {
     private User writer;
 
     @Column(name = "like_count")
-    private int likeCount = 0;
+    private Integer likeCount = 0;
 
     @Builder
     private PlanComment(String content, Long postId, Long parentId, Integer replyCount,
