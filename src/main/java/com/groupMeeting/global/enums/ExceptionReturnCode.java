@@ -41,6 +41,7 @@ public enum ExceptionReturnCode {
 
     // Post
     NOT_FOUND_POST("404", "게시글을 찾을 수 없습니다."),
+    NOT_PARTICIPANT("401", "접근 권한이 없습니다."),
 
     // Plan
     NOT_FOUND_PLAN("404", "일정을 찾을 수 없습니다."),

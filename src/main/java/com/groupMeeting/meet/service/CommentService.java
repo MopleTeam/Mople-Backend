@@ -13,6 +13,7 @@ import com.groupMeeting.entity.meet.comment.CommentMention;
 import com.groupMeeting.entity.meet.comment.CommentReport;
 import com.groupMeeting.entity.meet.comment.PlanComment;
 import com.groupMeeting.entity.meet.plan.MeetPlan;
+import com.groupMeeting.entity.meet.plan.PlanParticipant;
 import com.groupMeeting.entity.user.User;
 import com.groupMeeting.global.enums.Status;
 import com.groupMeeting.global.event.data.notify.NotifyEventPublisher;
@@ -37,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import static com.groupMeeting.dto.client.CommentClientResponse.*;
@@ -59,6 +61,9 @@ public class CommentService {
 
     @Transactional(readOnly = true)
     public CursorPageResponse<CommentClientResponse> getCommentList(Long userId, Long postId, String cursor, int size) {
+        validatePostIdExists(postId);
+        validateParticipant(userId, postId);
+
         List<CommentResponse> commentResponses = getComments(userId, postId, cursor, size);
         return buildCursorPage(size, commentResponses);
     }
@@ -80,6 +85,9 @@ public class CommentService {
 
     @Transactional(readOnly = true)
     public CursorPageResponse<CommentClientResponse> getCommentReplyList(Long userId, Long postId, Long commentId, String cursor, int size) {
+        validatePostIdExists(postId);
+        validateParticipant(userId, postId);
+
         List<CommentResponse> commentResponses = getCommentReplies(userId, postId, commentId, cursor, size);
         return buildCursorPage(size, commentResponses);
     }
@@ -136,7 +144,9 @@ public class CommentService {
     @Transactional
     public CommentClientResponse createComment(Long userId, Long postId, CommentCreateRequest request) {
         User writer = reader.findUser(userId);
+
         validatePostIdExists(postId);
+        validateParticipant(userId, postId);
 
         PlanComment comment = PlanComment.ofParent(
                 request.contents(),
@@ -159,7 +169,9 @@ public class CommentService {
     @Transactional
     public CommentClientResponse createCommentReply(Long userId, Long postId, Long parentCommentId, CommentCreateRequest request) {
         User writer = reader.findUser(userId);
+
         validatePostIdExists(postId);
+        validateParticipant(userId, postId);
 
         PlanComment parentComment = validateParentComment(parentCommentId);
 
@@ -194,6 +206,22 @@ public class CommentService {
         }
     }
 
+    private void validateParticipant(Long userId, Long postId) {
+        User user = reader.findUser(userId);
+
+        if (planRepository.existsById(postId)) {
+            MeetPlan plan = reader.findPlan(postId);
+            boolean isParticipant = plan.getParticipants()
+                    .stream()
+                    .map(PlanParticipant::getUser)
+                    .anyMatch(participantUser -> Objects.equals(participantUser.getId(), user.getId()));
+
+            if (!isParticipant) {
+                throw new ResourceNotFoundException(NOT_PARTICIPANT);
+            }
+        }
+    }
+
     private PlanComment validateParentComment(Long commentId) {
         PlanComment parentComment = reader.findComment(commentId);
 
@@ -209,9 +237,7 @@ public class CommentService {
         PlanComment comment = reader.findComment(commentId);
         User user = reader.findUser(userId);
 
-        if (comment.matchWriter(user.getId())) {
-            throw new ResourceNotFoundException(NOT_CREATOR);
-        }
+        validateWriter(comment, user);
 
         comment.updateContent(request.contents());
         updateMentions(request.mentions(), commentId);
@@ -224,6 +250,12 @@ public class CommentService {
         List<User> mentionedUsers = findMentionedUsers(comment.getId());
 
         return ofUpdate(new CommentUpdateResponse(comment, mentionedUsers, likedByMe));
+    }
+
+    private static void validateWriter(PlanComment comment, User user) {
+        if (comment.matchWriter(user.getId())) {
+            throw new ResourceNotFoundException(NOT_CREATOR);
+        }
     }
 
     private void createMentions(List<Long> mentions, Long commentId) {
