@@ -39,6 +39,9 @@ public enum ExceptionReturnCode {
     // TIME
     NOT_FOUND_TIME("404", "일정의 시간을 찾을 수 없습니다."),
 
+    // Post
+    NOT_FOUND_POST("404", "게시글을 찾을 수 없습니다."),
+
     // Plan
     NOT_FOUND_PLAN("404", "일정을 찾을 수 없습니다."),
     CURRENT_PARTICIPANT("400", "이미 존재하는 멤버입니다."),

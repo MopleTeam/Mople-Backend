@@ -136,6 +136,7 @@ public class CommentService {
     @Transactional
     public CommentClientResponse createComment(Long userId, Long postId, CommentCreateRequest request) {
         User writer = reader.findUser(userId);
+        validatePostIdExists(postId);
 
         PlanComment comment = PlanComment.ofParent(
                 request.contents(),
@@ -158,6 +159,7 @@ public class CommentService {
     @Transactional
     public CommentClientResponse createCommentReply(Long userId, Long postId, Long parentCommentId, CommentCreateRequest request) {
         User writer = reader.findUser(userId);
+        validatePostIdExists(postId);
 
         PlanComment parentComment = validateParentComment(parentCommentId);
 
@@ -181,6 +183,15 @@ public class CommentService {
         List<User> mentionedUsers = findMentionedUsers(comment.getId());
 
         return ofComment(new CommentResponse(comment, mentionedUsers, likedByMe));
+    }
+
+    private void validatePostIdExists(Long postId) {
+        boolean existsInPlan = planRepository.existsById(postId);
+        boolean existsInReview = reviewRepository.existsById(postId);
+
+        if (!existsInPlan && !existsInReview) {
+            throw new ResourceNotFoundException(NOT_FOUND_POST);
+        }
     }
 
     private PlanComment validateParentComment(Long commentId) {
