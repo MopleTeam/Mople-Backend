@@ -3,6 +3,7 @@ package com.groupMeeting.meet.repository.comment;
 import com.groupMeeting.entity.meet.comment.PlanComment;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
@@ -13,5 +14,6 @@ public interface PlanCommentRepository extends JpaRepository<PlanComment, Long> 
 
     List<PlanComment> findAllByParentId(Long parentId);
 
+    @Modifying
     void deleteByIdIn(List<Long> ids);
 }

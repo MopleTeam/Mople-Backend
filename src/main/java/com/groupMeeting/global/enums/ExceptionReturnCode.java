@@ -35,13 +35,13 @@ public enum ExceptionReturnCode {
     CURRENT_MEMBER("400", "이미 존재하는 멤버입니다."),
     NOT_FOUND_MEMBER("404", "모임에 가입한 유저만 접근할 수 있습니다."),
     NOT_FOUND_INVITE("404", "모임 초대정보를 찾을 수 없습니다."),
+    NOT_MEMBER("401", "접근 권한이 없습니다."),
 
     // TIME
     NOT_FOUND_TIME("404", "일정의 시간을 찾을 수 없습니다."),
 
-    // Post
+    // Post,
     NOT_FOUND_POST("404", "게시글을 찾을 수 없습니다."),
-    NOT_PARTICIPANT("401", "접근 권한이 없습니다."),
 
     // Plan
     NOT_FOUND_PLAN("404", "일정을 찾을 수 없습니다."),

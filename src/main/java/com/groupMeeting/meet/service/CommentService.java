@@ -8,12 +8,13 @@ import com.groupMeeting.dto.response.meet.comment.CommentResponse;
 import com.groupMeeting.dto.response.meet.comment.CommentUpdateResponse;
 import com.groupMeeting.dto.response.pagination.CursorPageResponse;
 import com.groupMeeting.dto.response.pagination.CursorPage;
+import com.groupMeeting.entity.meet.MeetMember;
 import com.groupMeeting.entity.meet.comment.CommentLike;
 import com.groupMeeting.entity.meet.comment.CommentMention;
 import com.groupMeeting.entity.meet.comment.CommentReport;
 import com.groupMeeting.entity.meet.comment.PlanComment;
 import com.groupMeeting.entity.meet.plan.MeetPlan;
-import com.groupMeeting.entity.meet.plan.PlanParticipant;
+import com.groupMeeting.entity.meet.review.PlanReview;
 import com.groupMeeting.entity.user.User;
 import com.groupMeeting.global.enums.Status;
 import com.groupMeeting.global.event.data.notify.NotifyEventPublisher;
@@ -62,7 +63,7 @@ public class CommentService {
     @Transactional(readOnly = true)
     public CursorPageResponse<CommentClientResponse> getCommentList(Long userId, Long postId, String cursor, int size) {
         validatePostIdExists(postId);
-        validateParticipant(userId, postId);
+        validateMember(userId, postId);
 
         List<CommentResponse> commentResponses = getComments(userId, postId, cursor, size);
         return buildCursorPage(size, commentResponses);
@@ -86,7 +87,7 @@ public class CommentService {
     @Transactional(readOnly = true)
     public CursorPageResponse<CommentClientResponse> getCommentReplyList(Long userId, Long postId, Long commentId, String cursor, int size) {
         validatePostIdExists(postId);
-        validateParticipant(userId, postId);
+        validateMember(userId, postId);
 
         List<CommentResponse> commentResponses = getCommentReplies(userId, postId, commentId, cursor, size);
         return buildCursorPage(size, commentResponses);
@@ -146,7 +147,7 @@ public class CommentService {
         User writer = reader.findUser(userId);
 
         validatePostIdExists(postId);
-        validateParticipant(userId, postId);
+        validateMember(userId, postId);
 
         PlanComment comment = PlanComment.ofParent(
                 request.contents(),
@@ -171,7 +172,7 @@ public class CommentService {
         User writer = reader.findUser(userId);
 
         validatePostIdExists(postId);
-        validateParticipant(userId, postId);
+        validateMember(userId, postId);
 
         PlanComment parentComment = validateParentComment(parentCommentId);
 
@@ -206,19 +207,31 @@ public class CommentService {
         }
     }
 
-    private void validateParticipant(Long userId, Long postId) {
+    private void validateMember(Long userId, Long postId) {
         User user = reader.findUser(userId);
+
+        boolean isMember = false;
 
         if (planRepository.existsById(postId)) {
             MeetPlan plan = reader.findPlan(postId);
-            boolean isParticipant = plan.getParticipants()
+            isMember = plan.getMeet().getMembers()
                     .stream()
-                    .map(PlanParticipant::getUser)
-                    .anyMatch(participantUser -> Objects.equals(participantUser.getId(), user.getId()));
+                    .map(MeetMember::getUser)
+                    .anyMatch(member -> Objects.equals(member.getId(), user.getId()));
+        }
 
-            if (!isParticipant) {
-                throw new ResourceNotFoundException(NOT_PARTICIPANT);
-            }
+        if (!planRepository.existsById(postId)) {
+            PlanReview review = reviewRepository.findReviewByPostId(postId)
+                    .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_REVIEW));
+
+            isMember = review.getMeet().getMembers()
+                    .stream()
+                    .map(MeetMember::getUser)
+                    .anyMatch(member -> Objects.equals(member.getId(), user.getId()));
+        }
+
+        if (!isMember) {
+            throw new ResourceNotFoundException(NOT_MEMBER);
         }
     }
 
