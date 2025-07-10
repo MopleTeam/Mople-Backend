@@ -102,4 +102,8 @@ public class PlanComment {
     public void decreaseLikeCount() {
         this.likeCount -= 1;
     }
+
+    public boolean isChildComment() {
+        return parentId != null;
+    }
 }

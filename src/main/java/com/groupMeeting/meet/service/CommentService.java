@@ -353,35 +353,42 @@ public class CommentService {
 
     @Transactional
     public void deleteComment(Long userId, Long commentId) {
+        User user = reader.findUser(userId);
         PlanComment comment = reader.findComment(commentId);
 
-        if (comment.matchWriter(userId)) {
-            throw new ResourceNotFoundException(NOT_CREATOR);
-        }
+        validateWriter(comment, user);
 
-        boolean isParent = comment.getParentId() == null;
-
-        if (!isParent) {
+        if (comment.isChildComment()) {
             PlanComment parentComment = reader.findComment(comment.getParentId());
 
-            likeRepository.deleteByCommentId(comment.getId());
-            mentionRepository.deleteByCommentId(comment.getId());
+            deleteSingleComment(comment);
             parentComment.decreaseReplyCount();
+            return;
         }
 
-        if (isParent) {
-            List<Long> replyIds = commentRepository
-                    .findAllByParentId(comment.getId())
-                    .stream()
-                    .map(PlanComment::getId)
-                    .toList();
+        List<Long> replyIds = commentRepository
+                .findAllByParentId(comment.getId())
+                .stream()
+                .map(PlanComment::getId)
+                .toList();
 
-            likeRepository.deleteByCommentIdIn(replyIds);
-            mentionRepository.deleteByCommentIdIn(replyIds);
-            commentRepository.deleteByIdIn(replyIds);
+        if (!replyIds.isEmpty()) {
+            deleteCommentsByIds(replyIds);
         }
 
-        commentRepository.deleteById(commentId);
+        deleteSingleComment(comment);
+    }
+
+    private void deleteCommentsByIds(List<Long> replyIds) {
+        likeRepository.deleteByCommentIdIn(replyIds);
+        mentionRepository.deleteByCommentIdIn(replyIds);
+        commentRepository.deleteByIdIn(replyIds);
+    }
+
+    private void deleteSingleComment(PlanComment comment) {
+        likeRepository.deleteByCommentId(comment.getId());
+        mentionRepository.deleteByCommentId(comment.getId());
+        commentRepository.deleteById(comment.getId());
     }
 
     @Transactional
