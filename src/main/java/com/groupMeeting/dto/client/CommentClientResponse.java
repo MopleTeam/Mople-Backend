@@ -20,7 +20,7 @@ public class CommentClientResponse {
     private final Long parentId;
     private final Integer replyCount;
     private final Integer likeCount;
-    private final boolean likeByMe;
+    private final boolean likedByMe;
     private final UserInfo writer;
     private final List<UserInfo> mentions;
     private final LocalDateTime time;
@@ -37,7 +37,7 @@ public class CommentClientResponse {
                 .parentId(commentResponse.parentId())
                 .replyCount(commentResponse.replyCount())
                 .likeCount(commentResponse.likeCount())
-                .likeByMe(commentResponse.likedByMe())
+                .likedByMe(commentResponse.likedByMe())
                 .writer(ofWriter(commentResponse.writer()))
                 .mentions(ofMentions(commentResponse.mentions()))
                 .time(commentResponse.time())
@@ -52,7 +52,7 @@ public class CommentClientResponse {
                 .parentId(updateResponse.parentId())
                 .replyCount(updateResponse.replyCount())
                 .likeCount(updateResponse.likeCount())
-                .likeByMe(updateResponse.likedByMe())
+                .likedByMe(updateResponse.likedByMe())
                 .writer(ofWriter(updateResponse.writer()))
                 .mentions(ofMentions(updateResponse.mentions()))
                 .time(updateResponse.time())
