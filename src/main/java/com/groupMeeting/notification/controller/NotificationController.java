@@ -21,6 +21,7 @@ import java.util.List;
 @RequestMapping("/notification")
 @RequiredArgsConstructor
 public class NotificationController {
+
     private final NotificationService service;
 
     @Operation(

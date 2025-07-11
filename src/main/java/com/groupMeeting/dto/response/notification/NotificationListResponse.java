@@ -22,9 +22,9 @@ public record NotificationListResponse(
         NotifyType type,
         NotificationPayload payload,
         String sendAt,
-        LocalDate planDate
+        LocalDateTime planDate
 ) {
-    public static List<NotificationListResponse> of(ObjectMapper mapper, List<NotificationListInterface> notificationList, Map<Long, LocalDateTime> planTimeMap) {
+    public static List<NotificationListResponse> of(ObjectMapper mapper, List<NotificationListInterface> notificationList, Map<Long, LocalDateTime> timeMap) {
 
         return notificationList.stream()
                 .map(notification ->
@@ -40,7 +40,7 @@ public record NotificationListResponse(
                                         notification.getType(),
                                         mapper.readValue(notification.getPayload(), NotificationPayload.class),
                                         notification.getSendAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
-                                        isNull(planTimeMap.get(notification.getPlanId())) ? null : planTimeMap.get(notification.getPlanId()).toLocalDate()
+                                        getDate(notification.getPlanId(), notification.getReviewId(), timeMap)
                                 );
                             } catch (JsonProcessingException e) {
                                 return null;
@@ -68,5 +68,10 @@ public record NotificationListResponse(
         String getPayload();
 
         LocalDateTime getSendAt();
+    }
+
+    private static LocalDateTime getDate(Long planId, Long reviewId, Map<Long, LocalDateTime> timeMap) {
+
+        return timeMap.getOrDefault(planId, timeMap.get(reviewId));
     }
 }
