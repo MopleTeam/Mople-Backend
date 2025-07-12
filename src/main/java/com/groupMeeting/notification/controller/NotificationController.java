@@ -23,6 +23,7 @@ import java.util.List;
 @Tag(name = "NOTIFICATION", description = "알림 API")
 @RequiredArgsConstructor
 public class NotificationController {
+
     private final NotificationService service;
 
     @Operation(
