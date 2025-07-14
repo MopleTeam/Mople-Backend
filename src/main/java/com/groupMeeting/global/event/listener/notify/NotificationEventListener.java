@@ -1,6 +1,7 @@
 package com.groupMeeting.global.event.listener.notify;
 
 import com.groupMeeting.core.annotation.event.ApplicationEventListener;
+import com.groupMeeting.dto.response.notification.NotificationPayload;
 import com.groupMeeting.global.event.data.notify.NotificationEvent;
 import com.groupMeeting.global.event.data.notify.NotifyEventPublisher;
 import com.groupMeeting.global.event.data.notify.rescheduleNotifyPublisher;
@@ -51,9 +52,17 @@ public class NotificationEventListener {
                     case REVIEW_UPDATE ->
                             new NotificationEvent(PLAN, TemplateMapper.updateReview(event.data()), event.body());
                     case COMMENT_REPLY ->
-                            new NotificationEvent(REPLY, TemplateMapper.commentReply(event.data()), event.body());
+                            new NotificationEvent(
+                                    REPLY,
+                                    new NotificationPayload(event.data().getTitle(), event.data().getBody()),
+                                    event.data().getRoutingKey()
+                            );
                     case COMMENT_MENTION ->
-                            new NotificationEvent(MENTION, TemplateMapper.commentMention(event.data()), event.body());
+                            new NotificationEvent(
+                                    MENTION,
+                                    new NotificationPayload(event.data().getTitle(), event.data().getBody()),
+                                    event.data().getRoutingKey()
+                            );
                 };
 
         service.sendMultiNotification(notify, event.type(), event.data());

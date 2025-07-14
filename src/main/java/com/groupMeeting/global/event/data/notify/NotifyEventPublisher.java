@@ -1,5 +1,6 @@
 package com.groupMeeting.global.event.data.notify;
 
+import com.groupMeeting.dto.event.data.EventData;
 import com.groupMeeting.global.enums.NotifyType;
 
 import java.util.Map;
@@ -8,8 +9,7 @@ import static com.groupMeeting.global.enums.NotifyType.*;
 
 public record NotifyEventPublisher(
         NotifyType type,
-        Map<String, String> data,
-        Map<String, String> body
+        EventData data
 ) {
     public static NotifyEventPublisher meetNewMember(Map<String, String> data, Map<String, String> body) {
         return new NotifyEventPublisher(MEET_NEW_MEMBER, data, body);
@@ -39,11 +39,11 @@ public record NotifyEventPublisher(
         return new NotifyEventPublisher(REVIEW_UPDATE, data, body);
     }
 
-    public static NotifyEventPublisher commentReply(Map<String, String> data, Map<String, String> body) {
-        return new NotifyEventPublisher(COMMENT_REPLY, data, body);
+    public static NotifyEventPublisher commentReply(EventData data) {
+        return new NotifyEventPublisher(COMMENT_REPLY, data);
     }
 
-    public static NotifyEventPublisher commentMention(Map<String, String> data, Map<String, String> body) {
-        return new NotifyEventPublisher(COMMENT_MENTION, data, body);
+    public static NotifyEventPublisher commentMention(EventData data) {
+        return new NotifyEventPublisher(COMMENT_MENTION, data);
     }
 }

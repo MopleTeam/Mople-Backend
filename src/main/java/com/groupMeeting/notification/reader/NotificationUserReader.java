@@ -104,6 +104,16 @@ public class NotificationUserReader {
                 .fetch();
     }
 
+    public List<User> filterNewMentionedUsers(List<Long> originMentions, Long senderId, Long commentId) {
+        List<User> mentionedUsers = findMentionedUsers(senderId, commentId);
+
+        if (originMentions == null || originMentions.isEmpty()) return mentionedUsers;
+
+        return mentionedUsers.stream()
+                .filter(mentionUser -> !originMentions.contains(mentionUser.getId()))
+                .toList();
+    }
+
     public List<Long> findAllUserId(List<User> users) {
 
         return users.stream().map(User::getId).toList();

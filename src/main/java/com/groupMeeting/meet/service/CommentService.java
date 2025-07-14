@@ -3,6 +3,8 @@ package com.groupMeeting.meet.service;
 import com.groupMeeting.core.exception.custom.CursorException;
 import com.groupMeeting.core.exception.custom.ResourceNotFoundException;
 import com.groupMeeting.dto.client.CommentClientResponse;
+import com.groupMeeting.dto.event.data.comment.impl.CommentMentionEventData;
+import com.groupMeeting.dto.event.data.comment.impl.CommentReplyEventData;
 import com.groupMeeting.dto.request.meet.comment.CommentCreateRequest;
 import com.groupMeeting.dto.response.meet.comment.CommentResponse;
 import com.groupMeeting.dto.response.meet.comment.CommentUpdateResponse;
@@ -38,7 +40,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -159,7 +160,7 @@ public class CommentService {
         commentRepository.save(comment);
         createMentions(request.mentions(), comment.getId());
 
-        publishMentionEvent(request.mentions(), comment);
+        publishMentionEvent(null, request.mentions(), comment);
 
         boolean likedByMe = likeRepository.existsByUserIdAndCommentId(userId, comment.getId());
         List<User> mentionedUsers = findMentionedUsers(comment.getId());
@@ -189,7 +190,7 @@ public class CommentService {
 
         parentComment.increaseReplyCount();
 
-        publishMentionEvent(request.mentions(), comment);
+        publishMentionEvent(null, request.mentions(), comment);
         publishReplyEvent(request.mentions(), comment, parentComment);
 
         boolean likedByMe = likeRepository.existsByUserIdAndCommentId(userId, comment.getId());
@@ -252,12 +253,12 @@ public class CommentService {
 
         validateWriter(comment, user);
 
+        List<Long> originMentions = mentionRepository.findUserIdByCommentId(comment.getId());
+
         comment.updateContent(request.contents());
-        updateMentions(request.mentions(), commentId);
+        updateMentions(request.mentions(), comment.getId());
 
-        commentRepository.save(comment);
-
-        publishMentionEvent(request.mentions(), comment);
+        publishMentionEvent(originMentions, request.mentions(), comment);
 
         boolean likedByMe = likeRepository.existsByUserIdAndCommentId(userId, comment.getId());
         List<User> mentionedUsers = findMentionedUsers(comment.getId());
@@ -272,7 +273,7 @@ public class CommentService {
     }
 
     private void createMentions(List<Long> mentions, Long commentId) {
-        if (mentions == null) return;
+        if (mentions == null || mentions.isEmpty()) return;
 
         for (Long userId : mentions) {
             User mentionedUser = reader.findUser(userId);
@@ -290,25 +291,22 @@ public class CommentService {
         createMentions(mentions, commentId);
     }
 
-    private void publishMentionEvent(List<Long> mentions, PlanComment comment) {
-        if (mentions != null && !mentions.isEmpty()) {
+    private void publishMentionEvent(List<Long> originMentions, List<Long> newMentions, PlanComment comment) {
+        if (newMentions == null || newMentions.isEmpty()) return;
 
-            publisher.publishEvent(
-                    NotifyEventPublisher.commentMention(
-                            Map.of(
-                                    "postId", comment.getPostId().toString(),
-                                    "postName", getPostName(comment.getPostId()),
-                                    "userName", comment.getWriter().getNickname(),
-                                    "userId", comment.getWriter().getId().toString(),
-                                    "commentId", comment.getId().toString(),
-                                    "commentContent", comment.getContent()
-                            ),
-                            Map.of(
-                                    "commentId", comment.getId().toString()
-                            )
-                    )
-            );
-        }
+        publisher.publishEvent(
+                NotifyEventPublisher.commentMention(
+                        CommentMentionEventData.builder()
+                                .postId(comment.getPostId())
+                                .postName(getPostName(comment.getPostId()))
+                                .commentId(comment.getId())
+                                .commentContent(comment.getContent())
+                                .senderId(comment.getWriter().getId())
+                                .senderNickname(comment.getWriter().getNickname())
+                                .originMentions(originMentions)
+                                .build()
+                )
+        );
     }
 
     private void publishReplyEvent(List<Long> mentions, PlanComment comment, PlanComment parentComment) {
@@ -324,18 +322,15 @@ public class CommentService {
         if (!parentIsMentioned) {
             publisher.publishEvent(
                     NotifyEventPublisher.commentReply(
-                            Map.of(
-                                    "postId", comment.getPostId().toString(),
-                                    "postName", getPostName(comment.getPostId()),
-                                    "userName", comment.getWriter().getNickname(),
-                                    "userId", comment.getWriter().getId().toString(),
-                                    "parentCommentId", parentComment.getId().toString(),
-                                    "commentId", comment.getId().toString(),
-                                    "commentContent", comment.getContent()
-                            ),
-                            Map.of(
-                                    "commentId", comment.getId().toString()
-                            )
+                            CommentReplyEventData.builder()
+                                    .postId(comment.getPostId())
+                                    .postName(getPostName(comment.getPostId()))
+                                    .commentId(comment.getId())
+                                    .commentContent(comment.getContent())
+                                    .senderId(comment.getWriter().getId())
+                                    .senderNickname(comment.getWriter().getNickname())
+                                    .parentCommentId(comment.getParentId())
+                                    .build()
                     )
             );
         }

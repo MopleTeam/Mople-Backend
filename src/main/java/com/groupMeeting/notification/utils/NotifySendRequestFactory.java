@@ -82,9 +82,9 @@ public class NotifySendRequestFactory {
         );
     }
 
-    public NotifySendRequest getCommentMentionPushToken(Long userId, Long commentId, PushTopic pushTopic) {
+    public NotifySendRequest getCommentMentionPushToken(List<Long> originMentions, Long userId, Long commentId, PushTopic pushTopic) {
 
-        List<User> mentionedUsers = userReader.findMentionedUsers(userId, commentId);
+        List<User> mentionedUsers = userReader.filterNewMentionedUsers(originMentions, userId, commentId);
         List<Long> usersTokens = tokenReader.findAllTokenId(userReader.findAllUserId(mentionedUsers), pushTopic);
 
         return new NotifySendRequest(

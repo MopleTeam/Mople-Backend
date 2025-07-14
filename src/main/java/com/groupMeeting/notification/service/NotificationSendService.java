@@ -3,6 +3,10 @@ package com.groupMeeting.notification.service;
 import com.google.firebase.messaging.*;
 
 import com.groupMeeting.core.exception.custom.ResourceNotFoundException;
+import com.groupMeeting.dto.event.data.EventData;
+import com.groupMeeting.dto.event.data.comment.CommentEventData;
+import com.groupMeeting.dto.event.data.comment.impl.CommentMentionEventData;
+import com.groupMeeting.dto.event.data.comment.impl.CommentReplyEventData;
 import com.groupMeeting.dto.response.notification.NotifySendRequest;
 import com.groupMeeting.entity.meet.plan.MeetPlan;
 import com.groupMeeting.entity.meet.review.PlanReview;
@@ -23,7 +27,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static com.groupMeeting.global.enums.Action.PENDING;
@@ -41,7 +44,7 @@ public class NotificationSendService {
     private final PlanReviewRepository reviewRepository;
 
     @Transactional
-    public void sendMultiNotification(NotificationEvent notify, NotifyType type, Map<String, String> data) {
+    public void sendMultiNotification(NotificationEvent notify, NotifyType type, EventData data) {
 
         Long id;
 
@@ -67,13 +70,19 @@ public class NotificationSendService {
                             toLong(data.get("userId")), id = toLong(data.get("reviewId")), notify.topic()
                     );
 
-                    case COMMENT_REPLY -> requestFactory.getCommentReplyPushToken(
-                            toLong(data.get("userId")), id = toLong(data.get("parentCommentId")), notify.topic()
-                    );
+                    case COMMENT_REPLY -> {
+                        CommentReplyEventData replyData = (CommentReplyEventData) data;
+                        id = replyData.getCommentId();
 
-                    case COMMENT_MENTION -> requestFactory.getCommentMentionPushToken(
-                            toLong(data.get("userId")), id = toLong(data.get("commentId")), notify.topic()
-                    );
+                        yield requestFactory.getCommentReplyPushToken(replyData.getSenderId(), replyData.getParentCommentId(), notify.topic());
+                    }
+
+                    case COMMENT_MENTION -> {
+                        CommentMentionEventData mentionData = (CommentMentionEventData) data;
+                        id = mentionData.getCommentId();
+
+                        yield requestFactory.getCommentMentionPushToken(mentionData.getOriginMentions(), mentionData.getSenderId(), id, notify.topic());
+                    }
                 };
 
         if (!sendRequest.tokens().isEmpty()) {
@@ -155,8 +164,11 @@ public class NotificationSendService {
                     case REVIEW_REMIND, REVIEW_UPDATE ->
                             getReviewNotifications(type, notify, sendRequest.users(), toLong(data.get("meetId")), toLong(data.get("reviewId")));
 
-                    case COMMENT_REPLY, COMMENT_MENTION ->
-                            getCommentNotifications(type, notify, sendRequest.users(), toLong(data.get("postId")));
+                    case COMMENT_REPLY, COMMENT_MENTION -> {
+                        CommentEventData commentData = (CommentEventData) data;
+
+                        yield getCommentNotifications(type, notify, sendRequest.users(), commentData.getPostId());
+                    }
                 }
         );
     }
