@@ -21,6 +21,7 @@ import com.groupMeeting.global.event.data.notify.NotifyEventPublisher;
 import com.groupMeeting.meet.mapper.PlanMapper;
 import com.groupMeeting.meet.reader.EntityReader;
 import com.groupMeeting.meet.repository.MeetTimeRepository;
+import com.groupMeeting.meet.repository.impl.comment.CommentRepositorySupport;
 import com.groupMeeting.meet.repository.plan.MeetPlanRepository;
 import com.groupMeeting.meet.repository.impl.plan.PlanRepositorySupport;
 import com.groupMeeting.meet.repository.plan.PlanParticipantRepository;
@@ -58,6 +59,7 @@ public class PlanService {
     private final PlanParticipantRepository planParticipantRepository;
     private final PlanRepositorySupport planRepositorySupport;
     private final MeetTimeRepository timeRepository;
+    private final CommentRepositorySupport commentRepositorySupport;
 
     private final PlanMapper mapper;
     private final EntityReader reader;
@@ -137,7 +139,7 @@ public class PlanService {
             );
         }
 
-        return ofView(mapper.getPlanView(plan));
+        return ofView(mapper.getPlanView(plan), commentRepositorySupport.countParentComment(plan.getId()));
     }
 
     @Transactional
@@ -184,7 +186,7 @@ public class PlanService {
                                 .build()
                 )
         );
-        return ofUpdate(mapper.getPlanView(plan));
+        return ofUpdate(mapper.getPlanView(plan), commentRepositorySupport.countParentComment(plan.getId()));
     }
 
     @Transactional
@@ -220,7 +222,8 @@ public class PlanService {
 
         return ofViewAndParticipant(
                 mapper.getPlanView(plan),
-                planParticipantRepository.existsByPlanIdAndUserId(planId, userId)
+                planParticipantRepository.existsByPlanIdAndUserId(planId, userId),
+                commentRepositorySupport.countParentComment(plan.getId())
         );
     }
 

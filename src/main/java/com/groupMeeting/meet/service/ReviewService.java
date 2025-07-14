@@ -18,6 +18,7 @@ import com.groupMeeting.global.event.data.notify.NotifyEventPublisher;
 import com.groupMeeting.image.service.ImageService;
 import com.groupMeeting.meet.mapper.ReviewMapper;
 import com.groupMeeting.meet.reader.EntityReader;
+import com.groupMeeting.meet.repository.impl.comment.CommentRepositorySupport;
 import com.groupMeeting.meet.repository.review.PlanReviewRepository;
 import com.groupMeeting.meet.repository.review.ReviewImageRepository;
 import com.groupMeeting.dto.response.meet.review.PlanReviewInfoResponse;
@@ -44,6 +45,7 @@ public class ReviewService {
     private final PlanReviewRepository planReviewRepository;
     private final ReviewImageRepository reviewImageRepository;
     private final ReviewReportRepository reviewReportRepository;
+    private final CommentRepositorySupport commentRepositorySupport;
     private final ImageService imageService;
     private final ReviewMapper mapper;
     private final EntityReader reader;
@@ -63,23 +65,23 @@ public class ReviewService {
 
     @Transactional(readOnly = true)
     public ReviewClientResponse getReviewDetail(Long reviewId) {
+        PlanReview review = planReviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_REVIEW));
+
         return ofDetail(
-                new PlanReviewDetailResponse(
-                        planReviewRepository.findById(reviewId).orElseThrow(
-                                () -> new ResourceNotFoundException(NOT_FOUND_REVIEW)
-                        )
-                )
+                new PlanReviewDetailResponse(review),
+                commentRepositorySupport.countParentComment(review.getPlanId())
         );
     }
 
     @Transactional(readOnly = true)
     public ReviewClientResponse getReviewDetailByPost(Long postId) {
+        PlanReview review = planReviewRepository.findById(postId)
+                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_REVIEW));
+
         return ofDetail(
-                new PlanReviewDetailResponse(
-                        planReviewRepository.findReviewByPostId(postId).orElseThrow(
-                                () -> new ResourceNotFoundException(NOT_FOUND_REVIEW)
-                        )
-                )
+                new PlanReviewDetailResponse(review),
+                commentRepositorySupport.countParentComment(review.getPlanId())
         );
     }
 
