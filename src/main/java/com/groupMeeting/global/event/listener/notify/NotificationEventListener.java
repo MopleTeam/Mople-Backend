@@ -4,7 +4,7 @@ import com.groupMeeting.core.annotation.event.ApplicationEventListener;
 import com.groupMeeting.dto.response.notification.NotificationPayload;
 import com.groupMeeting.global.event.data.notify.NotificationEvent;
 import com.groupMeeting.global.event.data.notify.NotifyEventPublisher;
-import com.groupMeeting.global.event.data.notify.rescheduleNotifyPublisher;
+import com.groupMeeting.global.event.data.notify.RescheduleNotifyPublisher;
 import com.groupMeeting.meet.schedule.PlanScheduleJob;
 import com.groupMeeting.notification.service.NotificationSendService;
 
@@ -21,8 +21,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 
-import static com.groupMeeting.global.enums.PushTopic.*;
-
 @Slf4j
 @ApplicationEventListener
 @RequiredArgsConstructor
@@ -34,43 +32,17 @@ public class NotificationEventListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void pushEventListener(NotifyEventPublisher event) {
-        NotificationEvent notify =
-                switch (event.type()) {
-                    case MEET_NEW_MEMBER ->
-                            new NotificationEvent(MEET,
-                                    new NotificationPayload(event.data().getTitle(), event.data().getBody()),
-                                    event.data().getRoutingKey());
-
-                    case PLAN_CREATE,
-                         PLAN_UPDATE,
-                         PLAN_DELETE,
-                         PLAN_REMIND,
-                         REVIEW_REMIND,
-                         REVIEW_UPDATE ->
-                            new NotificationEvent(PLAN,
-                                    new NotificationPayload(event.data().getTitle(), event.data().getBody()),
-                                    event.data().getRoutingKey());
-
-                    case COMMENT_REPLY ->
-                            new NotificationEvent(
-                                    REPLY,
-                                    new NotificationPayload(event.data().getTitle(), event.data().getBody()),
-                                    event.data().getRoutingKey()
-                            );
-
-                    case COMMENT_MENTION ->
-                            new NotificationEvent(
-                                    MENTION,
-                                    new NotificationPayload(event.data().getTitle(), event.data().getBody()),
-                                    event.data().getRoutingKey()
-                            );
-                };
+        NotificationEvent notify = new NotificationEvent(
+                event.type().getTopic(),
+                new NotificationPayload(event.data().getTitle(), event.data().getBody()),
+                event.data().getRoutingKey()
+        );
 
         service.sendMultiNotification(notify, event.type(), event.data());
     }
 
     @EventListener
-    public void reScheduleNotificationEvent(rescheduleNotifyPublisher publisher) {
+    public void reScheduleNotificationEvent(RescheduleNotifyPublisher publisher) {
         LocalDateTime now = LocalDateTime.now();
 
         log.info("reScheduleEvent time = {}, planId = {}", publisher.planTime(), publisher.planId());

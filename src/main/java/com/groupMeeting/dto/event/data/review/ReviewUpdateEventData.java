@@ -1,6 +1,6 @@
-package com.groupMeeting.dto.event.data.review.impl;
+package com.groupMeeting.dto.event.data.review;
 
-import com.groupMeeting.dto.event.data.review.ReviewEventData;
+import com.groupMeeting.dto.event.data.EventData;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -8,7 +8,7 @@ import java.util.Map;
 
 @Builder
 @Getter
-public class ReviewRemindEventData implements ReviewEventData {
+public class ReviewUpdateEventData implements EventData {
 
     private final Long meetId;
     private final String meetName;
@@ -23,16 +23,11 @@ public class ReviewRemindEventData implements ReviewEventData {
 
     @Override
     public String getBody() {
-        return reviewName + "의 사진을 공유해보세요";
+        return reviewName + "의 사진을 확인해보세요";
     }
 
     @Override
     public Map<String, String> getRoutingKey() {
         return Map.of("reviewId", reviewId.toString());
-    }
-
-    @Override
-    public Long triggeredBy() {
-        return creatorId;
     }
 }

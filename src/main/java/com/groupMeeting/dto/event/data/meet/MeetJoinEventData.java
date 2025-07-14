@@ -1,6 +1,6 @@
-package com.groupMeeting.dto.event.data.meet.impl;
+package com.groupMeeting.dto.event.data.meet;
 
-import com.groupMeeting.dto.event.data.meet.MeetEventData;
+import com.groupMeeting.dto.event.data.EventData;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -8,7 +8,7 @@ import java.util.Map;
 
 @Builder
 @Getter
-public class MeetJoinEventData implements MeetEventData {
+public class MeetJoinEventData implements EventData {
 
     private final Long meetId;
     private final String meetName;
@@ -28,10 +28,5 @@ public class MeetJoinEventData implements MeetEventData {
     @Override
     public Map<String, String> getRoutingKey() {
         return Map.of("meetId", meetId.toString());
-    }
-
-    @Override
-    public Long triggeredBy() {
-        return newMemberId;
     }
 }

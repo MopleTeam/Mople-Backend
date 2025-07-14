@@ -1,6 +1,6 @@
-package com.groupMeeting.dto.event.data.plan.impl;
+package com.groupMeeting.dto.event.data.plan;
 
-import com.groupMeeting.dto.event.data.plan.PlanEventData;
+import com.groupMeeting.dto.event.data.EventData;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -8,7 +8,7 @@ import java.util.Map;
 
 @Builder
 @Getter
-public class PlanDeleteEventData implements PlanEventData {
+public class PlanDeleteEventData implements EventData {
 
     private final Long meetId;
     private final String meetName;
@@ -29,10 +29,5 @@ public class PlanDeleteEventData implements PlanEventData {
     @Override
     public Map<String, String> getRoutingKey() {
         return Map.of("meetId", meetId.toString());
-    }
-
-    @Override
-    public Long triggeredBy() {
-        return deletedBy;
     }
 }

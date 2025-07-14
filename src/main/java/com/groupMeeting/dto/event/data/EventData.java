@@ -9,6 +9,4 @@ public interface EventData {
     String getBody();
 
     Map<String, String> getRoutingKey();
-
-    Long triggeredBy();
 }

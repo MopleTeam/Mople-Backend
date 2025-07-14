@@ -72,6 +72,7 @@ public enum ExceptionReturnCode {
 
     // Notification
     NOT_FOUND_NOTIFY("404", "알림을 찾을 수 없습니다."),
+    NOT_FOUND_NOTIFY_TYPE("400", "지원하지 않는 알림 유형입니다."),
 
     // 요청 관련
     WRONG_PARAMETER("400", "잘못된 파라미터 입니다."),

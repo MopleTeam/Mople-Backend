@@ -3,7 +3,7 @@ package com.groupMeeting.meet.service;
 import com.groupMeeting.core.exception.custom.BadRequestException;
 import com.groupMeeting.core.exception.custom.ResourceNotFoundException;
 import com.groupMeeting.dto.client.ReviewClientResponse;
-import com.groupMeeting.dto.event.data.review.impl.ReviewUpdateEventData;
+import com.groupMeeting.dto.event.data.review.ReviewUpdateEventData;
 import com.groupMeeting.dto.request.meet.review.ReviewImageDeleteRequest;
 import com.groupMeeting.dto.request.meet.review.ReviewReportRequest;
 import com.groupMeeting.dto.response.meet.review.PlanReviewDetailResponse;

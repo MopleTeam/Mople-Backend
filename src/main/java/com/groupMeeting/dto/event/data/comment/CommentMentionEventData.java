@@ -1,6 +1,6 @@
-package com.groupMeeting.dto.event.data.comment.impl;
+package com.groupMeeting.dto.event.data.comment;
 
-import com.groupMeeting.dto.event.data.comment.CommentEventData;
+import com.groupMeeting.dto.event.data.EventData;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,7 +9,7 @@ import java.util.Map;
 
 @Builder
 @Getter
-public class CommentMentionEventData implements CommentEventData {
+public class CommentMentionEventData implements EventData {
 
     private final Long postId;
     private final String postName;
@@ -32,15 +32,5 @@ public class CommentMentionEventData implements CommentEventData {
     @Override
     public Map<String, String> getRoutingKey() {
         return Map.of("commentId", commentId.toString());
-    }
-
-    @Override
-    public Long triggeredBy() {
-        return senderId;
-    }
-
-    @Override
-    public Long getParentId() {
-        return null;
     }
 }

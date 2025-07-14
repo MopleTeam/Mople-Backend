@@ -1,8 +1,8 @@
 package com.groupMeeting.meet.schedule;
 
 import com.groupMeeting.core.exception.custom.ResourceNotFoundException;
-import com.groupMeeting.dto.event.data.plan.impl.PlanRemindEventData;
-import com.groupMeeting.dto.event.data.review.impl.ReviewRemindEventData;
+import com.groupMeeting.dto.event.data.plan.PlanRemindEventData;
+import com.groupMeeting.dto.event.data.review.ReviewRemindEventData;
 import com.groupMeeting.dto.request.weather.CoordinateRequest;
 import com.groupMeeting.dto.response.weather.OpenWeatherResponse;
 import com.groupMeeting.dto.response.weather.WeatherInfoScheduleResponse;
@@ -11,7 +11,7 @@ import com.groupMeeting.entity.meet.review.PlanReview;
 import com.groupMeeting.entity.notification.Notification;
 import com.groupMeeting.global.enums.ExceptionReturnCode;
 import com.groupMeeting.global.event.data.notify.NotifyEventPublisher;
-import com.groupMeeting.global.event.data.notify.rescheduleNotifyPublisher;
+import com.groupMeeting.global.event.data.notify.RescheduleNotifyPublisher;
 import com.groupMeeting.meet.repository.plan.MeetPlanRepository;
 import com.groupMeeting.meet.repository.review.PlanReviewRepository;
 import com.groupMeeting.notification.repository.NotificationRepository;
@@ -107,7 +107,7 @@ public class PlanScheduleJob {
     }
 
     public void remindReschedule(Long planId, LocalDateTime planTime, Long userId) {
-        publisher.publishEvent(new rescheduleNotifyPublisher(planId, planTime, userId));
+        publisher.publishEvent(new RescheduleNotifyPublisher(planId, planTime, userId));
     }
 
     public OpenWeatherResponse weatherInfo(BigDecimal lot, BigDecimal lat) {

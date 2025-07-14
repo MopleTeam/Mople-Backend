@@ -2,7 +2,7 @@ package com.groupMeeting.meet.service;
 
 import com.groupMeeting.core.exception.custom.*;
 import com.groupMeeting.dto.client.MeetClientResponse;
-import com.groupMeeting.dto.event.data.meet.impl.MeetJoinEventData;
+import com.groupMeeting.dto.event.data.meet.MeetJoinEventData;
 import com.groupMeeting.dto.request.meet.MeetCreateRequest;
 import com.groupMeeting.dto.request.meet.MeetUpdateRequest;
 import com.groupMeeting.dto.response.meet.MeetMemberResponse;
