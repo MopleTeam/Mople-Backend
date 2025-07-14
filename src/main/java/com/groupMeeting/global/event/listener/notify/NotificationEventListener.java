@@ -6,7 +6,6 @@ import com.groupMeeting.global.event.data.notify.NotificationEvent;
 import com.groupMeeting.global.event.data.notify.NotifyEventPublisher;
 import com.groupMeeting.global.event.data.notify.rescheduleNotifyPublisher;
 import com.groupMeeting.meet.schedule.PlanScheduleJob;
-import com.groupMeeting.notification.mapper.TemplateMapper;
 import com.groupMeeting.notification.service.NotificationSendService;
 
 import lombok.RequiredArgsConstructor;
@@ -38,25 +37,27 @@ public class NotificationEventListener {
         NotificationEvent notify =
                 switch (event.type()) {
                     case MEET_NEW_MEMBER ->
-                            new NotificationEvent(MEET, TemplateMapper.newMeetMember(event.data()), event.body());
-                    case PLAN_CREATE ->
-                            new NotificationEvent(PLAN, TemplateMapper.newPlan(event.data()), event.body());
-                    case PLAN_UPDATE ->
-                            new NotificationEvent(PLAN, TemplateMapper.updatePlan(event.data()), event.body());
-                    case PLAN_DELETE ->
-                            new NotificationEvent(PLAN, TemplateMapper.removePlan(event.data()), event.body());
-                    case PLAN_REMIND ->
-                            new NotificationEvent(PLAN, TemplateMapper.remindPlan(event.data()), event.body());
-                    case REVIEW_REMIND ->
-                            new NotificationEvent(PLAN, TemplateMapper.remindReview(event.data()), event.body());
-                    case REVIEW_UPDATE ->
-                            new NotificationEvent(PLAN, TemplateMapper.updateReview(event.data()), event.body());
+                            new NotificationEvent(MEET,
+                                    new NotificationPayload(event.data().getTitle(), event.data().getBody()),
+                                    event.data().getRoutingKey());
+
+                    case PLAN_CREATE,
+                         PLAN_UPDATE,
+                         PLAN_DELETE,
+                         PLAN_REMIND,
+                         REVIEW_REMIND,
+                         REVIEW_UPDATE ->
+                            new NotificationEvent(PLAN,
+                                    new NotificationPayload(event.data().getTitle(), event.data().getBody()),
+                                    event.data().getRoutingKey());
+
                     case COMMENT_REPLY ->
                             new NotificationEvent(
                                     REPLY,
                                     new NotificationPayload(event.data().getTitle(), event.data().getBody()),
                                     event.data().getRoutingKey()
                             );
+
                     case COMMENT_MENTION ->
                             new NotificationEvent(
                                     MENTION,

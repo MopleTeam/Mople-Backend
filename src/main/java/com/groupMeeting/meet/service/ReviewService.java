@@ -3,6 +3,7 @@ package com.groupMeeting.meet.service;
 import com.groupMeeting.core.exception.custom.BadRequestException;
 import com.groupMeeting.core.exception.custom.ResourceNotFoundException;
 import com.groupMeeting.dto.client.ReviewClientResponse;
+import com.groupMeeting.dto.event.data.review.impl.ReviewUpdateEventData;
 import com.groupMeeting.dto.request.meet.review.ReviewImageDeleteRequest;
 import com.groupMeeting.dto.request.meet.review.ReviewReportRequest;
 import com.groupMeeting.dto.response.meet.review.PlanReviewDetailResponse;
@@ -32,7 +33,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 
 import static com.groupMeeting.dto.client.ReviewClientResponse.*;
 import static com.groupMeeting.global.enums.ExceptionReturnCode.*;
@@ -135,14 +135,13 @@ public class ReviewService {
 
             publisher.publishEvent(
                     NotifyEventPublisher.reviewUpdate(
-                            Map.of(
-                                    "reviewId", review.getId().toString(),
-                                    "reviewName", review.getName(),
-                                    "userId", review.getCreatorId().toString(),
-                                    "meetId", review.getMeet().getId().toString(),
-                                    "meetName", review.getMeet().getName()
-                            ),
-                            Map.of("reviewId", review.getId().toString())
+                            ReviewUpdateEventData.builder()
+                                    .meetId(review.getMeet().getId())
+                                    .meetName(review.getMeet().getName())
+                                    .reviewId(review.getId())
+                                    .reviewName(review.getName())
+                                    .creatorId(review.getCreatorId())
+                                    .build()
                     )
             );
         }

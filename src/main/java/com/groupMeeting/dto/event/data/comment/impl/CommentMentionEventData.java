@@ -33,4 +33,14 @@ public class CommentMentionEventData implements CommentEventData {
     public Map<String, String> getRoutingKey() {
         return Map.of("commentId", commentId.toString());
     }
+
+    @Override
+    public Long triggeredBy() {
+        return senderId;
+    }
+
+    @Override
+    public Long getParentId() {
+        return null;
+    }
 }

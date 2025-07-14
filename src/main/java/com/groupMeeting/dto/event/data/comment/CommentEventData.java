@@ -7,4 +7,6 @@ public interface CommentEventData extends EventData {
     Long getPostId();
 
     Long getCommentId();
+
+    Long getParentId();
 }

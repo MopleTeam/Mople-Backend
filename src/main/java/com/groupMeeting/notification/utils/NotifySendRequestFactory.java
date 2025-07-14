@@ -16,10 +16,10 @@ public class NotifySendRequestFactory {
     private final NotificationUserReader userReader;
     private final PushTokenReader tokenReader;
 
-    public NotifySendRequest getMeetPushToken(Long userId, Long meetId, PushTopic pushTopic) {
+    public NotifySendRequest getMeetPushToken(Long triggeredBy, Long meetId, PushTopic pushTopic) {
 
-        List<User> allUser = userReader.findMeetAllUser(meetId, userId);
-        List<Long> users = tokenReader.findAllTokenId(userReader.findUserIds(userId, allUser), pushTopic);
+        List<User> allUser = userReader.findMeetAllUser(triggeredBy, meetId);
+        List<Long> users = tokenReader.findAllTokenId(userReader.findUserIds(triggeredBy, allUser), pushTopic);
 
         return new NotifySendRequest(
                 allUser,
@@ -27,10 +27,10 @@ public class NotifySendRequestFactory {
         );
     }
 
-    public NotifySendRequest getPlanPushToken(Long userId, Long planId, PushTopic pushTopic) {
+    public NotifySendRequest getPlanPushToken(Long triggeredBy, Long planId, PushTopic pushTopic) {
 
-        List<User> allUser = userReader.findPlanUsers(planId, userId);
-        List<Long> users = tokenReader.findAllTokenId(userReader.findUserIds(userId, allUser), pushTopic);
+        List<User> allUser = userReader.findPlanUsers(triggeredBy, planId);
+        List<Long> users = tokenReader.findAllTokenId(userReader.findUserIds(triggeredBy, allUser), pushTopic);
 
         return new NotifySendRequest(
                 allUser,
@@ -49,7 +49,7 @@ public class NotifySendRequestFactory {
         );
     }
 
-    public NotifySendRequest getReviewCreatorPushToken(Long creatorId, Long reviewId, PushTopic pushTopic) {
+    public NotifySendRequest getReviewCreatorPushToken(Long creatorId, PushTopic pushTopic) {
 
         List<User> allUser = userReader.findAllReviewCreatorUser(creatorId);
         List<Long> users = tokenReader.findAllTokenId(userReader.findAllUserId(allUser), pushTopic);
@@ -60,10 +60,10 @@ public class NotifySendRequestFactory {
         );
     }
 
-    public NotifySendRequest getReviewPushToken(Long userId, Long reviewId, PushTopic pushTopic) {
+    public NotifySendRequest getReviewPushToken(Long creatorId, Long reviewId, PushTopic pushTopic) {
 
-        List<User> allUser = userReader.findAllReviewUser(userId, reviewId);
-        List<Long> users = tokenReader.findAllTokenId(userReader.findUserIds(userId, allUser), pushTopic);
+        List<User> allUser = userReader.findAllReviewUser(creatorId, reviewId);
+        List<Long> users = tokenReader.findAllTokenId(userReader.findUserIds(creatorId, allUser), pushTopic);
 
         return new NotifySendRequest(
                 allUser,
@@ -71,9 +71,9 @@ public class NotifySendRequestFactory {
         );
     }
 
-    public NotifySendRequest getCommentReplyPushToken(Long userId, Long parentCommentId, PushTopic pushTopic) {
+    public NotifySendRequest getCommentReplyPushToken(Long senderId, Long parentCommentId, PushTopic pushTopic) {
 
-        List<User> user = userReader.findParentCommentUser(userId, parentCommentId);
+        List<User> user = userReader.findParentCommentUser(senderId, parentCommentId);
         List<Long> userToken = tokenReader.findAllTokenId(userReader.findAllUserId(user), pushTopic);
 
         return new NotifySendRequest(
@@ -82,9 +82,9 @@ public class NotifySendRequestFactory {
         );
     }
 
-    public NotifySendRequest getCommentMentionPushToken(List<Long> originMentions, Long userId, Long commentId, PushTopic pushTopic) {
+    public NotifySendRequest getCommentMentionPushToken(List<Long> originMentions, Long senderId, Long commentId, PushTopic pushTopic) {
 
-        List<User> mentionedUsers = userReader.filterNewMentionedUsers(originMentions, userId, commentId);
+        List<User> mentionedUsers = userReader.filterNewMentionedUsers(originMentions, senderId, commentId);
         List<Long> usersTokens = tokenReader.findAllTokenId(userReader.findAllUserId(mentionedUsers), pushTopic);
 
         return new NotifySendRequest(

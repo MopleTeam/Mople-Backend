@@ -4,6 +4,9 @@ import com.groupMeeting.core.exception.custom.AuthException;
 import com.groupMeeting.core.exception.custom.BadRequestException;
 import com.groupMeeting.core.exception.custom.ResourceNotFoundException;
 import com.groupMeeting.dto.client.PlanClientResponse;
+import com.groupMeeting.dto.event.data.plan.impl.PlanCreateEventData;
+import com.groupMeeting.dto.event.data.plan.impl.PlanDeleteEventData;
+import com.groupMeeting.dto.event.data.plan.impl.PlanUpdateEventData;
 import com.groupMeeting.dto.request.meet.plan.PlanReportRequest;
 import com.groupMeeting.dto.request.weather.CoordinateRequest;
 import com.groupMeeting.dto.response.meet.UserAllDateResponse;
@@ -41,7 +44,6 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Map;
 
 import static com.groupMeeting.dto.client.PlanClientResponse.*;
 import static com.groupMeeting.global.enums.ExceptionReturnCode.*;
@@ -115,18 +117,14 @@ public class PlanService {
 
         publisher.publishEvent(
                 NotifyEventPublisher.planNew(
-                        Map.of(
-                                "planId", plan.getId().toString(),
-                                "meetId", meet.getId().toString(),
-                                "meetName", meet.getName(),
-                                "planName", plan.getName(),
-                                "planTime", plan.getPlanTime().toString(),
-                                "userId", creatorId.toString()
-                        ),
-                        Map.of(
-                                "planId", plan.getId().toString()
-//                                "meetId", meet.getId().toString()
-                        )
+                        PlanCreateEventData.builder()
+                                .meetId(meet.getId())
+                                .meetName(meet.getName())
+                                .planId(plan.getId())
+                                .planName(plan.getName())
+                                .planTime(plan.getPlanTime())
+                                .creatorId(user.getId())
+                                .build()
                 )
         );
 
@@ -177,17 +175,13 @@ public class PlanService {
 
         publisher.publishEvent(
                 NotifyEventPublisher.planUpdate(
-                        Map.of(
-                                "planId", plan.getId().toString(),
-                                "planName", plan.getName(),
-                                "meetId", plan.getMeet().getId().toString(),
-                                "meetName", plan.getMeet().getName(),
-                                "userId", userId.toString()
-                        ),
-                        Map.of(
-                                "planId", plan.getId().toString()
-//                                "meetId", plan.getMeet().getId().toString()
-                        )
+                        PlanUpdateEventData.builder()
+                                .meetId(plan.getMeet().getId())
+                                .meetName(plan.getMeet().getName())
+                                .planId(plan.getId())
+                                .planName(plan.getName())
+                                .updatedBy(plan.getCreator().getId())
+                                .build()
                 )
         );
         return ofUpdate(mapper.getPlanView(plan));
@@ -201,20 +195,17 @@ public class PlanService {
             throw new BadRequestException(NOT_CREATOR);
         }
 
-        Long meetId = plan.getMeet().getId();
-
         timeRepository.deleteAllInBatch(timeRepository.findByAllPlanId(planId));
 
         publisher.publishEvent(
                 NotifyEventPublisher.planRemove(
-                        Map.of(
-                                "planId", planId.toString(),
-                                "planName", plan.getName(),
-                                "meetId", plan.getMeet().getId().toString(),
-                                "meetName", plan.getMeet().getName(),
-                                "userId", userId.toString()
-                        ),
-                        Map.of("meetId", meetId.toString())
+                        PlanDeleteEventData.builder()
+                                .meetId(plan.getMeet().getId())
+                                .meetName(plan.getMeet().getName())
+                                .planId(plan.getId())
+                                .planName(plan.getName())
+                                .deletedBy(plan.getCreator().getId())
+                                .build()
                 )
         );
     }

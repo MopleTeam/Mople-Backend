@@ -6,7 +6,9 @@ import com.groupMeeting.core.exception.custom.ResourceNotFoundException;
 import com.groupMeeting.dto.event.data.EventData;
 import com.groupMeeting.dto.event.data.comment.CommentEventData;
 import com.groupMeeting.dto.event.data.comment.impl.CommentMentionEventData;
-import com.groupMeeting.dto.event.data.comment.impl.CommentReplyEventData;
+import com.groupMeeting.dto.event.data.meet.MeetEventData;
+import com.groupMeeting.dto.event.data.plan.PlanEventData;
+import com.groupMeeting.dto.event.data.review.ReviewEventData;
 import com.groupMeeting.dto.response.notification.NotifySendRequest;
 import com.groupMeeting.entity.meet.plan.MeetPlan;
 import com.groupMeeting.entity.meet.review.PlanReview;
@@ -50,31 +52,46 @@ public class NotificationSendService {
 
         NotifySendRequest sendRequest =
                 switch (type) {
-                    case MEET_NEW_MEMBER, PLAN_CREATE -> requestFactory.getMeetPushToken(
-                            toLong(data.get("userId")), id = toLong(data.get("meetId")), notify.topic()
-                    );
+                    case MEET_NEW_MEMBER, PLAN_CREATE -> {
+                        MeetEventData meetData = (MeetEventData) data;
+                        id = meetData.getMeetId();
 
-                    case PLAN_UPDATE, PLAN_DELETE -> requestFactory.getPlanPushToken(
-                            toLong(data.get("userId")), id = toLong(data.get("planId")), notify.topic()
-                    );
+                        yield requestFactory.getMeetPushToken(meetData.triggeredBy(), id, notify.topic());
+                    }
 
-                    case PLAN_REMIND -> requestFactory.getPlanRemindToken(
-                            id = toLong(data.get("planId")), notify.topic()
-                    );
+                    case PLAN_UPDATE, PLAN_DELETE -> {
+                        PlanEventData planData = (PlanEventData) data;
+                        id = planData.getPlanId();
 
-                    case REVIEW_REMIND -> requestFactory.getReviewCreatorPushToken(
-                            toLong(data.get("creatorId")), id = toLong(data.get("reviewId")), notify.topic()
-                    );
+                        yield requestFactory.getPlanPushToken(planData.triggeredBy(), id, notify.topic());
+                    }
 
-                    case REVIEW_UPDATE -> requestFactory.getReviewPushToken(
-                            toLong(data.get("userId")), id = toLong(data.get("reviewId")), notify.topic()
-                    );
+                    case PLAN_REMIND -> {
+                        PlanEventData planData = (PlanEventData) data;
+                        id = planData.getPlanId();
+
+                        yield requestFactory.getPlanRemindToken(id, notify.topic());
+                    }
+
+                    case REVIEW_REMIND -> {
+                        ReviewEventData reviewData = (ReviewEventData) data;
+                        id = reviewData.getReviewId();
+
+                        yield requestFactory.getReviewCreatorPushToken(reviewData.triggeredBy(), notify.topic());
+                    }
+
+                    case REVIEW_UPDATE -> {
+                        ReviewEventData reviewData = (ReviewEventData) data;
+                        id = reviewData.getReviewId();
+
+                        yield requestFactory.getReviewPushToken(reviewData.triggeredBy(), id, notify.topic());
+                    }
 
                     case COMMENT_REPLY -> {
-                        CommentReplyEventData replyData = (CommentReplyEventData) data;
-                        id = replyData.getCommentId();
+                        CommentEventData commentData = (CommentEventData) data;
+                        id = commentData.getCommentId();
 
-                        yield requestFactory.getCommentReplyPushToken(replyData.getSenderId(), replyData.getParentCommentId(), notify.topic());
+                        yield requestFactory.getCommentReplyPushToken(commentData.triggeredBy(), commentData.getParentId(), notify.topic());
                     }
 
                     case COMMENT_MENTION -> {
@@ -141,28 +158,41 @@ public class NotificationSendService {
         notificationRepository.saveAll(
 
                 switch (type) {
-                    case MEET_NEW_MEMBER ->
-                            getMeetNotifications(type, notify, sendRequest.users(), toLong(data.get("meetId")));
+                    case MEET_NEW_MEMBER -> {
+                        MeetEventData meetData = (MeetEventData) data;
 
-                    case PLAN_CREATE, PLAN_UPDATE ->
-                            getPlanNotifications(type, notify, sendRequest.users(), toLong(data.get("meetId")), toLong(data.get("planId")));
+                        yield getMeetNotifications(type, notify, sendRequest.users(), meetData.getMeetId());
+                    }
+
+                    case PLAN_CREATE, PLAN_UPDATE -> {
+                        PlanEventData planData = (PlanEventData) data;
+
+                        yield getPlanNotifications(type, notify, sendRequest.users(), planData.getMeetId(), planData.getPlanId());
+                    }
 
                     case PLAN_DELETE -> {
+                        PlanEventData planData = (PlanEventData) data;
+
                         deletePlan(id);
-                        yield getPlanNotifications(type, notify, sendRequest.users(), toLong(data.get("meetId")), null);
+                        yield getPlanNotifications(type, notify, sendRequest.users(), planData.getMeetId(), null);
                     }
 
                     case PLAN_REMIND -> {
+                        PlanEventData planData = (PlanEventData) data;
+
                         List<Notification> planRemindNotification =
-                                notificationRepository.findPlanRemindNotification(toLong(data.get("planId")), PENDING);
+                                notificationRepository.findPlanRemindNotification(planData.getPlanId(), PENDING);
 
                         planRemindNotification.forEach(n -> n.updateNotification(notify, type));
 
                         yield planRemindNotification;
                     }
 
-                    case REVIEW_REMIND, REVIEW_UPDATE ->
-                            getReviewNotifications(type, notify, sendRequest.users(), toLong(data.get("meetId")), toLong(data.get("reviewId")));
+                    case REVIEW_REMIND, REVIEW_UPDATE -> {
+                        ReviewEventData reviewData = (ReviewEventData) data;
+
+                        yield getReviewNotifications(type, notify, sendRequest.users(), reviewData.getMeetId(), reviewData.getReviewId());
+                    }
 
                     case COMMENT_REPLY, COMMENT_MENTION -> {
                         CommentEventData commentData = (CommentEventData) data;
@@ -265,9 +295,5 @@ public class NotificationSendService {
                                 .build()
                 )
                 .toList();
-    }
-
-    private Long toLong(String id) {
-        return Long.parseLong(id);
     }
 }
