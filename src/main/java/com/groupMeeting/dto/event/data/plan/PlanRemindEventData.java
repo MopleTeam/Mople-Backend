@@ -32,6 +32,6 @@ public class PlanRemindEventData implements EventData {
 
     @Override
     public Map<String, String> getRoutingKey() {
-        return Map.of();
+        return Map.of("planId", planId.toString());
     }
 }
