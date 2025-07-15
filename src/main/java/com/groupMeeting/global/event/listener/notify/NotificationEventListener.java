@@ -1,11 +1,11 @@
 package com.groupMeeting.global.event.listener.notify;
 
 import com.groupMeeting.core.annotation.event.ApplicationEventListener;
+import com.groupMeeting.dto.response.notification.NotificationPayload;
 import com.groupMeeting.global.event.data.notify.NotificationEvent;
 import com.groupMeeting.global.event.data.notify.NotifyEventPublisher;
-import com.groupMeeting.global.event.data.notify.rescheduleNotifyPublisher;
+import com.groupMeeting.global.event.data.notify.RescheduleNotifyPublisher;
 import com.groupMeeting.meet.schedule.PlanScheduleJob;
-import com.groupMeeting.notification.mapper.TemplateMapper;
 import com.groupMeeting.notification.service.NotificationSendService;
 
 import lombok.RequiredArgsConstructor;
@@ -21,8 +21,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 
-import static com.groupMeeting.global.enums.PushTopic.*;
-
 @Slf4j
 @ApplicationEventListener
 @RequiredArgsConstructor
@@ -34,33 +32,17 @@ public class NotificationEventListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void pushEventListener(NotifyEventPublisher event) {
-        NotificationEvent notify =
-                switch (event.type()) {
-                    case MEET_NEW_MEMBER ->
-                            new NotificationEvent(MEET, TemplateMapper.newMeetMember(event.data()), event.body());
-                    case PLAN_CREATE ->
-                            new NotificationEvent(PLAN, TemplateMapper.newPlan(event.data()), event.body());
-                    case PLAN_UPDATE ->
-                            new NotificationEvent(PLAN, TemplateMapper.updatePlan(event.data()), event.body());
-                    case PLAN_DELETE ->
-                            new NotificationEvent(PLAN, TemplateMapper.removePlan(event.data()), event.body());
-                    case PLAN_REMIND ->
-                            new NotificationEvent(PLAN, TemplateMapper.remindPlan(event.data()), event.body());
-                    case REVIEW_REMIND ->
-                            new NotificationEvent(PLAN, TemplateMapper.remindReview(event.data()), event.body());
-                    case REVIEW_UPDATE ->
-                            new NotificationEvent(PLAN, TemplateMapper.updateReview(event.data()), event.body());
-                    case COMMENT_REPLY ->
-                            new NotificationEvent(REPLY, TemplateMapper.commentReply(event.data()), event.body());
-                    case COMMENT_MENTION ->
-                            new NotificationEvent(MENTION, TemplateMapper.commentMention(event.data()), event.body());
-                };
+        NotificationEvent notify = new NotificationEvent(
+                event.type().getTopic(),
+                new NotificationPayload(event.data().getTitle(), event.data().getBody()),
+                event.data().getRoutingKey()
+        );
 
         service.sendMultiNotification(notify, event.type(), event.data());
     }
 
     @EventListener
-    public void reScheduleNotificationEvent(rescheduleNotifyPublisher publisher) {
+    public void reScheduleNotificationEvent(RescheduleNotifyPublisher publisher) {
         LocalDateTime now = LocalDateTime.now();
 
         log.info("reScheduleEvent time = {}, planId = {}", publisher.planTime(), publisher.planId());

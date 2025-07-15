@@ -4,6 +4,9 @@ import com.groupMeeting.core.exception.custom.AuthException;
 import com.groupMeeting.core.exception.custom.BadRequestException;
 import com.groupMeeting.core.exception.custom.ResourceNotFoundException;
 import com.groupMeeting.dto.client.PlanClientResponse;
+import com.groupMeeting.dto.event.data.plan.PlanCreateEventData;
+import com.groupMeeting.dto.event.data.plan.PlanDeleteEventData;
+import com.groupMeeting.dto.event.data.plan.PlanUpdateEventData;
 import com.groupMeeting.dto.request.meet.plan.PlanReportRequest;
 import com.groupMeeting.dto.request.weather.CoordinateRequest;
 import com.groupMeeting.dto.response.meet.UserAllDateResponse;
@@ -18,6 +21,7 @@ import com.groupMeeting.global.event.data.notify.NotifyEventPublisher;
 import com.groupMeeting.meet.mapper.PlanMapper;
 import com.groupMeeting.meet.reader.EntityReader;
 import com.groupMeeting.meet.repository.MeetTimeRepository;
+import com.groupMeeting.meet.repository.impl.comment.CommentRepositorySupport;
 import com.groupMeeting.meet.repository.plan.MeetPlanRepository;
 import com.groupMeeting.meet.repository.impl.plan.PlanRepositorySupport;
 import com.groupMeeting.meet.repository.plan.PlanParticipantRepository;
@@ -41,7 +45,6 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Map;
 
 import static com.groupMeeting.dto.client.PlanClientResponse.*;
 import static com.groupMeeting.global.enums.ExceptionReturnCode.*;
@@ -56,6 +59,7 @@ public class PlanService {
     private final PlanParticipantRepository planParticipantRepository;
     private final PlanRepositorySupport planRepositorySupport;
     private final MeetTimeRepository timeRepository;
+    private final CommentRepositorySupport commentRepositorySupport;
 
     private final PlanMapper mapper;
     private final EntityReader reader;
@@ -115,18 +119,14 @@ public class PlanService {
 
         publisher.publishEvent(
                 NotifyEventPublisher.planNew(
-                        Map.of(
-                                "planId", plan.getId().toString(),
-                                "meetId", meet.getId().toString(),
-                                "meetName", meet.getName(),
-                                "planName", plan.getName(),
-                                "planTime", plan.getPlanTime().toString(),
-                                "userId", creatorId.toString()
-                        ),
-                        Map.of(
-                                "planId", plan.getId().toString()
-//                                "meetId", meet.getId().toString()
-                        )
+                        PlanCreateEventData.builder()
+                                .meetId(meet.getId())
+                                .meetName(meet.getName())
+                                .planId(plan.getId())
+                                .planName(plan.getName())
+                                .planTime(plan.getPlanTime())
+                                .creatorId(user.getId())
+                                .build()
                 )
         );
 
@@ -139,7 +139,7 @@ public class PlanService {
             );
         }
 
-        return ofView(mapper.getPlanView(plan));
+        return ofView(mapper.getPlanView(plan), commentRepositorySupport.countParentComment(plan.getId()));
     }
 
     @Transactional
@@ -177,20 +177,16 @@ public class PlanService {
 
         publisher.publishEvent(
                 NotifyEventPublisher.planUpdate(
-                        Map.of(
-                                "planId", plan.getId().toString(),
-                                "planName", plan.getName(),
-                                "meetId", plan.getMeet().getId().toString(),
-                                "meetName", plan.getMeet().getName(),
-                                "userId", userId.toString()
-                        ),
-                        Map.of(
-                                "planId", plan.getId().toString()
-//                                "meetId", plan.getMeet().getId().toString()
-                        )
+                        PlanUpdateEventData.builder()
+                                .meetId(plan.getMeet().getId())
+                                .meetName(plan.getMeet().getName())
+                                .planId(plan.getId())
+                                .planName(plan.getName())
+                                .updatedBy(plan.getCreator().getId())
+                                .build()
                 )
         );
-        return ofUpdate(mapper.getPlanView(plan));
+        return ofUpdate(mapper.getPlanView(plan), commentRepositorySupport.countParentComment(plan.getId()));
     }
 
     @Transactional
@@ -201,20 +197,17 @@ public class PlanService {
             throw new BadRequestException(NOT_CREATOR);
         }
 
-        Long meetId = plan.getMeet().getId();
-
         timeRepository.deleteAllInBatch(timeRepository.findByAllPlanId(planId));
 
         publisher.publishEvent(
                 NotifyEventPublisher.planRemove(
-                        Map.of(
-                                "planId", planId.toString(),
-                                "planName", plan.getName(),
-                                "meetId", plan.getMeet().getId().toString(),
-                                "meetName", plan.getMeet().getName(),
-                                "userId", userId.toString()
-                        ),
-                        Map.of("meetId", meetId.toString())
+                        PlanDeleteEventData.builder()
+                                .meetId(plan.getMeet().getId())
+                                .meetName(plan.getMeet().getName())
+                                .planId(plan.getId())
+                                .planName(plan.getName())
+                                .deletedBy(plan.getCreator().getId())
+                                .build()
                 )
         );
     }
@@ -229,7 +222,8 @@ public class PlanService {
 
         return ofViewAndParticipant(
                 mapper.getPlanView(plan),
-                planParticipantRepository.existsByPlanIdAndUserId(planId, userId)
+                planParticipantRepository.existsByPlanIdAndUserId(planId, userId),
+                commentRepositorySupport.countParentComment(plan.getId())
         );
     }
 

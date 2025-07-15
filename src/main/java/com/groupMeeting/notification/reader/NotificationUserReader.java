@@ -18,25 +18,25 @@ import java.util.List;
 public class NotificationUserReader {
     private final JPAQueryFactory queryFactory;
 
-    public List<User> findMeetAllUser(Long meetId, Long userId) {
+    public List<User> findMeetAllUser(Long triggeredBy, Long meetId) {
 
         QMeetMember meetMember = QMeetMember.meetMember;
 
         return queryFactory
                 .select(meetMember.user)
                 .from(meetMember)
-                .where(meetMember.joinMeet.id.eq(meetId), meetMember.user.id.ne(userId))
+                .where(meetMember.joinMeet.id.eq(meetId), meetMember.user.id.ne(triggeredBy))
                 .fetch();
     }
 
-    public List<User> findPlanUsers(Long planId, Long userId) {
+    public List<User> findPlanUsers(Long triggeredBy, Long planId) {
 
         QPlanParticipant participant = QPlanParticipant.planParticipant;
 
         return queryFactory
                 .select(participant.user)
                 .from(participant)
-                .where(participant.plan.id.eq(planId), participant.user.id.ne(userId))
+                .where(participant.plan.id.eq(planId), participant.user.id.ne(triggeredBy))
                 .fetch();
     }
 
@@ -51,14 +51,14 @@ public class NotificationUserReader {
                 .fetch();
     }
 
-    public List<User> findAllReviewUser(Long userId, Long reviewId) {
+    public List<User> findAllReviewUser(Long creatorId, Long reviewId) {
 
         QPlanParticipant participant = QPlanParticipant.planParticipant;
 
         return queryFactory
                 .select(participant.user)
                 .from(participant)
-                .where(participant.review.id.eq(reviewId), participant.user.id.ne(userId))
+                .where(participant.review.id.eq(reviewId), participant.user.id.ne(creatorId))
                 .fetch();
     }
 
@@ -104,16 +104,26 @@ public class NotificationUserReader {
                 .fetch();
     }
 
+    public List<User> filterNewMentionedUsers(List<Long> originMentions, Long senderId, Long commentId) {
+        List<User> mentionedUsers = findMentionedUsers(senderId, commentId);
+
+        if (originMentions == null || originMentions.isEmpty()) return mentionedUsers;
+
+        return mentionedUsers.stream()
+                .filter(mentionUser -> !originMentions.contains(mentionUser.getId()))
+                .toList();
+    }
+
     public List<Long> findAllUserId(List<User> users) {
 
         return users.stream().map(User::getId).toList();
     }
 
-    public List<Long> findUserIds(Long userId, List<User> users) {
+    public List<Long> findUserIds(Long triggeredBy, List<User> users) {
 
         return users.stream()
                 .map(User::getId)
-                .filter(id -> !id.equals(userId))
+                .filter(id -> !id.equals(triggeredBy))
                 .toList();
     }
 }

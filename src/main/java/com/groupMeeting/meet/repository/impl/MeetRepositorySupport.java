@@ -19,7 +19,6 @@ import java.util.*;
 
 import static java.util.stream.Collectors.*;
 
-
 @Repository
 @RequiredArgsConstructor
 public class MeetRepositorySupport {
@@ -38,7 +37,6 @@ public class MeetRepositorySupport {
                         .where(meetMember.user.id.eq(userId))
                         .orderBy(meet.createdAt.asc())
                         .fetch();
-
 
         List<Long> meetIdList = meets.stream().map(Meet::getId).toList();
 
@@ -67,7 +65,7 @@ public class MeetRepositorySupport {
                         .collect(
                                 groupingBy(
                                         r -> r.getMeet().getId(),
-                                        minBy(Comparator.comparing(PlanReview::getPlanTime))
+                                        maxBy(Comparator.comparing(PlanReview::getPlanTime))
                                 )
                         );
 

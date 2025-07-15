@@ -95,6 +95,21 @@ public class CommentRepositorySupport {
                 .fetch();
     }
 
+    public Integer countParentComment(Long postId) {
+        QPlanComment comment = QPlanComment.planComment;
+
+        Long result = queryFactory
+                .select(comment.count())
+                .from(comment)
+                .where(
+                        comment.postId.eq(postId),
+                        comment.parentId.isNull()
+                )
+                .fetchOne();
+
+        return result == null ? 0 : result.intValue();
+    }
+
     public boolean validCursor(Long cursorId) {
         QPlanComment comment = QPlanComment.planComment;
 

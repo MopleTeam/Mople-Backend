@@ -2,6 +2,7 @@ package com.groupMeeting.meet.service;
 
 import com.groupMeeting.core.exception.custom.*;
 import com.groupMeeting.dto.client.MeetClientResponse;
+import com.groupMeeting.dto.event.data.meet.MeetJoinEventData;
 import com.groupMeeting.dto.request.meet.MeetCreateRequest;
 import com.groupMeeting.dto.request.meet.MeetUpdateRequest;
 import com.groupMeeting.dto.response.meet.MeetMemberResponse;
@@ -189,13 +190,12 @@ public class MeetService {
 
         publisher.publishEvent(
                 NotifyEventPublisher.meetNewMember(
-                        Map.of(
-                                "meetId", meet.getId().toString(),
-                                "meetName", meet.getName(),
-                                "userName", user.getNickname(),
-                                "userId", user.getId().toString()
-                        ),
-                        Map.of("meetId", meet.getId().toString())
+                        MeetJoinEventData.builder()
+                                .meetId(meet.getId())
+                                .meetName(meet.getName())
+                                .newMemberId(user.getId())
+                                .newMemberNickname(user.getNickname())
+                                .build()
                 )
         );
 

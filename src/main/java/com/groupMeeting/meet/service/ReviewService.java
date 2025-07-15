@@ -3,6 +3,7 @@ package com.groupMeeting.meet.service;
 import com.groupMeeting.core.exception.custom.BadRequestException;
 import com.groupMeeting.core.exception.custom.ResourceNotFoundException;
 import com.groupMeeting.dto.client.ReviewClientResponse;
+import com.groupMeeting.dto.event.data.review.ReviewUpdateEventData;
 import com.groupMeeting.dto.request.meet.review.ReviewImageDeleteRequest;
 import com.groupMeeting.dto.request.meet.review.ReviewReportRequest;
 import com.groupMeeting.dto.response.meet.review.PlanReviewDetailResponse;
@@ -17,6 +18,7 @@ import com.groupMeeting.global.event.data.notify.NotifyEventPublisher;
 import com.groupMeeting.image.service.ImageService;
 import com.groupMeeting.meet.mapper.ReviewMapper;
 import com.groupMeeting.meet.reader.EntityReader;
+import com.groupMeeting.meet.repository.impl.comment.CommentRepositorySupport;
 import com.groupMeeting.meet.repository.review.PlanReviewRepository;
 import com.groupMeeting.meet.repository.review.ReviewImageRepository;
 import com.groupMeeting.dto.response.meet.review.PlanReviewInfoResponse;
@@ -32,7 +34,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 
 import static com.groupMeeting.dto.client.ReviewClientResponse.*;
 import static com.groupMeeting.global.enums.ExceptionReturnCode.*;
@@ -44,6 +45,7 @@ public class ReviewService {
     private final PlanReviewRepository planReviewRepository;
     private final ReviewImageRepository reviewImageRepository;
     private final ReviewReportRepository reviewReportRepository;
+    private final CommentRepositorySupport commentRepositorySupport;
     private final ImageService imageService;
     private final ReviewMapper mapper;
     private final EntityReader reader;
@@ -63,23 +65,23 @@ public class ReviewService {
 
     @Transactional(readOnly = true)
     public ReviewClientResponse getReviewDetail(Long reviewId) {
+        PlanReview review = planReviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_REVIEW));
+
         return ofDetail(
-                new PlanReviewDetailResponse(
-                        planReviewRepository.findById(reviewId).orElseThrow(
-                                () -> new ResourceNotFoundException(NOT_FOUND_REVIEW)
-                        )
-                )
+                new PlanReviewDetailResponse(review),
+                commentRepositorySupport.countParentComment(review.getPlanId())
         );
     }
 
     @Transactional(readOnly = true)
     public ReviewClientResponse getReviewDetailByPost(Long postId) {
+        PlanReview review = planReviewRepository.findById(postId)
+                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_REVIEW));
+
         return ofDetail(
-                new PlanReviewDetailResponse(
-                        planReviewRepository.findReviewByPostId(postId).orElseThrow(
-                                () -> new ResourceNotFoundException(NOT_FOUND_REVIEW)
-                        )
-                )
+                new PlanReviewDetailResponse(review),
+                commentRepositorySupport.countParentComment(review.getPlanId())
         );
     }
 
@@ -135,14 +137,13 @@ public class ReviewService {
 
             publisher.publishEvent(
                     NotifyEventPublisher.reviewUpdate(
-                            Map.of(
-                                    "reviewId", review.getId().toString(),
-                                    "reviewName", review.getName(),
-                                    "userId", review.getCreatorId().toString(),
-                                    "meetId", review.getMeet().getId().toString(),
-                                    "meetName", review.getMeet().getName()
-                            ),
-                            Map.of("reviewId", review.getId().toString())
+                            ReviewUpdateEventData.builder()
+                                    .meetId(review.getMeet().getId())
+                                    .meetName(review.getMeet().getName())
+                                    .reviewId(review.getId())
+                                    .reviewName(review.getName())
+                                    .creatorId(review.getCreatorId())
+                                    .build()
                     )
             );
         }
