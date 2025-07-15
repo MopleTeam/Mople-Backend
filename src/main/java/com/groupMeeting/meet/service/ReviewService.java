@@ -70,7 +70,7 @@ public class ReviewService {
 
         return ofDetail(
                 new PlanReviewDetailResponse(review),
-                commentRepositorySupport.countParentComment(review.getPlanId())
+                commentRepositorySupport.countComment(review.getPlanId())
         );
     }
 
@@ -81,7 +81,7 @@ public class ReviewService {
 
         return ofDetail(
                 new PlanReviewDetailResponse(review),
-                commentRepositorySupport.countParentComment(review.getPlanId())
+                commentRepositorySupport.countComment(review.getPlanId())
         );
     }
 

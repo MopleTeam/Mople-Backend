@@ -95,16 +95,13 @@ public class CommentRepositorySupport {
                 .fetch();
     }
 
-    public Integer countParentComment(Long postId) {
+    public Integer countComment(Long postId) {
         QPlanComment comment = QPlanComment.planComment;
 
         Long result = queryFactory
                 .select(comment.count())
                 .from(comment)
-                .where(
-                        comment.postId.eq(postId),
-                        comment.parentId.isNull()
-                )
+                .where(comment.postId.eq(postId))
                 .fetchOne();
 
         return result == null ? 0 : result.intValue();
