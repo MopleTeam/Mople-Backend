@@ -139,7 +139,7 @@ public class PlanService {
             );
         }
 
-        return ofView(mapper.getPlanView(plan), commentRepositorySupport.countParentComment(plan.getId()));
+        return ofView(mapper.getPlanView(plan), commentRepositorySupport.countComment(plan.getId()));
     }
 
     @Transactional
@@ -186,7 +186,7 @@ public class PlanService {
                                 .build()
                 )
         );
-        return ofUpdate(mapper.getPlanView(plan), commentRepositorySupport.countParentComment(plan.getId()));
+        return ofUpdate(mapper.getPlanView(plan), commentRepositorySupport.countComment(plan.getId()));
     }
 
     @Transactional
@@ -223,7 +223,7 @@ public class PlanService {
         return ofViewAndParticipant(
                 mapper.getPlanView(plan),
                 planParticipantRepository.existsByPlanIdAndUserId(planId, userId),
-                commentRepositorySupport.countParentComment(plan.getId())
+                commentRepositorySupport.countComment(plan.getId())
         );
     }
 

@@ -30,13 +30,13 @@ public class PlanClientResponse {
     private final Double temperature;
     private final Double pop;
     private final boolean participant;
-    private final Integer parentCommentCount;
+    private final Integer commentCount;
 
     public static List<PlanClientResponse> ofViews(List<PlanViewResponse> viewResponses) {
         return viewResponses.stream().map(response -> ofView(response, 0)).toList();
     }
 
-    public static PlanClientResponse ofView(PlanViewResponse viewResponse, Integer parentCommentCount) {
+    public static PlanClientResponse ofView(PlanViewResponse viewResponse, Integer commentCount) {
         return PlanClientResponse.builder()
                 .planId(viewResponse.planId())
                 .meetId(viewResponse.meetId())
@@ -54,11 +54,11 @@ public class PlanClientResponse {
                 .weatherAddress(viewResponse.weatherAddress())
                 .temperature(viewResponse.temperature())
                 .pop(viewResponse.pop())
-                .parentCommentCount(parentCommentCount)
+                .commentCount(commentCount)
                 .build();
     }
 
-    public static PlanClientResponse ofViewAndParticipant(PlanViewResponse viewResponse, boolean participant, Integer parentCommentCount) {
+    public static PlanClientResponse ofViewAndParticipant(PlanViewResponse viewResponse, boolean participant, Integer commentCount) {
         return PlanClientResponse.builder()
                 .planId(viewResponse.planId())
                 .meetId(viewResponse.meetId())
@@ -77,11 +77,11 @@ public class PlanClientResponse {
                 .temperature(viewResponse.temperature())
                 .pop(viewResponse.pop())
                 .participant(participant)
-                .parentCommentCount(parentCommentCount)
+                .commentCount(commentCount)
                 .build();
     }
 
-    public static PlanClientResponse ofUpdate(PlanViewResponse viewResponse, Integer parentCommentCount) {
+    public static PlanClientResponse ofUpdate(PlanViewResponse viewResponse, Integer commentCount) {
         return PlanClientResponse.builder()
                 .planId(viewResponse.planId())
                 .meetId(viewResponse.meetId())
@@ -100,7 +100,7 @@ public class PlanClientResponse {
                 .temperature(viewResponse.temperature())
                 .pop(viewResponse.pop())
                 .participant(true)
-                .parentCommentCount(parentCommentCount)
+                .commentCount(commentCount)
                 .build();
     }
 

@@ -28,7 +28,7 @@ public class ReviewClientResponse {
     private final int participantsCount;
     private final boolean isRegister;
     private final List<PlanReviewDetailResponse.ReviewImageResponse> images;
-    private final Integer parentCommentCount;
+    private final Integer commentCount;
 
     public static List<ReviewClientResponse> ofInfos(List<PlanReviewInfoResponse> infoResponses){
         return infoResponses.stream().map(ReviewClientResponse::ofInfo).toList();
@@ -45,7 +45,7 @@ public class ReviewClientResponse {
                 .build();
     }
 
-    public static ReviewClientResponse ofDetail(PlanReviewDetailResponse detailResponse, Integer parentCommentCount){
+    public static ReviewClientResponse ofDetail(PlanReviewDetailResponse detailResponse, Integer commentCount){
         return ReviewClientResponse.builder()
                 .meetId(detailResponse.meetId())
                 .meetName(detailResponse.meetName())
@@ -62,7 +62,7 @@ public class ReviewClientResponse {
                 .participantsCount(detailResponse.participantsCount())
                 .isRegister(detailResponse.register())
                 .images(detailResponse.images())
-                .parentCommentCount(parentCommentCount)
+                .commentCount(commentCount)
                 .build();
     }
 }
