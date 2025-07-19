@@ -1,5 +1,5 @@
 # CI/CD를 사용하지 않으므로 Docker Image 빌드 시 Gradle Build
-FROM gradle:8.8-jdk17 AS builder
+FROM gradle:8.11-jdk21 AS builder
 WORKDIR /build
 
 # Gradle 파일 변경 시 의존성 다운로드
@@ -12,7 +12,7 @@ RUN gradle build -x test --parallel && \
     gradle --stop
 
 # Jdk Build - JRE로 Build해도 문제 없지만 기존 익숙한 방법으로 Build
-FROM openjdk:17-oraclelinux8
+FROM openjdk:21-oraclelinux8
 
 ENV TZ=Asia/Seoul
 
