@@ -15,5 +15,7 @@ server:
     max-http-form-post-size: 30MB
 
 logging:
-  level:
-    com.groupMeeting.global.client: DEBUG
+  thresholds:
+    slow:
+      api: 3000
+      query: 1000
