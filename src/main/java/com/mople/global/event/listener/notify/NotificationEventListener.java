@@ -1,0 +1,59 @@
+package com.mople.global.event.listener.notify;
+
+import com.mople.core.annotation.event.ApplicationEventListener;
+import com.mople.dto.response.notification.NotificationPayload;
+import com.mople.global.event.data.notify.NotificationEvent;
+import com.mople.global.event.data.notify.NotifyEventPublisher;
+import com.mople.global.event.data.notify.RescheduleNotifyPublisher;
+import com.mople.meet.schedule.PlanScheduleJob;
+import com.mople.notification.service.NotificationSendService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
+
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+
+@Slf4j
+@ApplicationEventListener
+@RequiredArgsConstructor
+public class NotificationEventListener {
+    private final NotificationSendService service;
+    private final PlanScheduleJob planScheduleJob;
+    private final TaskScheduler taskScheduler;
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void pushEventListener(NotifyEventPublisher event) {
+        NotificationEvent notify = new NotificationEvent(
+                event.type().getTopic(),
+                new NotificationPayload(event.data().getTitle(), event.data().getBody()),
+                event.data().getRoutingKey()
+        );
+
+        service.sendMultiNotification(notify, event.type(), event.data());
+    }
+
+    @EventListener
+    public void reScheduleNotificationEvent(RescheduleNotifyPublisher publisher) {
+        LocalDateTime now = LocalDateTime.now();
+
+        log.info("reScheduleEvent time = {}, planId = {}", publisher.planTime(), publisher.planId());
+
+        if (publisher.planTime().isAfter(now.plusHours(1))) {
+            long hour = publisher.planTime().until(now, ChronoUnit.HOURS) == 1 ? 1 : 2;
+
+            taskScheduler.schedule(
+                    () -> planScheduleJob.planRemindSchedule(publisher.planId(), publisher.planTime(), publisher.userId()),
+                    publisher.planTime().minusHours(hour).atZone(ZoneId.systemDefault()).toInstant()
+            );
+        }
+    }
+}
