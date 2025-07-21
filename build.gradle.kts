@@ -74,3 +74,7 @@ tasks.withType<Test> {
     useJUnitPlatform()
     jvmArgs("-javaagent:${mockitoAgent.asPath}", "-Xshare:off")
 }
+
+tasks.named<Jar>("jar") {
+    enabled = false
+}
