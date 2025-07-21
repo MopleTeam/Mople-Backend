@@ -1,0 +1,37 @@
+package com.mople.dto.response.meet.comment;
+
+import com.mople.entity.meet.comment.PlanComment;
+import com.mople.entity.user.User;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+public record CommentUpdateResponse(
+        Long commentId,
+        String content,
+        Long postId,
+        Long parentId,
+        Integer replyCount,
+        Integer likeCount,
+        boolean likedByMe,
+        User writer,
+        List<User> mentions,
+        LocalDateTime time,
+        boolean update
+) {
+    public CommentUpdateResponse(PlanComment comment, List<User> mentions, boolean likedByMe) {
+        this(
+                comment.getId(),
+                comment.getContent(),
+                comment.getPostId(),
+                comment.getParentId(),
+                comment.getReplyCount(),
+                comment.getLikeCount(),
+                likedByMe,
+                comment.getWriter(),
+                mentions,
+                comment.getWriteTime(),
+                true
+        );
+    }
+}
