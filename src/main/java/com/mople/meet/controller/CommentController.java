@@ -4,7 +4,7 @@ import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.CommentClientResponse;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.response.pagination.CursorPageResponse;
-import com.mople.meet.service.CommentService;
+import com.mople.meet.service.comment.CommentService;
 import com.mople.dto.request.meet.comment.CommentCreateRequest;
 import com.mople.dto.request.meet.comment.CommentReportRequest;
 
