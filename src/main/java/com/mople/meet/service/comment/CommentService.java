@@ -2,6 +2,7 @@ package com.mople.meet.service.comment;
 
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.CommentClientResponse;
+import com.mople.dto.client.MentionClientResponse;
 import com.mople.dto.request.meet.comment.CommentCreateRequest;
 import com.mople.dto.response.meet.comment.CommentResponse;
 import com.mople.dto.response.meet.comment.CommentUpdateResponse;
@@ -42,6 +43,7 @@ public class CommentService {
 
     private final CommentMentionService mentionService;
     private final CommentLikeService likeService;
+    private final CommentAutoCompleteService autoCompleteService;
 
     @Transactional(readOnly = true)
     public CursorPageResponse<CommentClientResponse> getCommentList(Long userId, Long postId, String cursor, int size) {
@@ -58,7 +60,7 @@ public class CommentService {
             return getResponseAddedLikedByMe(userId, commentFirstPage);
         }
 
-        Long cursor = CursorUtils.decode(encodedCursor);
+        Long cursor = Long.valueOf(CursorUtils.decode(encodedCursor));
         commentValidator.validateCursor(cursor);
 
         List<PlanComment> commentNextPage = commentRepositorySupport.findCommentNextPage(postId, cursor, size);
@@ -80,7 +82,7 @@ public class CommentService {
             return getResponseAddedLikedByMe(userId, commentReplyFirstPage);
         }
 
-        Long cursor = CursorUtils.decode(encodedCursor);
+        Long cursor = Long.valueOf(CursorUtils.decode(encodedCursor));
         commentValidator.validateCursor(cursor);
 
         List<PlanComment> commentReplyNextPage = commentRepositorySupport.findCommentReplyNextPage(postId, commentId, cursor, size);
@@ -108,7 +110,7 @@ public class CommentService {
         commentResponses = hasNext ? commentResponses.subList(0, size) : commentResponses;
 
         String nextCursor = hasNext && !commentResponses.isEmpty()
-                ? CursorUtils.encode(commentResponses.get(commentResponses.size() - 1).commentId())
+                ? CursorUtils.encode(commentResponses.get(commentResponses.size() - 1).commentId().toString())
                 : null;
 
         CursorPage page = CursorPage.builder()
@@ -259,6 +261,14 @@ public class CommentService {
         List<User> mentionedUsers = mentionService.findMentionedUsers(comment.getId());
 
         return ofComment(new CommentResponse(comment, mentionedUsers, likedByMe));
+    }
+
+    @Transactional(readOnly = true)
+    public CursorPageResponse<MentionClientResponse> searchMeetMember(Long userId, Long postId, String keyword, String cursor, int size) {
+        reader.findUser(userId);
+        commentValidator.validatePostId(postId);
+
+        return autoCompleteService.getMeetMembers(postId, keyword, cursor, size);
     }
 
     @Transactional

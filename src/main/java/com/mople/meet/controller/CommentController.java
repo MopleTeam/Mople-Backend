@@ -2,6 +2,7 @@ package com.mople.meet.controller;
 
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.CommentClientResponse;
+import com.mople.dto.client.MentionClientResponse;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.meet.service.comment.CommentService;
@@ -118,6 +119,21 @@ public class CommentController {
             @PathVariable Long commentId
     ) {
         return ResponseEntity.ok(commentService.toggleLike(user.id(), commentId));
+    }
+
+    @Operation(
+            summary = "멘션 자동 완성 API",
+            description = "입력한 키워드에 맞는 모임 멤버 닉네임을 자동 완성합니다."
+    )
+    @GetMapping("/{postId}/mention")
+    public CursorPageResponse<MentionClientResponse> searchMention(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @PathVariable Long postId,
+            @RequestParam String keyword,
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return commentService.searchMeetMember(user.id(), postId, keyword, cursor, size);
     }
 
     @Operation(

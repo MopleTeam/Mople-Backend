@@ -11,17 +11,16 @@ import static com.mople.global.enums.ExceptionReturnCode.INVALID_CURSOR;
 @Component
 public class CursorUtils {
 
-    public static String encode(Long rawCursor) {
+    public static String encode(String rawCursor) {
         return Base64.getEncoder()
                 .encodeToString(String.valueOf(rawCursor).getBytes(StandardCharsets.UTF_8));
     }
 
-    public static Long decode(String encodedCursor) {
+    public static String decode(String encodedCursor) {
         try {
             byte[] decodedBytes = Base64.getDecoder().decode(encodedCursor);
-            String rawCursor = new String(decodedBytes, StandardCharsets.UTF_8);
 
-            return Long.parseLong(rawCursor);
+            return new String(decodedBytes, StandardCharsets.UTF_8);
         } catch (Exception e) {
             throw new CursorException(INVALID_CURSOR);
         }
