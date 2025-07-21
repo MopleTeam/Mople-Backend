@@ -39,9 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import static com.mople.dto.client.CommentClientResponse.*;
 import static com.mople.global.enums.ExceptionReturnCode.*;
@@ -275,7 +273,9 @@ public class CommentService {
     private void createMentions(List<Long> mentions, Long commentId) {
         if (mentions == null || mentions.isEmpty()) return;
 
-        for (Long userId : mentions) {
+        List<Long> distinctMentions = new ArrayList<>(new LinkedHashSet<>(mentions));
+
+        for (Long userId : distinctMentions) {
             User mentionedUser = reader.findUser(userId);
 
             CommentMention mention = CommentMention.builder()
