@@ -2,7 +2,7 @@ package com.mople.meet.service.comment;
 
 import com.mople.core.exception.custom.CursorException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
-import com.mople.dto.client.MentionClientResponse;
+import com.mople.dto.client.AutoCompleteClientResponse;
 import com.mople.dto.response.pagination.CursorPage;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.entity.meet.MeetMember;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-import static com.mople.dto.client.MentionClientResponse.ofTargets;
+import static com.mople.dto.client.AutoCompleteClientResponse.ofTargets;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 
 @Service
@@ -24,7 +24,7 @@ public class CommentAutoCompleteService {
     private final MeetMemberRepositorySupport memberRepositorySupport;
     private final EntityReader reader;
 
-    public CursorPageResponse<MentionClientResponse> getMeetMembers(Long postId, String keyword, String encodedCursor, int size) {
+    public CursorPageResponse<AutoCompleteClientResponse> getMeetMembers(Long postId, String keyword, String encodedCursor, int size) {
         if (encodedCursor == null || encodedCursor.isEmpty()) {
             Long meetId = getMeetId(postId);
             List<MeetMember> memberFirstPage = memberRepositorySupport.findMemberFirstPage(meetId, keyword, size);
@@ -42,7 +42,7 @@ public class CommentAutoCompleteService {
         return buildCursorPage(size, memberNextPage);
     }
 
-    private CursorPageResponse<MentionClientResponse> buildCursorPage(int size, List<MeetMember> members) {
+    private CursorPageResponse<AutoCompleteClientResponse> buildCursorPage(int size, List<MeetMember> members) {
         boolean hasNext = members.size() > size;
         members = hasNext ? members.subList(0, size) : members;
 
@@ -70,7 +70,7 @@ public class CommentAutoCompleteService {
     }
 
     private void validateCursor(String cursorNickname, Long cursorId) {
-        if (memberRepositorySupport.validateCursor(cursorNickname, cursorId)) {
+        if (memberRepositorySupport.isCursorInvalid(cursorNickname, cursorId)) {
             throw new CursorException(NOT_FOUND_CURSOR);
         }
     }

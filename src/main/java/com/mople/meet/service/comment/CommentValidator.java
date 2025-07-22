@@ -29,7 +29,7 @@ public class CommentValidator {
     private final EntityReader reader;
 
     public void validateCursor(Long cursor) {
-        if (commentRepositorySupport.validCursor(cursor)) {
+        if (commentRepositorySupport.isCursorInvalid(cursor)) {
             throw new CursorException(NOT_FOUND_CURSOR);
         }
     }

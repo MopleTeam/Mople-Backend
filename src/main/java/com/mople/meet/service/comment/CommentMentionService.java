@@ -8,8 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
 
 @Service
@@ -23,7 +22,7 @@ public class CommentMentionService {
     public void createMentions(List<Long> mentions, Long commentId) {
         if (mentions == null || mentions.isEmpty()) return;
 
-        List<Long> distinctMentions = new ArrayList<>(new LinkedHashSet<>(mentions));
+        HashSet<Long> distinctMentions = new HashSet<>(mentions);
 
         for (Long userId : distinctMentions) {
             User mentionedUser = reader.findUser(userId);

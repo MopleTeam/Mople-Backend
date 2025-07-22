@@ -44,7 +44,7 @@ public class MeetMemberRepositorySupport {
                 .fetch();
     }
 
-    public boolean validateCursor(String cursorNickname, Long cursorId) {
+    public boolean isCursorInvalid(String cursorNickname, Long cursorId) {
         QMeetMember member = QMeetMember.meetMember;
 
         return queryFactory

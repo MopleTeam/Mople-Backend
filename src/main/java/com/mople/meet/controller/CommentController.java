@@ -2,7 +2,7 @@ package com.mople.meet.controller;
 
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.CommentClientResponse;
-import com.mople.dto.client.MentionClientResponse;
+import com.mople.dto.client.AutoCompleteClientResponse;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.meet.service.comment.CommentService;
@@ -126,7 +126,7 @@ public class CommentController {
             description = "입력한 키워드에 맞는 모임 멤버 닉네임을 자동 완성합니다."
     )
     @GetMapping("/{postId}/mention")
-    public CursorPageResponse<MentionClientResponse> searchMention(
+    public CursorPageResponse<AutoCompleteClientResponse> searchMention(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
             @RequestParam String keyword,

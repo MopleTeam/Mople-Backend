@@ -60,20 +60,12 @@ public class CommentClientResponse {
     }
 
     private static UserInfo ofWriter(User writer) {
-        return buildUserInfo(writer);
+        return UserInfo.from(writer);
     }
 
     private static List<UserInfo> ofMentions(List<User> mentions) {
         return mentions.stream()
-                .map(CommentClientResponse::buildUserInfo)
+                .map(UserInfo::from)
                 .toList();
-    }
-
-    private static UserInfo buildUserInfo(User user) {
-        return UserInfo.builder()
-                .userId(user.getId())
-                .nickname(user.getNickname())
-                .image(user.getProfileImg())
-                .build();
     }
 }

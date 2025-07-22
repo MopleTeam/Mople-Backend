@@ -2,7 +2,7 @@ package com.mople.meet.service.comment;
 
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.CommentClientResponse;
-import com.mople.dto.client.MentionClientResponse;
+import com.mople.dto.client.AutoCompleteClientResponse;
 import com.mople.dto.request.meet.comment.CommentCreateRequest;
 import com.mople.dto.response.meet.comment.CommentResponse;
 import com.mople.dto.response.meet.comment.CommentUpdateResponse;
@@ -264,7 +264,7 @@ public class CommentService {
     }
 
     @Transactional(readOnly = true)
-    public CursorPageResponse<MentionClientResponse> searchMeetMember(Long userId, Long postId, String keyword, String cursor, int size) {
+    public CursorPageResponse<AutoCompleteClientResponse> searchMeetMember(Long userId, Long postId, String keyword, String cursor, int size) {
         reader.findUser(userId);
         commentValidator.validatePostId(postId);
 
