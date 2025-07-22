@@ -169,7 +169,7 @@ public class CommentService {
         commentRepository.save(comment);
         mentionService.createMentions(request.mentions(), comment.getId());
 
-        parentComment.increaseReplyCount();
+        commentRepository.increaseReplyCount(parentComment.getId());
 
         String postName = getPostName(comment.getPostId());
         commentEventPublisher.publishMentionEvent(null, request.mentions(), comment, postName);
@@ -220,9 +220,11 @@ public class CommentService {
         if (comment.isChildComment()) {
             PlanComment parentComment = reader.findComment(comment.getParentId());
 
-            deleteSingleComment(comment.getId());
-            parentComment.decreaseReplyCount();
-            return;
+            if (parentComment.canDecreaseReplyCount()){
+                deleteSingleComment(comment.getId());
+                commentRepository.decreaseReplyCount(parentComment.getId());
+                return;
+            }
         }
 
         List<Long> replyIds = commentRepository
