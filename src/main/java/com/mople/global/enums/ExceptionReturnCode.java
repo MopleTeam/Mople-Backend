@@ -59,7 +59,7 @@ public enum ExceptionReturnCode {
 
     // cursor
     INVALID_CURSOR("400", "잘못된 커서입니다."),
-    NOT_FOUND_CURSOR("404", "커서를 찾을 수 없습니다."),
+    FAIL_DECODING_CURSOR("400", "커서를 디코딩할 수 없습니다."),
 
     // report
     CURRENT_REPORT("400", "이미 신고가 존재합니다."),

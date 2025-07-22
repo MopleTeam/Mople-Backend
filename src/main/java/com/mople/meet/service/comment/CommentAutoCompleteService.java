@@ -20,6 +20,8 @@ import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 @RequiredArgsConstructor
 public class CommentAutoCompleteService {
 
+    public static final int MEET_MEMBER_CURSOR_FIELD_COUNT = 2;
+
     private final MeetMemberRepositorySupport memberRepositorySupport;
     private final EntityReader reader;
 
@@ -31,11 +33,12 @@ public class CommentAutoCompleteService {
             return buildAutoCompleteCursorPage(size, memberFirstPage);
         }
 
-        String[] decodeParts = CursorUtils.decode(encodedCursor);
-        validateCursor(decodeParts);
+        String[] decodeParts = CursorUtils.decode(encodedCursor, MEET_MEMBER_CURSOR_FIELD_COUNT);
 
         String cursorNickname = decodeParts[0];
         Long cursorId = Long.parseLong(decodeParts[1]);
+
+        validateCursor(cursorNickname, cursorId);
 
         List<MeetMember> memberNextPage = memberRepositorySupport.findMemberAutoCompleteNextPage(postId, keyword, cursorNickname, cursorId, size);
 
@@ -62,22 +65,9 @@ public class CommentAutoCompleteService {
         );
     }
 
-    private void validateCursor(String[] decodeParts) {
-        if (decodeParts.length != 2) {
-            throw new CursorException(INVALID_CURSOR);
-        }
-
-        try {
-            Long.parseLong(decodeParts[1]);
-        } catch (NumberFormatException e) {
-            throw new CursorException(INVALID_CURSOR);
-        }
-
-        String cursorNickname = decodeParts[0];
-        Long cursorId = Long.valueOf(decodeParts[1]);
-
+    private void validateCursor(String cursorNickname, Long cursorId) {
         if (memberRepositorySupport.isCursorInvalid(cursorNickname, cursorId)) {
-            throw new CursorException(NOT_FOUND_CURSOR);
+            throw new CursorException(INVALID_CURSOR);
         }
     }
 }

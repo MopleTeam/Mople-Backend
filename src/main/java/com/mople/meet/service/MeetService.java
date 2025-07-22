@@ -5,11 +5,14 @@ import com.mople.dto.client.MeetClientResponse;
 import com.mople.dto.event.data.meet.MeetJoinEventData;
 import com.mople.dto.request.meet.MeetCreateRequest;
 import com.mople.dto.request.meet.MeetUpdateRequest;
-import com.mople.dto.response.meet.MeetMemberResponse;
+import com.mople.dto.client.MeetMemberClientResponse;
 import com.mople.dto.response.meet.*;
+import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.global.event.data.notify.NotifyEventPublisher;
+import com.mople.global.utils.cursor.CursorUtils;
 import com.mople.meet.reader.EntityReader;
+import com.mople.meet.repository.impl.MeetMemberRepositorySupport;
 import com.mople.meet.repository.impl.MeetRepositorySupport;
 import com.mople.entity.meet.*;
 import com.mople.meet.repository.*;
@@ -27,13 +30,17 @@ import java.util.*;
 
 import static com.mople.dto.client.MeetClientResponse.*;
 import static com.mople.global.enums.ExceptionReturnCode.*;
+import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
 @Service
 public class MeetService {
+    public static final int MEET_MEMBER_CURSOR_FIELD_COUNT = 2;
+
     private final MeetRepository meetRepository;
     private final MeetMemberRepository meetMemberRepository;
     private final MeetInviteRepository meetInviteRepository;
     private final MeetRepositorySupport meetRepositorySupport;
+    private final MeetMemberRepositorySupport meetMemberRepositorySupport;
     private final MeetPlanRepository meetPlanRepository;
     private final PlanReviewRepository reviewRepository;
     private final EntityReader reader;
@@ -47,6 +54,7 @@ public class MeetService {
             MeetMemberRepository meetMemberRepository,
             MeetInviteRepository meetInviteRepository,
             MeetRepositorySupport meetRepositorySupport,
+            MeetMemberRepositorySupport meetMemberRepositorySupport,
             MeetPlanRepository meetPlanRepository,
             PlanReviewRepository reviewRepository,
             EntityReader reader,
@@ -57,6 +65,7 @@ public class MeetService {
         this.meetMemberRepository = meetMemberRepository;
         this.meetInviteRepository = meetInviteRepository;
         this.meetRepositorySupport = meetRepositorySupport;
+        this.meetMemberRepositorySupport = meetMemberRepositorySupport;
         this.meetPlanRepository = meetPlanRepository;
         this.reviewRepository = reviewRepository;
         this.reader = reader;
@@ -119,12 +128,57 @@ public class MeetService {
     }
 
     @Transactional(readOnly = true)
-    public MeetMemberResponse meetMemberList(Long meetId, Long userId) {
-        var meet = meetRepository.findMeetAll(meetId).orElseThrow(
-                () -> new BadRequestException(NOT_FOUND_MEET)
-        );
+    public MeetMemberClientResponse meetMemberList(Long meetId, Long userId, String cursor, int size) {
+        reader.findUser(userId);
+        Meet meet = reader.findMeet(meetId);
+        validateMember(userId, meetId);
 
-        return new MeetMemberResponse(meet);
+        return MeetMemberClientResponse.builder()
+                .creatorId(meet.getCreator().getId())
+                .members(getMemberCursorPage(meet.getId(), cursor, size))
+                .build();
+    }
+
+    private CursorPageResponse<MeetMemberResponse> getMemberCursorPage(Long meetId, String encodedCursor, int size) {
+        if (encodedCursor == null || encodedCursor.isEmpty()) {
+            List<MeetMember> memberFirstPage = meetMemberRepositorySupport.findMemberFirstPage(meetId, size);
+            return buildMemberCursorPage(size, memberFirstPage);
+        }
+
+        String[] decodeParts = CursorUtils.decode(encodedCursor, MEET_MEMBER_CURSOR_FIELD_COUNT);
+
+        String cursorNickname = decodeParts[0];
+        Long cursorId = Long.valueOf(decodeParts[1]);
+
+        validateCursor(cursorNickname, cursorId);
+
+        List<MeetMember> memberNextPage = meetMemberRepositorySupport.findMemberNextPage(meetId, cursorNickname, cursorId, size);
+        return buildMemberCursorPage(size, memberNextPage);
+    }
+
+    private CursorPageResponse<MeetMemberResponse> buildMemberCursorPage(int size, List<MeetMember> members) {
+        return buildCursorPage(
+                members,
+                size,
+                c -> new String[]{
+                        c.getUser().getNickname(),
+                        c.getUser().getId().toString()
+                },
+                MeetMemberResponse::ofMemberList
+        );
+    }
+
+    private void validateMember(Long userId, Long meetId) {
+        Meet meet = reader.findMeet(meetId);
+        if (meet.matchMember(userId)) {
+            throw new BadRequestException(NOT_MEMBER);
+        }
+    }
+
+    private void validateCursor(String cursorNickname, Long cursorId) {
+        if (meetMemberRepositorySupport.isCursorInvalid(cursorNickname, cursorId)) {
+            throw new CursorException(INVALID_CURSOR);
+        }
     }
 
     @Transactional

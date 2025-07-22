@@ -32,6 +32,8 @@ import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 @Service
 @RequiredArgsConstructor
 public class CommentService {
+    public static final int COMMENT_CURSOR_FIELD_COUNT = 1;
+
     private final PlanCommentRepository commentRepository;
     private final CommentRepositorySupport commentRepositorySupport;
     private final CommentReportRepository commentReportRepository;
@@ -61,10 +63,10 @@ public class CommentService {
             return getResponseAddedLikedByMe(userId, commentFirstPage);
         }
 
-        String[] decodeParts = CursorUtils.decode(encodedCursor);
-        commentValidator.validateCursor(decodeParts);
-
+        String[] decodeParts = CursorUtils.decode(encodedCursor, COMMENT_CURSOR_FIELD_COUNT);
         Long cursorId = Long.valueOf(decodeParts[0]);
+
+        commentValidator.validateCursor(cursorId);
 
         List<PlanComment> commentNextPage = commentRepositorySupport.findCommentNextPage(postId, cursorId, size);
         return getResponseAddedLikedByMe(userId, commentNextPage);
@@ -97,10 +99,10 @@ public class CommentService {
             return getResponseAddedLikedByMe(userId, commentReplyFirstPage);
         }
 
-        String[] decodeParts = CursorUtils.decode(encodedCursor);
-        commentValidator.validateCursor(decodeParts);
-
+        String[] decodeParts = CursorUtils.decode(encodedCursor, COMMENT_CURSOR_FIELD_COUNT);
         Long cursorId = Long.valueOf(decodeParts[0]);
+
+        commentValidator.validateCursor(cursorId);
 
         List<PlanComment> commentReplyNextPage = commentRepositorySupport.findCommentReplyNextPage(postId, commentId, cursorId, size);
         return getResponseAddedLikedByMe(userId, commentReplyNextPage);

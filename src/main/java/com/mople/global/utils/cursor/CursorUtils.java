@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-import static com.mople.global.enums.ExceptionReturnCode.INVALID_CURSOR;
+import static com.mople.global.enums.ExceptionReturnCode.FAIL_DECODING_CURSOR;
 
 public class CursorUtils {
 
@@ -47,14 +47,33 @@ public class CursorUtils {
         return String.join(SEPARATOR, parts);
     }
 
-    public static String[] decode(String encodedCursor) {
+    public static String[] decode(String encodedCursor, int targetSize) {
+        if (targetSize <= 0) {
+            throw new CursorException(FAIL_DECODING_CURSOR);
+        }
+
         try {
             byte[] decodedBytes = Base64.getDecoder().decode(encodedCursor);
             String decoded = new String(decodedBytes, StandardCharsets.UTF_8);
 
-            return decoded.split(Pattern.quote(SEPARATOR));
+            String[] decodeParts = decoded.split(Pattern.quote(SEPARATOR));
+            validateCursorFormat(decodeParts, targetSize);
+
+            return decodeParts;
         } catch (Exception e) {
-            throw new CursorException(INVALID_CURSOR);
+            throw new CursorException(FAIL_DECODING_CURSOR);
+        }
+    }
+
+    private static void validateCursorFormat(String[] decodeParts, int targetSize) {
+        if (decodeParts.length != targetSize) {
+            throw new CursorException(FAIL_DECODING_CURSOR);
+        }
+
+        try {
+            Long.parseLong(decodeParts[targetSize - 1]);
+        } catch (NumberFormatException e) {
+            throw new CursorException(FAIL_DECODING_CURSOR);
         }
     }
 }
