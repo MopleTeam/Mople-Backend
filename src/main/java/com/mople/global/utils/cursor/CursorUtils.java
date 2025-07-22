@@ -3,7 +3,6 @@ package com.mople.global.utils.cursor;
 import com.mople.core.exception.custom.CursorException;
 import com.mople.dto.response.pagination.CursorPage;
 import com.mople.dto.response.pagination.CursorPageResponse;
-import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -13,7 +12,6 @@ import java.util.regex.Pattern;
 
 import static com.mople.global.enums.ExceptionReturnCode.INVALID_CURSOR;
 
-@Component
 public class CursorUtils {
 
     private static final String SEPARATOR = "|";

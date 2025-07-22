@@ -13,7 +13,34 @@ import java.util.List;
 public class MeetMemberRepositorySupport {
     private final JPAQueryFactory queryFactory;
 
-    public List<MeetMember> findMemberFirstPage(Long meetId, String keyword, int size) {
+    public List<MeetMember> findMemberFirstPage(Long meetId, int size) {
+        QMeetMember member = QMeetMember.meetMember;
+
+        return queryFactory
+                .selectFrom(member)
+                .where(member.joinMeet.id.eq(meetId))
+                .orderBy(member.user.nickname.asc(), member.id.asc())
+                .limit(size + 1)
+                .fetch();
+    }
+
+    public List<MeetMember> findMemberNextPage(Long meetId, String cursorNickname, Long cursorId, int size) {
+        QMeetMember member = QMeetMember.meetMember;
+
+        return queryFactory
+                .selectFrom(member)
+                .where(
+                        member.joinMeet.id.eq(meetId),
+                        member.user.nickname.gt(cursorNickname)
+                                .or(member.user.nickname.eq(cursorNickname)
+                                        .and(member.id.gt(cursorId)))
+                )
+                .orderBy(member.user.nickname.asc(), member.id.asc())
+                .limit(size + 1)
+                .fetch();
+    }
+
+    public List<MeetMember> findMemberAutoCompleteFirstPage(Long meetId, String keyword, int size) {
         QMeetMember member = QMeetMember.meetMember;
 
         return queryFactory
@@ -27,7 +54,7 @@ public class MeetMemberRepositorySupport {
                 .fetch();
     }
 
-    public List<MeetMember> findMemberNextPage(Long meetId, String keyword, String cursorNickname, Long cursorId, int size) {
+    public List<MeetMember> findMemberAutoCompleteNextPage(Long meetId, String keyword, String cursorNickname, Long cursorId, int size) {
         QMeetMember member = QMeetMember.meetMember;
 
         return queryFactory
@@ -44,7 +71,7 @@ public class MeetMemberRepositorySupport {
                 .fetch();
     }
 
-    public boolean validateCursor(String cursorNickname, Long cursorId) {
+    public boolean isCursorInvalid(String cursorNickname, Long cursorId) {
         QMeetMember member = QMeetMember.meetMember;
 
         return queryFactory

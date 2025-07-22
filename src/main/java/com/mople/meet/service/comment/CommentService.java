@@ -2,7 +2,7 @@ package com.mople.meet.service.comment;
 
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.CommentClientResponse;
-import com.mople.dto.client.CommentAutoCompleteClientResponse;
+import com.mople.dto.client.AutoCompleteClientResponse;
 import com.mople.dto.request.meet.comment.CommentCreateRequest;
 import com.mople.dto.response.meet.comment.CommentResponse;
 import com.mople.dto.response.meet.comment.CommentUpdateResponse;
@@ -169,7 +169,7 @@ public class CommentService {
         commentRepository.save(comment);
         mentionService.createMentions(request.mentions(), comment.getId());
 
-        parentComment.increaseReplyCount();
+        commentRepository.increaseReplyCount(parentComment.getId());
 
         String postName = getPostName(comment.getPostId());
         commentEventPublisher.publishMentionEvent(null, request.mentions(), comment, postName);
@@ -220,9 +220,11 @@ public class CommentService {
         if (comment.isChildComment()) {
             PlanComment parentComment = reader.findComment(comment.getParentId());
 
-            deleteSingleComment(comment.getId());
-            parentComment.decreaseReplyCount();
-            return;
+            if (parentComment.canDecreaseReplyCount()){
+                deleteSingleComment(comment.getId());
+                commentRepository.decreaseReplyCount(parentComment.getId());
+                return;
+            }
         }
 
         List<Long> replyIds = commentRepository
@@ -264,7 +266,7 @@ public class CommentService {
     }
 
     @Transactional(readOnly = true)
-    public CursorPageResponse<CommentAutoCompleteClientResponse> searchMeetMember(Long userId, Long postId, String keyword, String cursor, int size) {
+    public CursorPageResponse<AutoCompleteClientResponse> searchMeetMember(Long userId, Long postId, String keyword, String cursor, int size) {
         reader.findUser(userId);
         commentValidator.validatePostId(postId);
 

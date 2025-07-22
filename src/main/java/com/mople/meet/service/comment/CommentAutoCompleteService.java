@@ -2,7 +2,7 @@ package com.mople.meet.service.comment;
 
 import com.mople.core.exception.custom.CursorException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
-import com.mople.dto.client.CommentAutoCompleteClientResponse;
+import com.mople.dto.client.AutoCompleteClientResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.entity.meet.MeetMember;
 import com.mople.global.utils.cursor.CursorUtils;
@@ -23,12 +23,12 @@ public class CommentAutoCompleteService {
     private final MeetMemberRepositorySupport memberRepositorySupport;
     private final EntityReader reader;
 
-    public CursorPageResponse<CommentAutoCompleteClientResponse> getMeetMembers(Long postId, String keyword, String encodedCursor, int size) {
+    public CursorPageResponse<AutoCompleteClientResponse> getMeetMembers(Long postId, String keyword, String encodedCursor, int size) {
         if (encodedCursor == null || encodedCursor.isEmpty()) {
             Long meetId = getMeetId(postId);
             List<MeetMember> memberFirstPage = memberRepositorySupport.findMemberAutoCompleteFirstPage(meetId, keyword, size);
 
-            return buildCommentAutoCompleteCursorPage(size, memberFirstPage);
+            return buildAutoCompleteCursorPage(size, memberFirstPage);
         }
 
         String[] decodeParts = CursorUtils.decode(encodedCursor);
@@ -39,7 +39,7 @@ public class CommentAutoCompleteService {
 
         List<MeetMember> memberNextPage = memberRepositorySupport.findMemberAutoCompleteNextPage(postId, keyword, cursorNickname, cursorId, size);
 
-        return buildCommentAutoCompleteCursorPage(size, memberNextPage);
+        return buildAutoCompleteCursorPage(size, memberNextPage);
     }
 
     private Long getMeetId(Long postId) {
@@ -50,15 +50,15 @@ public class CommentAutoCompleteService {
         }
     }
 
-    private CursorPageResponse<CommentAutoCompleteClientResponse> buildCommentAutoCompleteCursorPage(int size, List<MeetMember> memberNextPage) {
+    private CursorPageResponse<AutoCompleteClientResponse> buildAutoCompleteCursorPage(int size, List<MeetMember> memberNextPage) {
         return buildCursorPage(
                 memberNextPage,
                 size,
                 c -> new String[]{
-                        c.getUser().getNickname(), 
+                        c.getUser().getNickname(),
                         c.getUser().getId().toString()
                 },
-                CommentAutoCompleteClientResponse::ofTargets
+                AutoCompleteClientResponse::ofTargets
         );
     }
 
@@ -76,7 +76,7 @@ public class CommentAutoCompleteService {
         String cursorNickname = decodeParts[0];
         Long cursorId = Long.valueOf(decodeParts[1]);
 
-        if (memberRepositorySupport.validateCursor(cursorNickname, cursorId)) {
+        if (memberRepositorySupport.isCursorInvalid(cursorNickname, cursorId)) {
             throw new CursorException(NOT_FOUND_CURSOR);
         }
     }

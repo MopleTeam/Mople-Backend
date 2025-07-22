@@ -28,7 +28,7 @@ public class CommentValidator {
     private final CommentRepositorySupport commentRepositorySupport;
     private final EntityReader reader;
 
-    public void validateCursor(String[] decodeParts) {
+     public void validateCursor(String[] decodeParts) {
         if (decodeParts.length != 1) {
             throw new CursorException(INVALID_CURSOR);
         }
@@ -41,7 +41,7 @@ public class CommentValidator {
 
         Long cursorId = Long.valueOf(decodeParts[0]);
 
-        if (commentRepositorySupport.validateCursor(cursorId)) {
+        if (commentRepositorySupport.isCursorInvalid(cursorId)) {
             throw new CursorException(NOT_FOUND_CURSOR);
         }
     }
