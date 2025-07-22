@@ -107,7 +107,7 @@ public class CommentRepositorySupport {
         return result == null ? 0 : result.intValue();
     }
 
-    public boolean validCursor(Long cursorId) {
+    public boolean validateCursor(Long cursorId) {
         QPlanComment comment = QPlanComment.planComment;
 
         return queryFactory

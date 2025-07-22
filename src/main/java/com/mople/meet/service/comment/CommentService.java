@@ -2,12 +2,11 @@ package com.mople.meet.service.comment;
 
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.CommentClientResponse;
-import com.mople.dto.client.MentionClientResponse;
+import com.mople.dto.client.CommentAutoCompleteClientResponse;
 import com.mople.dto.request.meet.comment.CommentCreateRequest;
 import com.mople.dto.response.meet.comment.CommentResponse;
 import com.mople.dto.response.meet.comment.CommentUpdateResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
-import com.mople.dto.response.pagination.CursorPage;
 import com.mople.entity.meet.comment.CommentReport;
 import com.mople.entity.meet.comment.PlanComment;
 import com.mople.entity.user.User;
@@ -28,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 import static com.mople.dto.client.CommentClientResponse.*;
+import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
 @Service
 @RequiredArgsConstructor
@@ -51,7 +51,8 @@ public class CommentService {
         commentValidator.validateMember(userId, postId);
 
         List<CommentResponse> commentResponses = getComments(userId, postId, cursor, size);
-        return buildCursorPage(size, commentResponses);
+
+        return buildCommentCursorPage(size, commentResponses);
     }
 
     private List<CommentResponse> getComments(Long userId, Long postId, String encodedCursor, int size) {
@@ -60,10 +61,12 @@ public class CommentService {
             return getResponseAddedLikedByMe(userId, commentFirstPage);
         }
 
-        Long cursor = Long.valueOf(CursorUtils.decode(encodedCursor));
-        commentValidator.validateCursor(cursor);
+        String[] decodeParts = CursorUtils.decode(encodedCursor);
+        commentValidator.validateCursor(decodeParts);
 
-        List<PlanComment> commentNextPage = commentRepositorySupport.findCommentNextPage(postId, cursor, size);
+        Long cursorId = Long.valueOf(decodeParts[0]);
+
+        List<PlanComment> commentNextPage = commentRepositorySupport.findCommentNextPage(postId, cursorId, size);
         return getResponseAddedLikedByMe(userId, commentNextPage);
     }
 
@@ -73,7 +76,19 @@ public class CommentService {
         commentValidator.validateMember(userId, postId);
 
         List<CommentResponse> commentResponses = getCommentReplies(userId, postId, commentId, cursor, size);
-        return buildCursorPage(size, commentResponses);
+
+        return buildCommentCursorPage(size, commentResponses);
+    }
+
+    private CursorPageResponse<CommentClientResponse> buildCommentCursorPage(int size, List<CommentResponse> commentResponses) {
+        return buildCursorPage(
+                commentResponses,
+                size,
+                c -> new String[]{
+                        c.commentId().toString()
+                },
+                CommentClientResponse::ofComments
+        );
     }
 
     private List<CommentResponse> getCommentReplies(Long userId, Long postId, Long commentId, String encodedCursor, int size) {
@@ -82,10 +97,12 @@ public class CommentService {
             return getResponseAddedLikedByMe(userId, commentReplyFirstPage);
         }
 
-        Long cursor = Long.valueOf(CursorUtils.decode(encodedCursor));
-        commentValidator.validateCursor(cursor);
+        String[] decodeParts = CursorUtils.decode(encodedCursor);
+        commentValidator.validateCursor(decodeParts);
 
-        List<PlanComment> commentReplyNextPage = commentRepositorySupport.findCommentReplyNextPage(postId, commentId, cursor, size);
+        Long cursorId = Long.valueOf(decodeParts[0]);
+
+        List<PlanComment> commentReplyNextPage = commentRepositorySupport.findCommentReplyNextPage(postId, commentId, cursorId, size);
         return getResponseAddedLikedByMe(userId, commentReplyNextPage);
     }
 
@@ -103,23 +120,6 @@ public class CommentService {
                         likedCommentIds.contains(comment.getId())
                 ))
                 .toList();
-    }
-
-    private CursorPageResponse<CommentClientResponse> buildCursorPage(int size, List<CommentResponse> commentResponses) {
-        boolean hasNext = commentResponses.size() > size;
-        commentResponses = hasNext ? commentResponses.subList(0, size) : commentResponses;
-
-        String nextCursor = hasNext && !commentResponses.isEmpty()
-                ? CursorUtils.encode(commentResponses.get(commentResponses.size() - 1).commentId().toString())
-                : null;
-
-        CursorPage page = CursorPage.builder()
-                .nextCursor(nextCursor)
-                .hasNext(hasNext)
-                .size(commentResponses.size())
-                .build();
-
-        return CursorPageResponse.of(ofComments(commentResponses), page);
     }
 
     @Transactional
@@ -264,7 +264,7 @@ public class CommentService {
     }
 
     @Transactional(readOnly = true)
-    public CursorPageResponse<MentionClientResponse> searchMeetMember(Long userId, Long postId, String keyword, String cursor, int size) {
+    public CursorPageResponse<CommentAutoCompleteClientResponse> searchMeetMember(Long userId, Long postId, String keyword, String cursor, int size) {
         reader.findUser(userId);
         commentValidator.validatePostId(postId);
 

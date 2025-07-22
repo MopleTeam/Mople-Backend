@@ -9,15 +9,15 @@ import java.util.List;
 
 @Getter
 @Builder
-public class MentionClientResponse {
+public class CommentAutoCompleteClientResponse {
     private final UserInfo user;
 
-    public static List<MentionClientResponse> ofTargets(List<MeetMember> members){
-        return members.stream().map(MentionClientResponse::ofTarget).toList();
+    public static List<CommentAutoCompleteClientResponse> ofTargets(List<MeetMember> members){
+        return members.stream().map(CommentAutoCompleteClientResponse::ofTarget).toList();
     }
 
-    public static MentionClientResponse ofTarget(MeetMember member){
-        return MentionClientResponse.builder()
+    private static CommentAutoCompleteClientResponse ofTarget(MeetMember member){
+        return CommentAutoCompleteClientResponse.builder()
                 .user(
                         UserInfo.builder()
                                 .userId(member.getUser().getId())
