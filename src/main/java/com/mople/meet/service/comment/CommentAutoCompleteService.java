@@ -25,12 +25,10 @@ public class CommentAutoCompleteService {
     private final MeetMemberRepositorySupport memberRepositorySupport;
     private final EntityReader reader;
 
-    public CursorPageResponse<AutoCompleteClientResponse> getMeetMembers(Long postId, String keyword, String encodedCursor, int size) {
+    public List<MeetMember> getMeetMembers(Long postId, String keyword, String encodedCursor, int size) {
         if (encodedCursor == null || encodedCursor.isEmpty()) {
             Long meetId = getMeetId(postId);
-            List<MeetMember> memberFirstPage = memberRepositorySupport.findMemberAutoCompleteFirstPage(meetId, keyword, size);
-
-            return buildAutoCompleteCursorPage(size, memberFirstPage);
+            return memberRepositorySupport.findMemberAutoCompleteFirstPage(meetId, keyword, size);
         }
 
         String[] decodeParts = CursorUtils.decode(encodedCursor, MEET_MEMBER_CURSOR_FIELD_COUNT);
@@ -40,9 +38,7 @@ public class CommentAutoCompleteService {
 
         validateCursor(cursorNickname, cursorId);
 
-        List<MeetMember> memberNextPage = memberRepositorySupport.findMemberAutoCompleteNextPage(postId, keyword, cursorNickname, cursorId, size);
-
-        return buildAutoCompleteCursorPage(size, memberNextPage);
+        return memberRepositorySupport.findMemberAutoCompleteNextPage(postId, keyword, cursorNickname, cursorId, size);
     }
 
     private Long getMeetId(Long postId) {
@@ -53,7 +49,7 @@ public class CommentAutoCompleteService {
         }
     }
 
-    private CursorPageResponse<AutoCompleteClientResponse> buildAutoCompleteCursorPage(int size, List<MeetMember> memberNextPage) {
+    public CursorPageResponse<AutoCompleteClientResponse> buildAutoCompleteCursorPage(int size, List<MeetMember> memberNextPage) {
         return buildCursorPage(
                 memberNextPage,
                 size,

@@ -3,6 +3,7 @@ package com.mople.meet.controller;
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.CommentClientResponse;
 import com.mople.dto.client.AutoCompleteClientResponse;
+import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.meet.service.comment.CommentService;
@@ -35,10 +36,9 @@ public class CommentController {
     public ResponseEntity<CursorPageResponse<CommentClientResponse>> commentList(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
-            @RequestParam(required = false) String cursor,
-            @RequestParam(defaultValue = "10") int size
+            @Valid CursorPageRequest request
     ) {
-        return ResponseEntity.ok(commentService.getCommentList(user.id(), postId, cursor, size));
+        return ResponseEntity.ok(commentService.getCommentList(user.id(), postId, request));
     }
 
     @Operation(
@@ -50,10 +50,9 @@ public class CommentController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
             @PathVariable Long commentId,
-            @RequestParam(required = false) String cursor,
-            @RequestParam(defaultValue = "10") int size
+            @Valid CursorPageRequest request
     ) {
-        return ResponseEntity.ok(commentService.getCommentReplyList(user.id(), postId, commentId, cursor, size));
+        return ResponseEntity.ok(commentService.getCommentReplyList(user.id(), postId, commentId, request));
     }
 
     @Operation(
@@ -130,10 +129,9 @@ public class CommentController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
             @RequestParam String keyword,
-            @RequestParam(required = false) String cursor,
-            @RequestParam(defaultValue = "10") int size
+            @Valid CursorPageRequest request
     ) {
-        return commentService.searchMeetMember(user.id(), postId, keyword, cursor, size);
+        return commentService.searchMeetMember(user.id(), postId, keyword, request);
     }
 
     @Operation(

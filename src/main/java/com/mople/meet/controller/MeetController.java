@@ -4,6 +4,7 @@ import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.MeetClientResponse;
 import com.mople.dto.request.meet.MeetCreateRequest;
 import com.mople.dto.request.meet.MeetUpdateRequest;
+import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.client.MeetMemberClientResponse;
 import com.mople.meet.service.MeetService;
@@ -12,8 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
@@ -84,10 +84,9 @@ public class MeetController {
     public ResponseEntity<MeetMemberClientResponse> getMeetMembers(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long meetId,
-            @RequestParam(required = false) String cursor,
-            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size
+            @Valid CursorPageRequest request
     ) {
-        return ResponseEntity.ok(meetService.meetMemberList(meetId, user.id(), cursor, size));
+        return ResponseEntity.ok(meetService.meetMemberList(meetId, user.id(), request));
     }
 
     @Operation(

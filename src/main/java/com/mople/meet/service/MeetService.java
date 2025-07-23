@@ -1,13 +1,17 @@
 package com.mople.meet.service;
 
 import com.mople.core.exception.custom.*;
+import com.mople.dto.client.CommentClientResponse;
 import com.mople.dto.client.MeetClientResponse;
 import com.mople.dto.event.data.meet.MeetJoinEventData;
 import com.mople.dto.request.meet.MeetCreateRequest;
 import com.mople.dto.request.meet.MeetUpdateRequest;
 import com.mople.dto.client.MeetMemberClientResponse;
+import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.meet.*;
+import com.mople.dto.response.meet.comment.CommentResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
+import com.mople.entity.meet.comment.PlanComment;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.global.event.data.notify.NotifyEventPublisher;
 import com.mople.global.utils.cursor.CursorUtils;
@@ -128,21 +132,23 @@ public class MeetService {
     }
 
     @Transactional(readOnly = true)
-    public MeetMemberClientResponse meetMemberList(Long meetId, Long userId, String cursor, int size) {
+    public MeetMemberClientResponse meetMemberList(Long meetId, Long userId, CursorPageRequest request) {
         reader.findUser(userId);
         Meet meet = reader.findMeet(meetId);
         validateMember(userId, meetId);
 
+        int size = request.getSafeSize();
+        List<MeetMember> meetMembers = getMeetMembers(meet.getId(), request.cursor(), size);
+
         return MeetMemberClientResponse.builder()
                 .creatorId(meet.getCreator().getId())
-                .members(getMemberCursorPage(meet.getId(), cursor, size))
+                .members(buildMemberCursorPage(size, meetMembers))
                 .build();
     }
 
-    private CursorPageResponse<MeetMemberResponse> getMemberCursorPage(Long meetId, String encodedCursor, int size) {
+    private List<MeetMember> getMeetMembers(Long meetId, String encodedCursor, int size) {
         if (encodedCursor == null || encodedCursor.isEmpty()) {
-            List<MeetMember> memberFirstPage = meetMemberRepositorySupport.findMemberFirstPage(meetId, size);
-            return buildMemberCursorPage(size, memberFirstPage);
+            return meetMemberRepositorySupport.findMemberFirstPage(meetId, size);
         }
 
         String[] decodeParts = CursorUtils.decode(encodedCursor, MEET_MEMBER_CURSOR_FIELD_COUNT);
@@ -152,8 +158,7 @@ public class MeetService {
 
         validateCursor(cursorNickname, cursorId);
 
-        List<MeetMember> memberNextPage = meetMemberRepositorySupport.findMemberNextPage(meetId, cursorNickname, cursorId, size);
-        return buildMemberCursorPage(size, memberNextPage);
+        return meetMemberRepositorySupport.findMemberNextPage(meetId, cursorNickname, cursorId, size);
     }
 
     private CursorPageResponse<MeetMemberResponse> buildMemberCursorPage(int size, List<MeetMember> members) {
