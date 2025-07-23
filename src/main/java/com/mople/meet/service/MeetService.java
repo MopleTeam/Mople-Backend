@@ -30,6 +30,7 @@ import org.springframework.ui.Model;
 import java.util.*;
 
 import static com.mople.dto.client.MeetClientResponse.*;
+import static com.mople.dto.client.MeetMemberClientResponse.ofMembers;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
@@ -176,10 +177,10 @@ public class MeetService {
         int size = request.getSafeSize();
         List<MeetMember> meetMembers = getMeetMembers(meet.getId(), request.cursor(), size);
 
-        return MeetMemberClientResponse.builder()
-                .creatorId(meet.getCreator().getId())
-                .members(buildMemberCursorPage(size, meetMembers))
-                .build();
+        return ofMembers(
+                meet.getCreator().getId(),
+                buildMemberCursorPage(size, meetMembers)
+        );
     }
 
     private List<MeetMember> getMeetMembers(Long meetId, String encodedCursor, int size) {

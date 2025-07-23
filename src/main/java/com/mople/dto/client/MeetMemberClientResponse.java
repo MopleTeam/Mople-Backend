@@ -17,6 +17,5 @@ public class MeetMemberClientResponse {
                 .creatorId(creatorId)
                 .members(members)
                 .build();
-
     }
 }
