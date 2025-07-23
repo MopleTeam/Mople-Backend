@@ -74,7 +74,7 @@ public class MeetController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long meetId
     ) {
-        return ResponseEntity.ok(meetService.getMeetDetail(meetId, user.id()));
+        return ResponseEntity.ok(meetService.getMeetDetail(user.id(), meetId));
     }
 
     @Operation(
@@ -87,7 +87,7 @@ public class MeetController {
             @PathVariable Long meetId,
             @ParameterObject @Valid CursorPageRequest request
     ) {
-        return ResponseEntity.ok(meetService.meetMemberList(meetId, user.id(), request));
+        return ResponseEntity.ok(meetService.meetMemberList(user.id(), meetId, request));
     }
 
     @Operation(
@@ -99,7 +99,7 @@ public class MeetController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long meetId
     ) {
-        meetService.removeMeet(meetId, user.id());
+        meetService.removeMeet(user.id(), meetId);
         return ResponseEntity.ok().build();
     }
 

@@ -55,7 +55,7 @@ public class CommentAutoCompleteService {
                 size,
                 c -> new String[]{
                         c.getUser().getNickname(),
-                        c.getUser().getId().toString()
+                        c.getId().toString()
                 },
                 AutoCompleteClientResponse::ofTargets
         );

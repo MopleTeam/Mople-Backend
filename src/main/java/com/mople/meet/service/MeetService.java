@@ -158,7 +158,7 @@ public class MeetService {
     }
 
     @Transactional(readOnly = true)
-    public MeetClientResponse getMeetDetail(Long meetId, Long userId) {
+    public MeetClientResponse getMeetDetail(Long userId, Long meetId) {
         var meet = reader.findMeet(meetId);
 
         if (meet.matchMember(userId)) {
@@ -169,7 +169,7 @@ public class MeetService {
     }
 
     @Transactional(readOnly = true)
-    public MeetMemberClientResponse meetMemberList(Long meetId, Long userId, CursorPageRequest request) {
+    public MeetMemberClientResponse meetMemberList(Long userId, Long meetId, CursorPageRequest request) {
         reader.findUser(userId);
         Meet meet = reader.findMeet(meetId);
         validateMember(userId, meetId);
@@ -204,7 +204,7 @@ public class MeetService {
                 size,
                 c -> new String[]{
                         c.getUser().getNickname(),
-                        c.getUser().getId().toString()
+                        c.getId().toString()
                 },
                 MeetMemberResponse::ofMemberList
         );
@@ -224,7 +224,7 @@ public class MeetService {
     }
 
     @Transactional
-    public void removeMeet(Long meetId, Long userId) {
+    public void removeMeet(Long userId, Long meetId) {
         var meet = reader.findMeet(meetId);
 
         if (meet.matchCreator(userId)) {
