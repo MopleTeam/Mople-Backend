@@ -5,6 +5,7 @@ import com.mople.core.exception.custom.BadRequestException;
 import com.mople.core.exception.custom.CursorException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.PlanClientResponse;
+import com.mople.dto.client.PlanParticipantClientResponse;
 import com.mople.dto.event.data.plan.PlanCreateEventData;
 import com.mople.dto.event.data.plan.PlanDeleteEventData;
 import com.mople.dto.event.data.plan.PlanUpdateEventData;
@@ -28,6 +29,7 @@ import com.mople.meet.mapper.PlanMapper;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.MeetTimeRepository;
 import com.mople.meet.repository.impl.comment.CommentRepositorySupport;
+import com.mople.meet.repository.impl.plan.ParticipantRepositorySupport;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.meet.repository.impl.plan.PlanRepositorySupport;
 import com.mople.meet.repository.plan.PlanParticipantRepository;
@@ -53,6 +55,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static com.mople.dto.client.PlanClientResponse.*;
+import static com.mople.dto.client.PlanParticipantClientResponse.ofParticipants;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
@@ -63,11 +66,13 @@ public class PlanService {
 
     private static final int PLAN_HOME_VIEW_SIZE = 5;
     private static final int PLAN_CURSOR_FIELD_COUNT = 1;
+    public static final int PLAN_PARTICIPANT_CURSOR_FIELD_COUNT = 2;
 
     private final WeatherService weatherService;
     private final MeetPlanRepository meetPlanRepository;
     private final PlanReportRepository planReportRepository;
     private final PlanParticipantRepository planParticipantRepository;
+    private final ParticipantRepositorySupport participantRepositorySupport;
     private final PlanRepositorySupport planRepositorySupport;
     private final MeetTimeRepository timeRepository;
     private final CommentRepositorySupport commentRepositorySupport;
@@ -240,7 +245,7 @@ public class PlanService {
 
     @Transactional(readOnly = true)
     public CursorPageResponse<PlanClientResponse> getPlanList(Long userId, Long meetId, CursorPageRequest request) {
-        validateMember(meetId, userId);
+        validateMemberByMeetId(userId, meetId);
 
         int size = request.getSafeSize();
         List<PlanListResponse> plans = getPlans(userId, meetId, request.cursor(), size);
@@ -248,7 +253,7 @@ public class PlanService {
         return buildPlanCursorPage(size, plans);
     }
 
-    private void validateMember(Long meetId, Long userId) {
+    private void validateMemberByMeetId(Long userId, Long meetId) {
         User user = reader.findUser(userId);
         Meet meet = reader.findMeet(meetId);
 
@@ -265,12 +270,12 @@ public class PlanService {
         String[] decodeParts = CursorUtils.decode(encodedCursor, PLAN_CURSOR_FIELD_COUNT);
         Long cursorId = Long.valueOf(decodeParts[0]);
 
-        validateCursor(cursorId);
+        validatePlanCursor(cursorId);
 
         return planRepositorySupport.findPlanNextPage(userId, meetId, cursorId, size);
     }
 
-    private void validateCursor(Long cursorId) {
+    private void validatePlanCursor(Long cursorId) {
         if (planRepositorySupport.isCursorInvalid(cursorId)) {
             throw new CursorException(INVALID_CURSOR);
         }
@@ -309,12 +314,59 @@ public class PlanService {
     }
 
     @Transactional(readOnly = true)
-    public PlanParticipantResponse getParticipantList(Long planId) {
-        MeetPlan plan = meetPlanRepository.findPlanAll(planId).orElseThrow(
-                () -> new BadRequestException(NOT_FOUND_PLAN)
-        );
+    public PlanParticipantClientResponse getParticipantList(Long userId, Long planId, CursorPageRequest request) {
+        MeetPlan plan = reader.findPlan(planId);
+        validateMemberByPlanId(userId, planId);
 
-        return new PlanParticipantResponse(plan);
+        int size = request.getSafeSize();
+        List<PlanParticipant> participants = getPlanParticipants(planId, request.cursor(), size);
+
+        return ofParticipants(
+                plan.getCreator().getId(),
+                buildParticipantCursorPage(size, participants)
+        );
+    }
+
+    private List<PlanParticipant> getPlanParticipants(Long planId, String encodedCursor, int size) {
+        if (encodedCursor == null || encodedCursor.isEmpty()) {
+            return participantRepositorySupport.findParticipantFirstPage(planId, size);
+        }
+
+        String[] decodeParts = CursorUtils.decode(encodedCursor, PLAN_PARTICIPANT_CURSOR_FIELD_COUNT);
+
+        String cursorNickname = decodeParts[0];
+        Long cursorId = Long.valueOf(decodeParts[1]);
+
+        validateParticipantCursor(cursorNickname, cursorId);
+
+        return participantRepositorySupport.findParticipantNextPage(planId, cursorNickname, cursorId, size);
+    }
+
+    private CursorPageResponse<PlanParticipantResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants) {
+        return buildCursorPage(
+                participants,
+                size,
+                c -> new String[]{
+                        c.getUser().getNickname(),
+                        c.getId().toString()
+                },
+                PlanParticipantResponse::ofParticipantList
+        );
+    }
+
+    private void validateMemberByPlanId(Long userId, Long planId) {
+        User user = reader.findUser(userId);
+        MeetPlan plan = reader.findPlan(planId);
+
+        if (plan.getMeet().matchMember(user.getId())) {
+            throw new BadRequestException(NOT_MEMBER);
+        }
+    }
+
+    private void validateParticipantCursor(String cursorNickname, Long cursorId) {
+        if (participantRepositorySupport.isCursorInvalid(cursorNickname, cursorId)) {
+            throw new CursorException(INVALID_CURSOR);
+        }
     }
 
     @Transactional
