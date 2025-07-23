@@ -34,7 +34,7 @@ import java.util.List;
 public class PlanRepositorySupport {
     private final JPAQueryFactory queryFactory;
 
-    public List<PlanViewResponse> findHomeViewPlan(Long userId) {
+    public List<PlanViewResponse> findHomeViewPlan(Long userId, int size) {
         QMeetPlan plan = QMeetPlan.meetPlan;
         QMeet meet = QMeet.meet;
         QPlanParticipant participant = QPlanParticipant.planParticipant;
@@ -71,7 +71,7 @@ public class PlanRepositorySupport {
                                 LocalDateTime.class, Ops.DateTimeOps.CURRENT_TIMESTAMP))
                 )
                 .orderBy(plan.planTime.asc())
-                .limit(5)
+                .limit(size)
                 .fetch();
     }
 

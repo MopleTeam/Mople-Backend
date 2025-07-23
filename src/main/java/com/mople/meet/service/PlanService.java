@@ -53,6 +53,9 @@ import static com.mople.global.enums.ExceptionReturnCode.*;
 @Service
 @RequiredArgsConstructor
 public class PlanService {
+
+    private static final int PLAN_HOME_VIEW_SIZE = 5;
+
     private final WeatherService weatherService;
     private final MeetPlanRepository meetPlanRepository;
     private final PlanReportRepository planReportRepository;
@@ -70,7 +73,7 @@ public class PlanService {
 
     @Transactional(readOnly = true)
     public PlanHomeViewResponse getPlanView(Long userId) {
-        return new PlanHomeViewResponse(ofViews(planRepositorySupport.findHomeViewPlan(userId)), reader.findMeetListUseMember(userId));
+        return new PlanHomeViewResponse(ofViews(planRepositorySupport.findHomeViewPlan(userId, PLAN_HOME_VIEW_SIZE)), reader.findMeetListUseMember(userId));
     }
 
     @Transactional
