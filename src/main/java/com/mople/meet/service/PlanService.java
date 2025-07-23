@@ -66,7 +66,7 @@ public class PlanService {
 
     private static final int PLAN_HOME_VIEW_SIZE = 5;
     private static final int PLAN_CURSOR_FIELD_COUNT = 1;
-    public static final int PLAN_PARTICIPANT_CURSOR_FIELD_COUNT = 2;
+    private static final int PLAN_PARTICIPANT_CURSOR_FIELD_COUNT = 2;
 
     private final WeatherService weatherService;
     private final MeetPlanRepository meetPlanRepository;
@@ -329,7 +329,7 @@ public class PlanService {
 
     private List<PlanParticipant> getPlanParticipants(Long planId, String encodedCursor, int size) {
         if (encodedCursor == null || encodedCursor.isEmpty()) {
-            return participantRepositorySupport.findParticipantFirstPage(planId, size);
+            return participantRepositorySupport.findPlanParticipantFirstPage(planId, size);
         }
 
         String[] decodeParts = CursorUtils.decode(encodedCursor, PLAN_PARTICIPANT_CURSOR_FIELD_COUNT);
@@ -339,7 +339,7 @@ public class PlanService {
 
         validateParticipantCursor(cursorNickname, cursorId);
 
-        return participantRepositorySupport.findParticipantNextPage(planId, cursorNickname, cursorId, size);
+        return participantRepositorySupport.findPlanParticipantNextPage(planId, cursorNickname, cursorId, size);
     }
 
     private CursorPageResponse<PlanParticipantResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants) {

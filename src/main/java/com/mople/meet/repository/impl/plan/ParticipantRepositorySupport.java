@@ -13,7 +13,7 @@ import java.util.List;
 public class ParticipantRepositorySupport {
     private final JPAQueryFactory queryFactory;
 
-    public List<PlanParticipant> findParticipantFirstPage(Long planId, int size) {
+    public List<PlanParticipant> findPlanParticipantFirstPage(Long planId, int size) {
         QPlanParticipant participant = QPlanParticipant.planParticipant;
 
         return queryFactory
@@ -24,13 +24,40 @@ public class ParticipantRepositorySupport {
                 .fetch();
     }
 
-    public List<PlanParticipant> findParticipantNextPage(Long planId, String cursorNickname, Long cursorId, int size) {
+    public List<PlanParticipant> findPlanParticipantNextPage(Long planId, String cursorNickname, Long cursorId, int size) {
         QPlanParticipant participant = QPlanParticipant.planParticipant;
 
         return queryFactory
                 .selectFrom(participant)
                 .where(
                         participant.plan.id.eq(planId),
+                        participant.user.nickname.gt(cursorNickname)
+                                .or(participant.user.nickname.eq(cursorNickname)
+                                        .and(participant.id.gt(cursorId)))
+                )
+                .orderBy(participant.user.nickname.asc(), participant.id.asc())
+                .limit(size + 1)
+                .fetch();
+    }
+
+    public List<PlanParticipant> findReviewParticipantFirstPage(Long reviewId, int size) {
+        QPlanParticipant participant = QPlanParticipant.planParticipant;
+
+        return queryFactory
+                .selectFrom(participant)
+                .where(participant.review.id.eq(reviewId))
+                .orderBy(participant.user.nickname.asc(), participant.id.asc())
+                .limit(size + 1)
+                .fetch();
+    }
+
+    public List<PlanParticipant> findReviewParticipantNextPage(Long reviewId, String cursorNickname, Long cursorId, int size) {
+        QPlanParticipant participant = QPlanParticipant.planParticipant;
+
+        return queryFactory
+                .selectFrom(participant)
+                .where(
+                        participant.review.id.eq(reviewId),
                         participant.user.nickname.gt(cursorNickname)
                                 .or(participant.user.nickname.eq(cursorNickname)
                                         .and(participant.id.gt(cursorId)))

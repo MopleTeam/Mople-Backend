@@ -4,6 +4,7 @@ import com.mople.core.exception.custom.BadRequestException;
 import com.mople.core.exception.custom.CursorException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.ReviewClientResponse;
+import com.mople.dto.client.ReviewParticipantClientResponse;
 import com.mople.dto.event.data.review.ReviewUpdateEventData;
 import com.mople.dto.request.meet.review.ReviewImageDeleteRequest;
 import com.mople.dto.request.meet.review.ReviewReportRequest;
@@ -13,6 +14,7 @@ import com.mople.dto.response.meet.review.ReviewImageListResponse;
 import com.mople.dto.response.meet.review.ReviewParticipantResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.entity.meet.Meet;
+import com.mople.entity.meet.plan.PlanParticipant;
 import com.mople.entity.meet.review.PlanReview;
 import com.mople.entity.meet.review.ReviewImage;
 import com.mople.entity.meet.review.ReviewReport;
@@ -24,6 +26,7 @@ import com.mople.image.service.ImageService;
 import com.mople.meet.mapper.ReviewMapper;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.impl.comment.CommentRepositorySupport;
+import com.mople.meet.repository.impl.plan.ParticipantRepositorySupport;
 import com.mople.meet.repository.impl.review.ReviewRepositorySupport;
 import com.mople.meet.repository.review.PlanReviewRepository;
 import com.mople.meet.repository.review.ReviewImageRepository;
@@ -42,6 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 import static com.mople.dto.client.ReviewClientResponse.*;
+import static com.mople.dto.client.ReviewParticipantClientResponse.ofParticipants;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
@@ -51,12 +55,14 @@ import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 public class ReviewService {
 
     private static final int REVIEW_CURSOR_FIELD_COUNT = 1;
+    private static final int REVIEW_PARTICIPANT_CURSOR_FIELD_COUNT = 2;
 
     private final PlanReviewRepository planReviewRepository;
     private final ReviewImageRepository reviewImageRepository;
     private final ReviewReportRepository reviewReportRepository;
     private final CommentRepositorySupport commentRepositorySupport;
     private final ReviewRepositorySupport reviewRepositorySupport;
+    private final ParticipantRepositorySupport participantRepositorySupport;
 
     private final ImageService imageService;
     private final ReviewMapper mapper;
@@ -65,7 +71,7 @@ public class ReviewService {
 
     @Transactional(readOnly = true)
     public CursorPageResponse<ReviewClientResponse> getAllMeetReviews(Long userId, Long meetId, CursorPageRequest request) {
-        validateMember(userId, meetId);
+        validateMemberByMeetId(userId, meetId);
 
         int size = request.getSafeSize();
         List<PlanReview> reviews = getReviews(meetId, request.cursor(), size);
@@ -84,12 +90,12 @@ public class ReviewService {
         String[] decodeParts = CursorUtils.decode(encodedCursor, REVIEW_CURSOR_FIELD_COUNT);
         Long cursorId = Long.valueOf(decodeParts[0]);
 
-        validateCursor(cursorId);
+        validateReviewCursor(cursorId);
 
         return reviewRepositorySupport.findReviewNextPage(meetId, cursorId, size);
     }
 
-    private void validateCursor(Long cursorId) {
+    private void validateReviewCursor(Long cursorId) {
         if (reviewRepositorySupport.isCursorInvalid(cursorId)) {
             throw new CursorException(INVALID_CURSOR);
         }
@@ -106,7 +112,7 @@ public class ReviewService {
         );
     }
 
-    private void validateMember(Long userId, Long meetId) {
+    private void validateMemberByMeetId(Long userId, Long meetId) {
         User user = reader.findUser(userId);
         Meet meet = reader.findMeet(meetId);
 
@@ -143,8 +149,59 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    public ReviewParticipantResponse getReviewParticipants(Long reviewId) {
-        return new ReviewParticipantResponse(reader.findReview(reviewId));
+    public ReviewParticipantClientResponse getReviewParticipants(Long userId, Long reviewId, CursorPageRequest request) {
+        PlanReview review = reader.findReview(reviewId);
+        validateMemberByReviewId(userId, reviewId);
+
+        int size = request.getSafeSize();
+        List<PlanParticipant> participants = getReviewParticipants(reviewId, request.cursor(), size);
+
+        return ofParticipants(
+                review.getCreatorId(),
+                buildParticipantCursorPage(size, participants)
+        );
+    }
+
+    private List<PlanParticipant> getReviewParticipants(Long reviewId, String encodedCursor, int size) {
+        if (encodedCursor == null || encodedCursor.isEmpty()) {
+            return participantRepositorySupport.findReviewParticipantFirstPage(reviewId, size);
+        }
+
+        String[] decodeParts = CursorUtils.decode(encodedCursor, REVIEW_PARTICIPANT_CURSOR_FIELD_COUNT);
+
+        String cursorNickname = decodeParts[0];
+        Long cursorId = Long.valueOf(decodeParts[1]);
+
+        validateParticipantCursor(cursorNickname, cursorId);
+
+        return participantRepositorySupport.findReviewParticipantNextPage(reviewId, cursorNickname, cursorId, size);
+    }
+
+    private CursorPageResponse<ReviewParticipantResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants) {
+        return buildCursorPage(
+                participants,
+                size,
+                c -> new String[]{
+                        c.getUser().getNickname(),
+                        c.getId().toString()
+                },
+                ReviewParticipantResponse::ofParticipantList
+        );
+    }
+
+    private void validateMemberByReviewId(Long userId, Long reviewId) {
+        User user = reader.findUser(userId);
+        PlanReview review = reader.findReview(reviewId);
+
+        if (review.getMeet().matchMember(user.getId())) {
+            throw new BadRequestException(NOT_MEMBER);
+        }
+    }
+
+    private void validateParticipantCursor(String cursorNickname, Long cursorId) {
+        if (participantRepositorySupport.isCursorInvalid(cursorNickname, cursorId)) {
+            throw new CursorException(INVALID_CURSOR);
+        }
     }
 
     @Transactional(readOnly = true)
