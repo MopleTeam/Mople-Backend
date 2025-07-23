@@ -7,9 +7,10 @@ import java.util.UUID;
 
 @Component
 public class LoggingContextManager {
-    public static final String MDC_REQUEST_ID = "requestId";
-    public static final String MDC_USER_INFO = "userInfo";
-    public static final String MDC_FEATURE = "feature";
+
+    private static final String MDC_REQUEST_ID = "requestId";
+    private static final String MDC_USER_INFO = "userInfo";
+    private static final String MDC_FEATURE = "feature";
 
     public void setRequestId() {
         MDC.put(MDC_REQUEST_ID, UUID.randomUUID().toString().substring(0, 8));

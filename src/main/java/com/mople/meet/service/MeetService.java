@@ -1,7 +1,6 @@
 package com.mople.meet.service;
 
 import com.mople.core.exception.custom.*;
-import com.mople.dto.client.CommentClientResponse;
 import com.mople.dto.client.MeetClientResponse;
 import com.mople.dto.event.data.meet.MeetJoinEventData;
 import com.mople.dto.request.meet.MeetCreateRequest;
@@ -9,9 +8,7 @@ import com.mople.dto.request.meet.MeetUpdateRequest;
 import com.mople.dto.client.MeetMemberClientResponse;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.meet.*;
-import com.mople.dto.response.meet.comment.CommentResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
-import com.mople.entity.meet.comment.PlanComment;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.global.event.data.notify.NotifyEventPublisher;
 import com.mople.global.utils.cursor.CursorUtils;
@@ -38,7 +35,8 @@ import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
 @Service
 public class MeetService {
-    public static final int MEET_MEMBER_CURSOR_FIELD_COUNT = 2;
+
+    private static final int MEET_CURSOR_FIELD_COUNT = 1;
 
     private final MeetRepository meetRepository;
     private final MeetMemberRepository meetMemberRepository;

@@ -20,7 +20,7 @@ import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 @RequiredArgsConstructor
 public class CommentAutoCompleteService {
 
-    public static final int MEET_MEMBER_CURSOR_FIELD_COUNT = 2;
+    private static final int MEET_MEMBER_CURSOR_FIELD_COUNT = 2;
 
     private final MeetMemberRepositorySupport memberRepositorySupport;
     private final EntityReader reader;

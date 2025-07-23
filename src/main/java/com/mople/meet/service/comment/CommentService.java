@@ -34,7 +34,8 @@ import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 @Service
 @RequiredArgsConstructor
 public class CommentService {
-    public static final int COMMENT_CURSOR_FIELD_COUNT = 1;
+
+    private static final int COMMENT_CURSOR_FIELD_COUNT = 1;
 
     private final PlanCommentRepository commentRepository;
     private final CommentRepositorySupport commentRepositorySupport;
