@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -59,7 +60,7 @@ public class MeetController {
     @GetMapping("/list")
     public ResponseEntity<CursorPageResponse<MeetClientResponse>> getMeetList(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
-            @Valid CursorPageRequest request
+            @ParameterObject @Valid CursorPageRequest request
     ) {
         return ResponseEntity.ok(meetService.getUserMeetList(user.id(), request));
     }
@@ -78,13 +79,13 @@ public class MeetController {
 
     @Operation(
             summary = "모임 유저 목록 조회 API",
-            description = "모임 세부 정보를 조회합니다."
+            description = "모임 유저 목록을 조회합니다."
     )
     @GetMapping("/members/{meetId}")
     public ResponseEntity<MeetMemberClientResponse> getMeetMembers(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long meetId,
-            @Valid CursorPageRequest request
+            @ParameterObject @Valid CursorPageRequest request
     ) {
         return ResponseEntity.ok(meetService.meetMemberList(meetId, user.id(), request));
     }

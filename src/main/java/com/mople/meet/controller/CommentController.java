@@ -18,6 +18,7 @@ import jakarta.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,7 +37,7 @@ public class CommentController {
     public ResponseEntity<CursorPageResponse<CommentClientResponse>> commentList(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
-            @Valid CursorPageRequest request
+            @ParameterObject @Valid CursorPageRequest request
     ) {
         return ResponseEntity.ok(commentService.getCommentList(user.id(), postId, request));
     }
@@ -50,7 +51,7 @@ public class CommentController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
             @PathVariable Long commentId,
-            @Valid CursorPageRequest request
+            @ParameterObject @Valid CursorPageRequest request
     ) {
         return ResponseEntity.ok(commentService.getCommentReplyList(user.id(), postId, commentId, request));
     }
@@ -129,7 +130,7 @@ public class CommentController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
             @RequestParam String keyword,
-            @Valid CursorPageRequest request
+            @ParameterObject @Valid CursorPageRequest request
     ) {
         return commentService.searchMeetMember(user.id(), postId, keyword, request);
     }
