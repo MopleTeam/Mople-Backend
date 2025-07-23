@@ -1,9 +1,12 @@
 package com.mople.notification.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mople.core.exception.custom.CursorException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.request.notification.topic.PushTopicRequest;
+import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.notification.NotificationListResponse;
+import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.review.PlanReview;
 import com.mople.entity.notification.Notification;
@@ -11,6 +14,8 @@ import com.mople.entity.notification.Topic;
 import com.mople.entity.user.User;
 import com.mople.global.enums.Action;
 import com.mople.global.enums.PushTopic;
+import com.mople.global.utils.cursor.CursorUtils;
+import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.meet.repository.review.PlanReviewRepository;
 import com.mople.notification.repository.NotificationRepository;
@@ -26,19 +31,26 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.mople.global.enums.ExceptionReturnCode.*;
+import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
+
+    private static final int NOTIFICATION_CURSOR_FIELD_COUNT = 1;
+
     private final NotificationRepository notificationRepository;
     private final TopicRepository topicRepository;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
     private final MeetPlanRepository planRepository;
     private final PlanReviewRepository reviewRepository;
+
+    private final EntityReader reader;
 
     @Transactional(readOnly = true)
     public List<PushTopic> getSubscribeList(Long userId) {
@@ -85,10 +97,13 @@ public class NotificationService {
     }
 
     @Transactional(readOnly = true)
-    public List<NotificationListResponse> getUserNotificationList(Long userId) {
+    public CursorPageResponse<NotificationListResponse> getUserNotificationList(Long userId, CursorPageRequest request) {
+        reader.findUser(userId);
 
-        List<Long> planIds = notificationRepository
-                .getUserNotificationListLimit(userId, Action.COMPLETE)
+        int size = request.getSafeSize();
+        List<NotificationListResponse.NotificationListInterface> notifications = getNotifications(userId, request.cursor(), size);
+
+        List<Long> planIds = notifications
                 .stream()
                 .map(NotificationListResponse.NotificationListInterface::getPlanId)
                 .filter(Objects::nonNull)
@@ -114,11 +129,40 @@ public class NotificationService {
                         )
         );
 
-        return NotificationListResponse.of(
-                objectMapper,
-                notificationRepository
-                        .getUserNotificationListLimit(userId, Action.COMPLETE),
-                planMap
+        List<NotificationListResponse> notificationListResponses = NotificationListResponse.of(objectMapper, notifications, planMap);
+
+        return buildNotificationCursorPage(size, notificationListResponses);
+    }
+
+    private List<NotificationListResponse.NotificationListInterface> getNotifications(Long userId, String encodedCursor, int size) {
+        int limit = size + 1;
+
+        if (encodedCursor == null || encodedCursor.isEmpty()) {
+            return notificationRepository.findNotificationFirstPage(userId, Action.COMPLETE, limit);
+        }
+
+        String[] decodeParts = CursorUtils.decode(encodedCursor, NOTIFICATION_CURSOR_FIELD_COUNT);
+        Long cursorId = Long.valueOf(decodeParts[0]);
+
+        validateCursor(cursorId);
+
+        return notificationRepository.findNotificationNextPage(userId, Action.COMPLETE, cursorId, limit);
+    }
+
+    private void validateCursor(Long cursorId) {
+        if (notificationRepository.isCursorInvalid(cursorId).isEmpty()) {
+            throw new CursorException(INVALID_CURSOR);
+        }
+    }
+
+    private CursorPageResponse<NotificationListResponse> buildNotificationCursorPage(int size, List<NotificationListResponse> notificationListResponses) {
+        return buildCursorPage(
+                notificationListResponses,
+                size,
+                c -> new String[]{
+                        c.notificationId().toString()
+                },
+                Function.identity()
         );
     }
 

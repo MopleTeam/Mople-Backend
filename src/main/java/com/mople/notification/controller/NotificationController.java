@@ -2,8 +2,10 @@ package com.mople.notification.controller;
 
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.request.notification.topic.PushTopicRequest;
+import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.response.notification.NotificationListResponse;
+import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.global.enums.PushTopic;
 import com.mople.notification.service.NotificationService;
 
@@ -11,8 +13,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -68,10 +72,11 @@ public class NotificationController {
             description = "알림 항목을 조회합니다."
     )
     @GetMapping("/list")
-    public ResponseEntity<List<NotificationListResponse>> notificationList(
-            @Parameter(hidden = true) @SignUser AuthUserRequest user
+    public ResponseEntity<CursorPageResponse<NotificationListResponse>> notificationList(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @ParameterObject @Valid CursorPageRequest request
     ) {
-        return ResponseEntity.ok(service.getUserNotificationList(user.id()));
+        return ResponseEntity.ok(service.getUserNotificationList(user.id(), request));
     }
 
     @Operation(
