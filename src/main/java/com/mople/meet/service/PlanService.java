@@ -2,22 +2,28 @@ package com.mople.meet.service;
 
 import com.mople.core.exception.custom.AuthException;
 import com.mople.core.exception.custom.BadRequestException;
+import com.mople.core.exception.custom.CursorException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.PlanClientResponse;
 import com.mople.dto.event.data.plan.PlanCreateEventData;
 import com.mople.dto.event.data.plan.PlanDeleteEventData;
 import com.mople.dto.event.data.plan.PlanUpdateEventData;
 import com.mople.dto.request.meet.plan.PlanReportRequest;
+import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.weather.CoordinateRequest;
 import com.mople.dto.response.meet.UserAllDateResponse;
 import com.mople.dto.response.meet.UserPageResponse;
 import com.mople.dto.response.meet.plan.*;
+import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.weather.WeatherInfoResponse;
+import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.MeetTime;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.plan.PlanParticipant;
 import com.mople.entity.meet.plan.PlanReport;
+import com.mople.entity.user.User;
 import com.mople.global.event.data.notify.NotifyEventPublisher;
+import com.mople.global.utils.cursor.CursorUtils;
 import com.mople.meet.mapper.PlanMapper;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.MeetTimeRepository;
@@ -48,6 +54,7 @@ import java.util.List;
 
 import static com.mople.dto.client.PlanClientResponse.*;
 import static com.mople.global.enums.ExceptionReturnCode.*;
+import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
 @Slf4j
 @Service
@@ -55,6 +62,7 @@ import static com.mople.global.enums.ExceptionReturnCode.*;
 public class PlanService {
 
     private static final int PLAN_HOME_VIEW_SIZE = 5;
+    private static final int PLAN_CURSOR_FIELD_COUNT = 1;
 
     private final WeatherService weatherService;
     private final MeetPlanRepository meetPlanRepository;
@@ -231,8 +239,52 @@ public class PlanService {
     }
 
     @Transactional(readOnly = true)
-    public List<PlanClientResponse> getPlanList(Long userId, Long meetId) {
-        return ofLists(planRepositorySupport.findPlanList(userId, meetId));
+    public CursorPageResponse<PlanClientResponse> getPlanList(Long userId, Long meetId, CursorPageRequest request) {
+        validateMember(meetId, userId);
+
+        int size = request.getSafeSize();
+        List<PlanListResponse> plans = getPlans(userId, meetId, request.cursor(), size);
+
+        return buildPlanCursorPage(size, plans);
+    }
+
+    private void validateMember(Long meetId, Long userId) {
+        User user = reader.findUser(userId);
+        Meet meet = reader.findMeet(meetId);
+
+        if (meet.matchMember(user.getId())) {
+            throw new BadRequestException(NOT_MEMBER);
+        }
+    }
+
+    private List<PlanListResponse> getPlans(Long userId, Long meetId, String encodedCursor, int size) {
+        if (encodedCursor == null || encodedCursor.isEmpty()) {
+            return planRepositorySupport.findPlanFirstPage(userId, meetId, size);
+        }
+
+        String[] decodeParts = CursorUtils.decode(encodedCursor, PLAN_CURSOR_FIELD_COUNT);
+        Long cursorId = Long.valueOf(decodeParts[0]);
+
+        validateCursor(cursorId);
+
+        return planRepositorySupport.findPlanNextPage(userId, meetId, cursorId, size);
+    }
+
+    private void validateCursor(Long cursorId) {
+        if (planRepositorySupport.isCursorInvalid(cursorId)) {
+            throw new CursorException(INVALID_CURSOR);
+        }
+    }
+
+    private CursorPageResponse<PlanClientResponse> buildPlanCursorPage(int size, List<PlanListResponse> planListResponses) {
+        return buildCursorPage(
+                planListResponses,
+                size,
+                c -> new String[]{
+                        c.planId().toString()
+                },
+                PlanClientResponse::ofLists
+        );
     }
 
     @Transactional(readOnly = true)
