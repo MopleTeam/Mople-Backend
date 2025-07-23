@@ -24,19 +24,38 @@ import static java.util.stream.Collectors.*;
 public class MeetRepositorySupport {
     private final JPAQueryFactory queryFactory;
 
-    public List<MeetListResponse> findMeetList(Long userId) {
+    public List<Meet> findMeetFirstPage(Long userId, int size) {
         QMeet meet = QMeet.meet;
-        QMeetPlan plan = QMeetPlan.meetPlan;
-        QPlanReview review = QPlanReview.planReview;
         QMeetMember meetMember = QMeetMember.meetMember;
 
-        List<Meet> meets =
-                queryFactory.selectFrom(meet)
-                        .join(meetMember)
-                        .on(meet.id.eq(meetMember.joinMeet.id))
-                        .where(meetMember.user.id.eq(userId))
-                        .orderBy(meet.createdAt.asc())
-                        .fetch();
+        return queryFactory
+                .selectFrom(meet)
+                .join(meetMember).on(meet.id.eq(meetMember.joinMeet.id))
+                .where(meetMember.user.id.eq(userId))
+                .orderBy(meet.id.asc())
+                .limit(size + 1)
+                .fetch();
+    }
+
+    public List<Meet> findMeetNextPage(Long userId, Long cursorId, int size) {
+        QMeet meet = QMeet.meet;
+        QMeetMember meetMember = QMeetMember.meetMember;
+
+        return queryFactory
+                .selectFrom(meet)
+                .join(meetMember).on(meet.id.eq(meetMember.joinMeet.id))
+                .where(
+                        meetMember.user.id.eq(userId)
+                                .and(meet.id.gt(cursorId))
+                )
+                .orderBy(meet.id.asc())
+                .limit(size + 1)
+                .fetch();
+    }
+
+    public List<MeetListResponse> mapToMeetListResponses(List<Meet> meets) {
+        QMeetPlan plan = QMeetPlan.meetPlan;
+        QPlanReview review = QPlanReview.planReview;
 
         List<Long> meetIdList = meets.stream().map(Meet::getId).toList();
 
@@ -68,7 +87,6 @@ public class MeetRepositorySupport {
                                         maxBy(Comparator.comparing(PlanReview::getPlanTime))
                                 )
                         );
-
 
         return meets.stream()
                 .map(m -> {
@@ -105,7 +123,6 @@ public class MeetRepositorySupport {
                     );
                 })
                 .toList();
-
     }
 
     public List<MeetListFindMemberResponse> findMeetUseMember(Long userId) {
@@ -125,5 +142,15 @@ public class MeetRepositorySupport {
                 .on(meet.id.eq(meetMember.joinMeet.id))
                 .where(meetMember.user.id.eq(userId))
                 .fetch();
+    }
+
+    public boolean isCursorInvalid(Long cursorId) {
+        QMeet meet = QMeet.meet;
+
+        return queryFactory
+                .selectOne()
+                .from(meet)
+                .where(meet.id.eq(cursorId))
+                .fetchFirst() == null;
     }
 }

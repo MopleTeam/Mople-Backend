@@ -7,6 +7,7 @@ import com.mople.dto.request.meet.MeetUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.client.MeetMemberClientResponse;
+import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.meet.service.MeetService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,8 +19,6 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/meet")
@@ -58,10 +57,11 @@ public class MeetController {
             description = "유저의 모임 목록을 조회합니다."
     )
     @GetMapping("/list")
-    public ResponseEntity<List<MeetClientResponse>> getMeetList(
-            @Parameter(hidden = true) @SignUser AuthUserRequest user
+    public ResponseEntity<CursorPageResponse<MeetClientResponse>> getMeetList(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @Valid CursorPageRequest request
     ) {
-        return ResponseEntity.ok(meetService.getUserMeetList(user.id()));
+        return ResponseEntity.ok(meetService.getUserMeetList(user.id(), request));
     }
 
     @Operation(

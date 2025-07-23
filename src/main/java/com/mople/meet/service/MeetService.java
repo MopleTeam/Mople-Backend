@@ -37,6 +37,7 @@ import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 public class MeetService {
 
     private static final int MEET_CURSOR_FIELD_COUNT = 1;
+    private static final int MEET_MEMBER_CURSOR_FIELD_COUNT = 2;
 
     private final MeetRepository meetRepository;
     private final MeetMemberRepository meetMemberRepository;
@@ -114,8 +115,45 @@ public class MeetService {
     }
 
     @Transactional(readOnly = true)
-    public List<MeetClientResponse> getUserMeetList(Long userId) {
-        return ofListMeets(meetRepositorySupport.findMeetList(userId));
+    public CursorPageResponse<MeetClientResponse> getUserMeetList(Long userId, CursorPageRequest request) {
+        reader.findUser(userId);
+
+        int size = request.getSafeSize();
+        List<Meet> meets = getMeets(userId, request.cursor(), size);
+
+        List<MeetListResponse> meetListResponses = meetRepositorySupport.mapToMeetListResponses(meets);
+
+        return buildMeetCursorPage(size, meetListResponses);
+    }
+
+    private List<Meet> getMeets(Long userId, String encodedCursor, int size) {
+        if (encodedCursor == null || encodedCursor.isEmpty()) {
+            return meetRepositorySupport.findMeetFirstPage(userId, size);
+        }
+
+        String[] decodeParts = CursorUtils.decode(encodedCursor, MEET_CURSOR_FIELD_COUNT);
+        Long cursorId = Long.valueOf(decodeParts[0]);
+
+        validateCursor(cursorId);
+
+        return meetRepositorySupport.findMeetNextPage(userId, cursorId, size);
+    }
+
+    private void validateCursor(Long cursorId) {
+        if (meetRepositorySupport.isCursorInvalid(cursorId)) {
+            throw new CursorException(INVALID_CURSOR);
+        }
+    }
+
+    private CursorPageResponse<MeetClientResponse> buildMeetCursorPage(int size, List<MeetListResponse> meetListResponses) {
+        return buildCursorPage(
+                meetListResponses,
+                size,
+                c -> new String[]{
+                        c.meetId().toString()
+                },
+                MeetClientResponse::ofListMeets
+        );
     }
 
     @Transactional(readOnly = true)
