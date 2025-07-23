@@ -4,17 +4,21 @@ import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.ReviewClientResponse;
 import com.mople.dto.request.meet.review.ReviewImageDeleteRequest;
 import com.mople.dto.request.meet.review.ReviewReportRequest;
+import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.response.meet.review.ReviewImageListResponse;
 import com.mople.dto.response.meet.review.ReviewParticipantResponse;
+import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.meet.service.ReviewService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,14 +32,16 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     @Operation(
-            summary = "후기 조회 API",
+            summary = "후기 목록 조회 API",
             description = "모임 id를 통해 모임의 모든 후기 목록을 조회합니다."
     )
     @GetMapping("/list/{meetId}")
-    public ResponseEntity<List<ReviewClientResponse>> getReviews(
-            @PathVariable Long meetId
+    public ResponseEntity<CursorPageResponse<ReviewClientResponse>> getReviews(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @PathVariable Long meetId,
+            @ParameterObject @Valid CursorPageRequest request
     ) {
-        return ResponseEntity.ok(reviewService.getAllMeetReviews(meetId));
+        return ResponseEntity.ok(reviewService.getAllMeetReviews(user.id(), meetId, request));
     }
 
     @Operation(

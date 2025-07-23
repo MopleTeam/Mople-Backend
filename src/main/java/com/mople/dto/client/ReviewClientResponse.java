@@ -34,7 +34,7 @@ public class ReviewClientResponse {
         return infoResponses.stream().map(ReviewClientResponse::ofInfo).toList();
     }
 
-    public static ReviewClientResponse ofInfo(PlanReviewInfoResponse infoResponse){
+    private static ReviewClientResponse ofInfo(PlanReviewInfoResponse infoResponse){
         return ReviewClientResponse.builder()
                 .reviewId(infoResponse.reviewId())
                 .reviewName(infoResponse.reviewName())
