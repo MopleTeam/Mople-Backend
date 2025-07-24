@@ -1,25 +1,22 @@
 package com.mople.dto.response.meet;
 
-import com.mople.entity.meet.Meet;
+import com.mople.dto.response.user.UserInfo;
 import com.mople.entity.meet.MeetMember;
+import lombok.Builder;
 
 import java.util.List;
 
+@Builder
 public record MeetMemberResponse(
-        Long creatorId,
-        List<MeetMemberListResponse> members
+        UserInfo user
 ) {
-    public MeetMemberResponse(Meet meet) {
-        this(meet.getCreator().getId(), meet.getMembers().stream().map(MeetMemberListResponse::new).toList());
+    public static List<MeetMemberResponse> ofMemberList(List<MeetMember> members) {
+        return members.stream().map(MeetMemberResponse::ofMember).toList();
     }
 
-    public record MeetMemberListResponse(
-            Long memberId,
-            String nickname,
-            String profileImg
-    ) {
-        public MeetMemberListResponse(MeetMember member) {
-            this(member.getUser().getId(), member.getUser().getNickname(), member.getUser().getProfileImg());
-        }
+    private static MeetMemberResponse ofMember(MeetMember member) {
+        return MeetMemberResponse.builder()
+                .user(UserInfo.from(member.getUser()))
+                .build();
     }
 }

@@ -1,33 +1,22 @@
 package com.mople.dto.response.meet.review;
 
+import com.mople.dto.response.user.UserInfo;
 import com.mople.entity.meet.plan.PlanParticipant;
-import com.mople.entity.meet.review.PlanReview;
+import lombok.Builder;
 
 import java.util.List;
 
+@Builder
 public record ReviewParticipantResponse(
-        Long creatorId,
-        List<ReviewParticipant> members
+        UserInfo user
 ) {
-    public ReviewParticipantResponse(PlanReview review) {
-        this(
-                review.getCreatorId(),
-                review.getParticipants().stream().map(ReviewParticipant::new).toList()
-        );
+    public static List<ReviewParticipantResponse> ofParticipantList(List<PlanParticipant> participants) {
+        return participants.stream().map(ReviewParticipantResponse::ofParticipant).toList();
     }
 
-    public record ReviewParticipant(
-            Long memberId,
-            String nickname,
-            String profileImg
-    ) {
-        public ReviewParticipant(PlanParticipant participant) {
-            this(
-                    participant.getUser().getId(),
-                    participant.getUser().getNickname(),
-                    participant.getUser().getProfileImg()
-            );
-        }
-
+    private static ReviewParticipantResponse ofParticipant(PlanParticipant participant) {
+        return ReviewParticipantResponse.builder()
+                .user(UserInfo.from(participant.getUser()))
+                .build();
     }
 }

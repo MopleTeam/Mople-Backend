@@ -19,7 +19,6 @@ import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.DateTimePath;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
-import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import lombok.RequiredArgsConstructor;
@@ -35,7 +34,7 @@ import java.util.List;
 public class PlanRepositorySupport {
     private final JPAQueryFactory queryFactory;
 
-    public List<PlanViewResponse> findHomeViewPlan(Long userId) {
+    public List<PlanViewResponse> findHomeViewPlan(Long userId, int size) {
         QMeetPlan plan = QMeetPlan.meetPlan;
         QMeet meet = QMeet.meet;
         QPlanParticipant participant = QPlanParticipant.planParticipant;
@@ -72,7 +71,7 @@ public class PlanRepositorySupport {
                                 LocalDateTime.class, Ops.DateTimeOps.CURRENT_TIMESTAMP))
                 )
                 .orderBy(plan.planTime.asc())
-                .limit(5)
+                .limit(size)
                 .fetch();
     }
 
@@ -100,9 +99,8 @@ public class PlanRepositorySupport {
                 .fetchOne();
     }
 
-    public List<PlanListResponse> findPlanList(Long userId, Long meetId) {
+    public List<PlanListResponse> findPlanFirstPage(Long userId, Long meetId, int size) {
         QMeet meet = QMeet.meet;
-        QMeetMember meetMember = QMeetMember.meetMember;
         QMeetPlan plan = QMeetPlan.meetPlan;
         QPlanParticipant participant = QPlanParticipant.planParticipant;
 
@@ -133,16 +131,78 @@ public class PlanRepositorySupport {
                 )
                 .from(plan)
                 .join(plan.meet, meet)
-                .on(plan.meet.id.eq(meetId))
-                .join(meet.members, meetMember)
-                .on(meetMember.user.id.eq(userId))
-                .where(plan.planTime.after(
+                .where(
+                        plan.meet.id.eq(meetId),
+                        plan.planTime.after(
                                 Expressions.dateTimeOperation(
                                         LocalDateTime.class, Ops.DateTimeOps.CURRENT_DATE)
                         )
                 )
-                .orderBy(plan.planTime.asc())
+                .orderBy(plan.planTime.asc(), plan.id.asc())
+                .limit(size + 1)
                 .fetch();
+    }
+
+    public List<PlanListResponse> findPlanNextPage(Long userId, Long meetId, Long cursorId, int size) {
+        QMeet meet = QMeet.meet;
+        QMeetPlan plan = QMeetPlan.meetPlan;
+        QPlanParticipant participant = QPlanParticipant.planParticipant;
+
+        LocalDateTime cursorPlanTime = queryFactory
+                .select(plan.planTime)
+                .from(plan)
+                .where(plan.id.eq(cursorId))
+                .fetchOne();
+
+        return queryFactory
+                .select(
+                        Projections.constructor(
+                                PlanListResponse.class,
+                                plan.id,
+                                meet.id,
+                                meet.name,
+                                meet.meetImage,
+                                plan.name,
+                                plan.participants.size(),
+                                plan.planTime,
+                                plan.address,
+                                plan.title,
+                                plan.creator.id,
+                                plan.weatherIcon,
+                                plan.weatherAddress,
+                                plan.temperature,
+                                plan.pop,
+                                plan.participants.contains(
+                                        JPAExpressions
+                                                .selectFrom(participant)
+                                                .where(plan.id.eq(participant.plan.id).and(participant.user.id.eq(userId)))
+                                )
+                        )
+                )
+                .from(plan)
+                .join(plan.meet, meet)
+                .where(
+                        plan.meet.id.eq(meetId),
+                        plan.planTime.after(
+                                Expressions.dateTimeOperation(
+                                        LocalDateTime.class, Ops.DateTimeOps.CURRENT_DATE)
+                        ),
+                        plan.planTime.gt(cursorPlanTime)
+                                .or(plan.planTime.eq(cursorPlanTime).and(plan.id.gt(cursorId)))
+                )
+                .orderBy(plan.planTime.asc(), plan.id.asc())
+                .limit(size + 1)
+                .fetch();
+    }
+
+    public boolean isCursorInvalid(Long cursorId) {
+        QMeetPlan plan = QMeetPlan.meetPlan;
+
+        return queryFactory
+                .selectOne()
+                .from(plan)
+                .where(plan.id.eq(cursorId))
+                .fetchFirst() == null;
     }
 
     public List<PlanListResponse> findPreviousPlanList(Long userId) {
@@ -329,7 +389,6 @@ public class PlanRepositorySupport {
     private BooleanExpression getBetweenDate(DateTimePath<LocalDateTime> planTime, LocalDateTime start, LocalDateTime end) {
         return planTime.between(start, end);
     }
-
 
     public List<MeetPlan> findUpdateWeatherPlan() {
         QMeetPlan plan = QMeetPlan.meetPlan;

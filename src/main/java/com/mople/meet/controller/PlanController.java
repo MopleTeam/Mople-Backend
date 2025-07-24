@@ -3,11 +3,14 @@ package com.mople.meet.controller;
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.core.annotation.log.BusinessLogicLogging;
 import com.mople.dto.client.PlanClientResponse;
+import com.mople.dto.client.PlanParticipantClientResponse;
 import com.mople.dto.request.meet.plan.PlanReportRequest;
+import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.response.meet.UserAllDateResponse;
 import com.mople.dto.response.meet.UserPageResponse;
 import com.mople.dto.response.meet.plan.*;
+import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.meet.service.PlanService;
 import com.mople.dto.request.meet.plan.PlanCreateRequest;
 import com.mople.dto.request.meet.plan.PlanUpdateRequest;
@@ -19,12 +22,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.YearMonth;
-import java.util.List;
 
 @RestController
 @RequestMapping("/plan")
@@ -99,11 +102,12 @@ public class PlanController {
             description = "조회 일을 기준으로 모임의 일정 목록을 반환합니다."
     )
     @GetMapping("/list/{meetId}")
-    public ResponseEntity<List<PlanClientResponse>> getPlans(
+    public ResponseEntity<CursorPageResponse<PlanClientResponse>> getPlans(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
-            @PathVariable Long meetId
+            @PathVariable Long meetId,
+            @ParameterObject @Valid CursorPageRequest request
     ) {
-        return ResponseEntity.ok(planService.getPlanList(user.id(), meetId));
+        return ResponseEntity.ok(planService.getPlanList(user.id(), meetId, request));
     }
 
     @Operation(
@@ -147,10 +151,12 @@ public class PlanController {
             description = "일정에 참가하는 유저 정보를 반환합니다."
     )
     @GetMapping("/participants/{planId}")
-    public ResponseEntity<PlanParticipantResponse> getParticipants(
-            @PathVariable Long planId
+    public ResponseEntity<PlanParticipantClientResponse> getParticipants(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @PathVariable Long planId,
+            @ParameterObject @Valid CursorPageRequest request
     ) {
-        return ResponseEntity.ok(planService.getParticipantList(planId));
+        return ResponseEntity.ok(planService.getParticipantList(user.id(), planId, request));
     }
 
     @Operation(

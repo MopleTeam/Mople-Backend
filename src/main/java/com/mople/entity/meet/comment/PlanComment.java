@@ -87,20 +87,12 @@ public class PlanComment {
         this.content = content;
     }
 
-    public void increaseReplyCount() {
-        this.replyCount += 1;
+    public boolean canDecreaseReplyCount() {
+        return this.replyCount > 0;
     }
 
-    public void decreaseReplyCount() {
-        this.replyCount -= 1;
-    }
-
-    public void increaseLikeCount() {
-        this.likeCount += 1;
-    }
-
-    public void decreaseLikeCount() {
-        this.likeCount -= 1;
+    public boolean canDecreaseLikeCount() {
+        return this.likeCount > 0;
     }
 
     public boolean isChildComment() {

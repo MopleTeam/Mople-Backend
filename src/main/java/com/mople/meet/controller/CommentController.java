@@ -2,9 +2,11 @@ package com.mople.meet.controller;
 
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.CommentClientResponse;
+import com.mople.dto.client.AutoCompleteClientResponse;
+import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.response.pagination.CursorPageResponse;
-import com.mople.meet.service.CommentService;
+import com.mople.meet.service.comment.CommentService;
 import com.mople.dto.request.meet.comment.CommentCreateRequest;
 import com.mople.dto.request.meet.comment.CommentReportRequest;
 
@@ -16,6 +18,7 @@ import jakarta.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,10 +37,9 @@ public class CommentController {
     public ResponseEntity<CursorPageResponse<CommentClientResponse>> commentList(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
-            @RequestParam(required = false) String cursor,
-            @RequestParam(defaultValue = "10") int size
+            @ParameterObject @Valid CursorPageRequest request
     ) {
-        return ResponseEntity.ok(commentService.getCommentList(user.id(), postId, cursor, size));
+        return ResponseEntity.ok(commentService.getCommentList(user.id(), postId, request));
     }
 
     @Operation(
@@ -49,10 +51,9 @@ public class CommentController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
             @PathVariable Long commentId,
-            @RequestParam(required = false) String cursor,
-            @RequestParam(defaultValue = "10") int size
+            @ParameterObject @Valid CursorPageRequest request
     ) {
-        return ResponseEntity.ok(commentService.getCommentReplyList(user.id(), postId, commentId, cursor, size));
+        return ResponseEntity.ok(commentService.getCommentReplyList(user.id(), postId, commentId, request));
     }
 
     @Operation(
@@ -118,6 +119,20 @@ public class CommentController {
             @PathVariable Long commentId
     ) {
         return ResponseEntity.ok(commentService.toggleLike(user.id(), commentId));
+    }
+
+    @Operation(
+            summary = "멘션 자동 완성 API",
+            description = "입력한 키워드에 맞는 모임 멤버 닉네임을 자동 완성합니다."
+    )
+    @GetMapping("/{postId}/mention")
+    public CursorPageResponse<AutoCompleteClientResponse> searchMention(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @PathVariable Long postId,
+            @RequestParam String keyword,
+            @ParameterObject @Valid CursorPageRequest request
+    ) {
+        return commentService.searchMeetMember(user.id(), postId, keyword, request);
     }
 
     @Operation(

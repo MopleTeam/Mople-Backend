@@ -108,7 +108,7 @@ public class PlanClientResponse {
         return listResponses.stream().map(PlanClientResponse::ofList).toList();
     }
 
-    public static PlanClientResponse ofList(PlanListResponse listResponse) {
+    private static PlanClientResponse ofList(PlanListResponse listResponse) {
         return PlanClientResponse.builder()
                 .planId(listResponse.planId())
                 .meetId(listResponse.meetId())

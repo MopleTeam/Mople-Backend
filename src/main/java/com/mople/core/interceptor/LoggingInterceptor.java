@@ -17,8 +17,9 @@ import static com.mople.global.enums.logging.LoggerMessage.INTERNAL_API_FAIL_WIT
 @RequiredArgsConstructor
 @Component
 public class LoggingInterceptor implements HandlerInterceptor {
+
     private static final String START_TIME_ATTR = "startTime";
-    public static final String ORIGINAL_EXCEPTION = "originalException";
+    private static final String ORIGINAL_EXCEPTION = "originalException";
 
     private final InternalApiLogger internalApiLogger;
     private final LoggingContextManager loggingContextManager;

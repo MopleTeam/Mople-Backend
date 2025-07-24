@@ -25,7 +25,7 @@ public class MeetClientResponse {
         return listResponses.stream().map(MeetClientResponse::ofListMeet).toList();
     }
 
-    public static MeetClientResponse ofListMeet(MeetListResponse listResponse) {
+    private static MeetClientResponse ofListMeet(MeetListResponse listResponse) {
         return MeetClientResponse.builder()
                 .meetId(listResponse.meetId())
                 .meetName(listResponse.meetName())

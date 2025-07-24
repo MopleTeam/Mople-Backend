@@ -18,7 +18,8 @@ import static com.mople.global.enums.logging.LoggerKey.USER_INFO;
 @RequiredArgsConstructor
 @Component
 public class CustomErrorAttributes extends DefaultErrorAttributes {
-    public static final String ORIGINAL_EXCEPTION = "originalException";
+
+    private static final String ORIGINAL_EXCEPTION = "originalException";
 
     private final ExceptionLoggerService exceptionLoggerService;
     private final LoggingContextManager loggingContextManager;

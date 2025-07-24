@@ -1,25 +1,22 @@
 package com.mople.dto.response.meet.plan;
 
-import com.mople.entity.meet.plan.MeetPlan;
+import com.mople.dto.response.user.UserInfo;
 import com.mople.entity.meet.plan.PlanParticipant;
+import lombok.Builder;
 
 import java.util.List;
 
+@Builder
 public record PlanParticipantResponse(
-        Long creatorId,
-        List<PlanParticipantListResponse> members
+        UserInfo user
 ) {
-    public PlanParticipantResponse(MeetPlan plan) {
-        this(plan.getCreator().getId(), plan.getParticipants().stream().map(PlanParticipantListResponse::new).toList());
+    public static List<PlanParticipantResponse> ofParticipantList(List<PlanParticipant> participants) {
+        return participants.stream().map(PlanParticipantResponse::ofParticipant).toList();
     }
 
-    public record PlanParticipantListResponse(
-            Long memberId,
-            String nickname,
-            String profileImg
-    ) {
-        public PlanParticipantListResponse(PlanParticipant participant) {
-            this(participant.getUser().getId(), participant.getUser().getNickname(), participant.getUser().getProfileImg());
-        }
+    private static PlanParticipantResponse ofParticipant(PlanParticipant participant) {
+        return PlanParticipantResponse.builder()
+                .user(UserInfo.from(participant.getUser()))
+                .build();
     }
 }

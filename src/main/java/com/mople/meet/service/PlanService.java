@@ -2,26 +2,34 @@ package com.mople.meet.service;
 
 import com.mople.core.exception.custom.AuthException;
 import com.mople.core.exception.custom.BadRequestException;
+import com.mople.core.exception.custom.CursorException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.PlanClientResponse;
+import com.mople.dto.client.PlanParticipantClientResponse;
 import com.mople.dto.event.data.plan.PlanCreateEventData;
 import com.mople.dto.event.data.plan.PlanDeleteEventData;
 import com.mople.dto.event.data.plan.PlanUpdateEventData;
 import com.mople.dto.request.meet.plan.PlanReportRequest;
+import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.weather.CoordinateRequest;
 import com.mople.dto.response.meet.UserAllDateResponse;
 import com.mople.dto.response.meet.UserPageResponse;
 import com.mople.dto.response.meet.plan.*;
+import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.weather.WeatherInfoResponse;
+import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.MeetTime;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.plan.PlanParticipant;
 import com.mople.entity.meet.plan.PlanReport;
+import com.mople.entity.user.User;
 import com.mople.global.event.data.notify.NotifyEventPublisher;
+import com.mople.global.utils.cursor.CursorUtils;
 import com.mople.meet.mapper.PlanMapper;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.MeetTimeRepository;
 import com.mople.meet.repository.impl.comment.CommentRepositorySupport;
+import com.mople.meet.repository.impl.plan.ParticipantRepositorySupport;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.meet.repository.impl.plan.PlanRepositorySupport;
 import com.mople.meet.repository.plan.PlanParticipantRepository;
@@ -47,16 +55,24 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static com.mople.dto.client.PlanClientResponse.*;
+import static com.mople.dto.client.PlanParticipantClientResponse.ofParticipants;
 import static com.mople.global.enums.ExceptionReturnCode.*;
+import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class PlanService {
+
+    private static final int PLAN_HOME_VIEW_SIZE = 5;
+    private static final int PLAN_CURSOR_FIELD_COUNT = 1;
+    private static final int PLAN_PARTICIPANT_CURSOR_FIELD_COUNT = 2;
+
     private final WeatherService weatherService;
     private final MeetPlanRepository meetPlanRepository;
     private final PlanReportRepository planReportRepository;
     private final PlanParticipantRepository planParticipantRepository;
+    private final ParticipantRepositorySupport participantRepositorySupport;
     private final PlanRepositorySupport planRepositorySupport;
     private final MeetTimeRepository timeRepository;
     private final CommentRepositorySupport commentRepositorySupport;
@@ -70,7 +86,7 @@ public class PlanService {
 
     @Transactional(readOnly = true)
     public PlanHomeViewResponse getPlanView(Long userId) {
-        return new PlanHomeViewResponse(ofViews(planRepositorySupport.findHomeViewPlan(userId)), reader.findMeetListUseMember(userId));
+        return new PlanHomeViewResponse(ofViews(planRepositorySupport.findHomeViewPlan(userId, PLAN_HOME_VIEW_SIZE)), reader.findMeetListUseMember(userId));
     }
 
     @Transactional
@@ -228,8 +244,52 @@ public class PlanService {
     }
 
     @Transactional(readOnly = true)
-    public List<PlanClientResponse> getPlanList(Long userId, Long meetId) {
-        return ofLists(planRepositorySupport.findPlanList(userId, meetId));
+    public CursorPageResponse<PlanClientResponse> getPlanList(Long userId, Long meetId, CursorPageRequest request) {
+        validateMemberByMeetId(userId, meetId);
+
+        int size = request.getSafeSize();
+        List<PlanListResponse> plans = getPlans(userId, meetId, request.cursor(), size);
+
+        return buildPlanCursorPage(size, plans);
+    }
+
+    private void validateMemberByMeetId(Long userId, Long meetId) {
+        User user = reader.findUser(userId);
+        Meet meet = reader.findMeet(meetId);
+
+        if (meet.matchMember(user.getId())) {
+            throw new BadRequestException(NOT_MEMBER);
+        }
+    }
+
+    private List<PlanListResponse> getPlans(Long userId, Long meetId, String encodedCursor, int size) {
+        if (encodedCursor == null || encodedCursor.isEmpty()) {
+            return planRepositorySupport.findPlanFirstPage(userId, meetId, size);
+        }
+
+        String[] decodeParts = CursorUtils.decode(encodedCursor, PLAN_CURSOR_FIELD_COUNT);
+        Long cursorId = Long.valueOf(decodeParts[0]);
+
+        validatePlanCursor(cursorId);
+
+        return planRepositorySupport.findPlanNextPage(userId, meetId, cursorId, size);
+    }
+
+    private void validatePlanCursor(Long cursorId) {
+        if (planRepositorySupport.isCursorInvalid(cursorId)) {
+            throw new CursorException(INVALID_CURSOR);
+        }
+    }
+
+    private CursorPageResponse<PlanClientResponse> buildPlanCursorPage(int size, List<PlanListResponse> planListResponses) {
+        return buildCursorPage(
+                planListResponses,
+                size,
+                c -> new String[]{
+                        c.planId().toString()
+                },
+                PlanClientResponse::ofLists
+        );
     }
 
     @Transactional(readOnly = true)
@@ -254,12 +314,59 @@ public class PlanService {
     }
 
     @Transactional(readOnly = true)
-    public PlanParticipantResponse getParticipantList(Long planId) {
-        MeetPlan plan = meetPlanRepository.findPlanAll(planId).orElseThrow(
-                () -> new BadRequestException(NOT_FOUND_PLAN)
-        );
+    public PlanParticipantClientResponse getParticipantList(Long userId, Long planId, CursorPageRequest request) {
+        MeetPlan plan = reader.findPlan(planId);
+        validateMemberByPlanId(userId, planId);
 
-        return new PlanParticipantResponse(plan);
+        int size = request.getSafeSize();
+        List<PlanParticipant> participants = getPlanParticipants(planId, request.cursor(), size);
+
+        return ofParticipants(
+                plan.getCreator().getId(),
+                buildParticipantCursorPage(size, participants)
+        );
+    }
+
+    private List<PlanParticipant> getPlanParticipants(Long planId, String encodedCursor, int size) {
+        if (encodedCursor == null || encodedCursor.isEmpty()) {
+            return participantRepositorySupport.findPlanParticipantFirstPage(planId, size);
+        }
+
+        String[] decodeParts = CursorUtils.decode(encodedCursor, PLAN_PARTICIPANT_CURSOR_FIELD_COUNT);
+
+        String cursorNickname = decodeParts[0];
+        Long cursorId = Long.valueOf(decodeParts[1]);
+
+        validateParticipantCursor(cursorNickname, cursorId);
+
+        return participantRepositorySupport.findPlanParticipantNextPage(planId, cursorNickname, cursorId, size);
+    }
+
+    private CursorPageResponse<PlanParticipantResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants) {
+        return buildCursorPage(
+                participants,
+                size,
+                c -> new String[]{
+                        c.getUser().getNickname(),
+                        c.getId().toString()
+                },
+                PlanParticipantResponse::ofParticipantList
+        );
+    }
+
+    private void validateMemberByPlanId(Long userId, Long planId) {
+        User user = reader.findUser(userId);
+        MeetPlan plan = reader.findPlan(planId);
+
+        if (plan.getMeet().matchMember(user.getId())) {
+            throw new BadRequestException(NOT_MEMBER);
+        }
+    }
+
+    private void validateParticipantCursor(String cursorNickname, Long cursorId) {
+        if (participantRepositorySupport.isCursorInvalid(cursorNickname, cursorId)) {
+            throw new CursorException(INVALID_CURSOR);
+        }
     }
 
     @Transactional

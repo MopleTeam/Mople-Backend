@@ -63,6 +63,12 @@ public class EntityReader {
         );
     }
 
+    public PlanReview findReviewByPostId(Long postId) {
+        return planReviewRepository.findReviewByPostId(postId).orElseThrow(
+                () -> new ResourceNotFoundException(NOT_FOUND_REVIEW)
+        );
+    }
+
     public List<MeetListFindMemberResponse> findMeetListUseMember(Long userId) {
         return meetRepositorySupport.findMeetUseMember(userId);
     }
