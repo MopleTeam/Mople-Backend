@@ -201,7 +201,7 @@ public class CommentService {
 
     private void validatePostIdExists(Long postId) {
         boolean existsInPlan = planRepository.existsById(postId);
-        boolean existsInReview = reviewRepository.existsById(postId);
+        boolean existsInReview = reviewRepository.findReviewByPostId(postId).isPresent();
 
         if (!existsInPlan && !existsInReview) {
             throw new ResourceNotFoundException(NOT_FOUND_POST);
