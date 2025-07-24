@@ -16,19 +16,19 @@ public interface PlanCommentRepository extends JpaRepository<PlanComment, Long> 
 
     void deleteByIdIn(List<Long> ids);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE PlanComment c SET c.likeCount = c.likeCount + 1 WHERE c.id = :id")
     void increaseLikeCount(Long id);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE PlanComment c SET c.likeCount = c.likeCount - 1 WHERE c.id = :id")
     void decreaseLikeCount(Long id);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE PlanComment c SET c.replyCount = c.replyCount + 1 WHERE c.id = :id")
     void increaseReplyCount(Long id);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE PlanComment c SET c.replyCount = c.replyCount - 1 WHERE c.id = :id")
     void decreaseReplyCount(Long id);
 }
