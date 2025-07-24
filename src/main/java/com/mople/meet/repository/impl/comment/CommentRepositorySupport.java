@@ -63,7 +63,7 @@ public class CommentRepositorySupport {
                 .selectFrom(comment)
                 .join(comment.writer, user).fetchJoin()
                 .where(comment.postId.eq(postId), comment.parentId.eq(commentId))
-                .orderBy(comment.writeTime.asc(), comment.id.desc())
+                .orderBy(comment.writeTime.asc(), comment.id.asc())
                 .limit(size + 1)
                 .fetch();
     }
@@ -85,12 +85,12 @@ public class CommentRepositorySupport {
                         comment.postId.eq(postId)
                                 .and(comment.parentId.eq(commentId))
                                 .and(
-                                        comment.writeTime.lt(cursorWriteTime)
+                                        comment.writeTime.gt(cursorWriteTime)
                                                 .or(comment.writeTime.eq(cursorWriteTime)
-                                                        .and(comment.id.lt(cursorId)))
+                                                        .and(comment.id.gt(cursorId)))
                                 )
                 )
-                .orderBy(comment.writeTime.asc(), comment.id.desc())
+                .orderBy(comment.writeTime.asc(), comment.id.asc())
                 .limit(size + 1)
                 .fetch();
     }
