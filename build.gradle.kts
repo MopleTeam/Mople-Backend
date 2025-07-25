@@ -70,6 +70,14 @@ dependencies {
     mockitoAgent(libs.mockito) { isTransitive = false }
 }
 
+sourceSets {
+    main {
+        resources {
+            srcDirs("src/main/resources, secret/yaml, secret/templates")
+        }
+    }
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
     jvmArgs("-javaagent:${mockitoAgent.asPath}", "-Xshare:off")
@@ -78,3 +86,20 @@ tasks.withType<Test> {
 tasks.named<Jar>("jar") {
     enabled = false
 }
+
+// build -> gradle 일 경우 사용 가능 intellij Idea면 X
+
+//tasks.register<Exec>("updateSubmodules") {
+//    commandLine("git", "submodule", "update", "--init", "--recursive")
+//}
+//
+//tasks.processResources {
+//    dependsOn("updateSubmodules")
+//
+//    // secret/templates → build/resources/main/templates
+//    from("secret/templates") {
+//        into("templates")
+//    }
+//
+//    duplicatesStrategy = DuplicatesStrategy.FAIL
+//}
