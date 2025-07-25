@@ -267,9 +267,11 @@ public class CommentService {
         reader.findUser(userId);
 
         boolean likedByMe = likeService.toggleLike(userId, comment);
-        List<User> mentionedUsers = mentionService.findMentionedUsers(comment.getId());
 
-        return ofComment(new CommentResponse(comment, mentionedUsers, likedByMe));
+        PlanComment updatedComment = reader.findComment(commentId);
+        List<User> mentionedUsers = mentionService.findMentionedUsers(updatedComment.getId());
+
+        return ofComment(new CommentResponse(updatedComment, mentionedUsers, likedByMe));
     }
 
     @Transactional(readOnly = true)
