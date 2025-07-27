@@ -73,7 +73,7 @@ dependencies {
 sourceSets {
     main {
         resources {
-            srcDirs("src/main/resources, secret/yaml, secret/templates")
+            srcDirs( "secret/yaml", "secret/templates")
         }
     }
 }
@@ -93,13 +93,11 @@ tasks.named<Jar>("jar") {
 //    commandLine("git", "submodule", "update", "--init", "--recursive")
 //}
 //
-//tasks.processResources {
+tasks.processResources {
 //    dependsOn("updateSubmodules")
-//
-//    // secret/templates → build/resources/main/templates
-//    from("secret/templates") {
-//        into("templates")
-//    }
-//
-//    duplicatesStrategy = DuplicatesStrategy.FAIL
-//}
+
+    // secret/templates → build/resources/main/templates
+    from("secret/templates") {
+        into("templates")
+    }
+}
