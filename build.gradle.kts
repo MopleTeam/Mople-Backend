@@ -73,7 +73,7 @@ dependencies {
 sourceSets {
     main {
         resources {
-            srcDirs( "secret/yaml", "secret/templates")
+            srcDirs( "secret/yaml")
         }
     }
 }
