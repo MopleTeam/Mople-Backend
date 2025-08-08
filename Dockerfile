@@ -8,4 +8,4 @@ COPY build/libs/mople-*.jar app.jar
 
 EXPOSE 8284
 
-ENTRYPOINT ["java", "-Duser.timezone=Asia/Seoul", "-Dspring.profiles.active=${PROFILE}", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Duser.timezone=Asia/Seoul", "${JAVA_OPS}", "-Dspring.profiles.active=${PROFILE}", "-jar", "app.jar"]
