@@ -71,8 +71,12 @@ public class CommentValidator {
         }
     }
 
-    public void validateParentComment(Long commentId) {
+    public void validateParentComment(Long commentId, Long postId) {
         PlanComment parentComment = reader.findComment(commentId);
+
+        if (!parentComment.getPostId().equals(postId)) {
+            throw new ResourceNotFoundException(NOT_PARENT_COMMENT);
+        }
 
         if (parentComment.getParentId() != null) {
             throw new ResourceNotFoundException(NOT_PARENT_COMMENT);

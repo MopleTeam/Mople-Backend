@@ -181,7 +181,7 @@ public class CommentService {
 
         commentValidator.validatePostId(postId);
         commentValidator.validateMember(userId, postId);
-        commentValidator.validateParentComment(parentCommentId);
+        commentValidator.validateParentComment(parentCommentId, postId);
 
         PlanComment parentComment = reader.findComment(parentCommentId);
 
