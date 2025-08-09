@@ -9,6 +9,7 @@ import com.mople.dto.client.MeetMemberClientResponse;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.meet.*;
 import com.mople.dto.response.pagination.CursorPageResponse;
+import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.global.utils.cursor.MemberCursor;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.global.event.data.notify.NotifyEventPublisher;
@@ -171,7 +172,7 @@ public class MeetService {
     }
 
     @Transactional(readOnly = true)
-    public CursorPageResponse<MeetMemberClientResponse> meetMemberList(Long userId, Long meetId, CursorPageRequest request) {
+    public FlatCursorPageResponse<MeetMemberClientResponse> meetMemberList(Long userId, Long meetId, CursorPageRequest request) {
         reader.findUser(userId);
         Meet meet = reader.findMeet(meetId);
         validateMember(userId, meetId);
@@ -180,7 +181,10 @@ public class MeetService {
         int size = request.getSafeSize();
         List<MeetMember> meetMembers = getMeetMembers(meet.getId(), creatorId, request.cursor(), size);
 
-        return buildMemberCursorPage(size, meetMembers, creatorId);
+        return FlatCursorPageResponse.of(
+                meetMemberRepositorySupport.countMeetMembers(meetId),
+                buildMemberCursorPage(size, meetMembers, creatorId)
+        );
     }
 
     private List<MeetMember> getMeetMembers(Long meetId, Long creatorId, String encodedCursor, int size) {

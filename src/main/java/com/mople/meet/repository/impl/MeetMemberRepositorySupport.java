@@ -54,6 +54,18 @@ public class MeetMemberRepositorySupport {
                 .fetch();
     }
 
+    public Long countMeetMembers(Long meetId) {
+        QMeetMember member = QMeetMember.meetMember;
+
+        Long count = queryFactory
+                .select(member.count())
+                .from(member)
+                .where(member.joinMeet.id.eq(meetId))
+                .fetchOne();
+
+        return count != null ? count : 0L;
+    }
+
     public List<MeetMember> findMemberAutoCompletePage(
             Long meetId,
             Long creatorId,

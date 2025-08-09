@@ -8,6 +8,7 @@ import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.meet.comment.CommentResponse;
 import com.mople.dto.response.meet.comment.CommentUpdateResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
+import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.entity.meet.MeetMember;
 import com.mople.entity.meet.comment.CommentReport;
 import com.mople.entity.meet.comment.PlanComment;
@@ -51,7 +52,7 @@ public class CommentService {
     private final CommentAutoCompleteService autoCompleteService;
 
     @Transactional(readOnly = true)
-    public CursorPageResponse<CommentClientResponse> getCommentList(Long userId, Long postId, CursorPageRequest request) {
+    public FlatCursorPageResponse<CommentClientResponse> getCommentList(Long userId, Long postId, CursorPageRequest request) {
         commentValidator.validatePostId(postId);
         commentValidator.validateMember(userId, postId);
 
@@ -61,7 +62,11 @@ public class CommentService {
         Long meetId = getMeetId(postId);
         Long creatorId = reader.findMeet(meetId).getCreator().getId();
         Long hostId = getHostId(postId);
-        return buildCommentCursorPage(size, commentResponses, creatorId, hostId);
+
+        return FlatCursorPageResponse.of(
+                commentRepositorySupport.countComments(postId),
+                buildCommentCursorPage(size, commentResponses, creatorId, hostId)
+        );
     }
 
     private List<CommentResponse> getComments(Long userId, Long postId, String encodedCursor, int size) {
@@ -90,6 +95,7 @@ public class CommentService {
         Long meetId = getMeetId(postId);
         Long creatorId = reader.findMeet(meetId).getCreator().getId();
         Long hostId = getHostId(postId);
+
         return buildCommentCursorPage(size, commentResponses, creatorId, hostId);
     }
 

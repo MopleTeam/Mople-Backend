@@ -47,6 +47,21 @@ public class CommentRepositorySupport {
                 .fetch();
     }
 
+    public Long countComments(Long postId) {
+        QPlanComment comment = QPlanComment.planComment;
+
+        Long count = queryFactory
+                .select(comment.count())
+                .from(comment)
+                .where(
+                        comment.postId.eq(postId),
+                        comment.parentId.isNull()
+                )
+                .fetchOne();
+
+        return count != null ? count : 0L;
+    }
+
     public List<PlanComment> findCommentReplyPage(Long postId, Long commentId, Long cursorId, int size) {
         QPlanComment comment = QPlanComment.planComment;
         QUser user = QUser.user;

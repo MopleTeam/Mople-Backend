@@ -16,6 +16,7 @@ import com.mople.dto.response.meet.UserAllDateResponse;
 import com.mople.dto.response.meet.UserPageResponse;
 import com.mople.dto.response.meet.plan.*;
 import com.mople.dto.response.pagination.CursorPageResponse;
+import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.global.utils.cursor.MemberCursor;
 import com.mople.dto.response.weather.WeatherInfoResponse;
 import com.mople.entity.meet.Meet;
@@ -245,13 +246,16 @@ public class PlanService {
     }
 
     @Transactional(readOnly = true)
-    public CursorPageResponse<PlanClientResponse> getPlanList(Long userId, Long meetId, CursorPageRequest request) {
+    public FlatCursorPageResponse<PlanClientResponse> getPlanList(Long userId, Long meetId, CursorPageRequest request) {
         validateMemberByMeetId(userId, meetId);
 
         int size = request.getSafeSize();
         List<PlanListResponse> plans = getPlans(userId, meetId, request.cursor(), size);
 
-        return buildPlanCursorPage(size, plans);
+        return FlatCursorPageResponse.of(
+                planRepositorySupport.countPlans(meetId),
+                buildPlanCursorPage(size, plans)
+        );
     }
 
     private void validateMemberByMeetId(Long userId, Long meetId) {
@@ -316,7 +320,7 @@ public class PlanService {
     }
 
     @Transactional(readOnly = true)
-    public CursorPageResponse<ParticipantClientResponse> getParticipantList(Long userId, Long planId, CursorPageRequest request) {
+    public FlatCursorPageResponse<ParticipantClientResponse> getParticipantList(Long userId, Long planId, CursorPageRequest request) {
         MeetPlan plan = reader.findPlan(planId);
         validateMemberByPlanId(userId, planId);
 
@@ -325,7 +329,10 @@ public class PlanService {
         int size = request.getSafeSize();
         List<PlanParticipant> participants = getPlanParticipants(planId, creatorId, hostId, request.cursor(), size);
 
-        return buildParticipantCursorPage(size, participants, creatorId, hostId);
+        return FlatCursorPageResponse.of(
+                participantRepositorySupport.countPlanParticipants(planId),
+                buildParticipantCursorPage(size, participants, creatorId, hostId)
+        );
     }
 
     private List<PlanParticipant> getPlanParticipants(Long planId, Long creatorId, Long hostId, String encodedCursor, int size) {

@@ -42,6 +42,18 @@ public class ReviewRepositorySupport {
                 .fetch();
     }
 
+    public Long countReviews(Long meetId) {
+        QPlanReview review = QPlanReview.planReview;
+
+        Long count = queryFactory
+                .select(review.count())
+                .from(review)
+                .where(review.meet.id.eq(meetId))
+                .fetchOne();
+
+        return count != null ? count : 0L;
+    }
+
     public boolean isCursorInvalid(Long cursorId) {
         QPlanReview review = QPlanReview.planReview;
 

@@ -56,6 +56,18 @@ public class ParticipantRepositorySupport {
                 .fetch();
     }
 
+    public Long countPlanParticipants(Long planId) {
+        QPlanParticipant participant = QPlanParticipant.planParticipant;
+
+        Long count = queryFactory
+                .select(participant.count())
+                .from(participant)
+                .where(participant.plan.id.eq(planId))
+                .fetchOne();
+
+        return count != null ? count : 0L;
+    }
+
     public List<PlanParticipant> findReviewParticipantPage(Long reviewId, Long creatorId, Long hostId, MemberCursor cursor, int size) {
         QPlanParticipant participant = QPlanParticipant.planParticipant;
 
@@ -91,6 +103,18 @@ public class ParticipantRepositorySupport {
                 )
                 .limit(size + 1)
                 .fetch();
+    }
+
+    public Long countReviewParticipants(Long reviewId) {
+        QPlanParticipant participant = QPlanParticipant.planParticipant;
+
+        Long count = queryFactory
+                .select(participant.count())
+                .from(participant)
+                .where(participant.review.id.eq(reviewId))
+                .fetchOne();
+
+        return count != null ? count : 0L;
     }
 
     public boolean isCursorInvalid(String cursorNickname, Long cursorId) {

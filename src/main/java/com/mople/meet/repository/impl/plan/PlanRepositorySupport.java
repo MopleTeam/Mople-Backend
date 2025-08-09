@@ -158,6 +158,23 @@ public class PlanRepositorySupport {
                 .fetch();
     }
 
+    public Long countPlans(Long meetId) {
+        QMeetPlan plan = QMeetPlan.meetPlan;
+
+        Long count = queryFactory
+                .select(plan.count())
+                .from(plan)
+                .where(
+                        plan.meet.id.eq(meetId),
+                        plan.planTime.after(
+                                Expressions.dateTimeOperation(
+                                        LocalDateTime.class, Ops.DateTimeOps.CURRENT_DATE)
+                        ))
+                .fetchOne();
+
+        return count != null ? count : 0L;
+    }
+
     public boolean isCursorInvalid(Long cursorId) {
         QMeetPlan plan = QMeetPlan.meetPlan;
 

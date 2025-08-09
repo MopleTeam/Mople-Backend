@@ -10,7 +10,7 @@ import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.response.meet.UserAllDateResponse;
 import com.mople.dto.response.meet.UserPageResponse;
 import com.mople.dto.response.meet.plan.*;
-import com.mople.dto.response.pagination.CursorPageResponse;
+import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.meet.service.PlanService;
 import com.mople.dto.request.meet.plan.PlanCreateRequest;
 import com.mople.dto.request.meet.plan.PlanUpdateRequest;
@@ -102,7 +102,7 @@ public class PlanController {
             description = "조회 일을 기준으로 모임의 일정 목록을 반환합니다."
     )
     @GetMapping("/list/{meetId}")
-    public ResponseEntity<CursorPageResponse<PlanClientResponse>> getPlans(
+    public ResponseEntity<FlatCursorPageResponse<PlanClientResponse>> getPlans(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long meetId,
             @ParameterObject @Valid CursorPageRequest request
@@ -151,7 +151,7 @@ public class PlanController {
             description = "일정에 참가하는 유저 정보를 반환합니다."
     )
     @GetMapping("/participants/{planId}")
-    public ResponseEntity<CursorPageResponse<ParticipantClientResponse>> getParticipants(
+    public ResponseEntity<FlatCursorPageResponse<ParticipantClientResponse>> getParticipants(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long planId,
             @ParameterObject @Valid CursorPageRequest request
