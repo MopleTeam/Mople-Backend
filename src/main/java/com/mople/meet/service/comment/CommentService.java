@@ -58,22 +58,25 @@ public class CommentService {
         int size = request.getSafeSize();
         List<CommentResponse> commentResponses = getComments(userId, postId, request.cursor(), size);
 
-        return buildCommentCursorPage(size, commentResponses);
+        Long meetId = getMeetId(postId);
+        Long creatorId = reader.findMeet(meetId).getCreator().getId();
+        Long hostId = getHostId(postId);
+        return buildCommentCursorPage(size, commentResponses, creatorId, hostId);
     }
 
     private List<CommentResponse> getComments(Long userId, Long postId, String encodedCursor, int size) {
-        if (encodedCursor == null || encodedCursor.isEmpty()) {
-            List<PlanComment> commentFirstPage = commentRepositorySupport.findCommentFirstPage(postId, size);
-            return mapToResponsesWithLikedByMe(userId, commentFirstPage);
+
+        Long cursorId = null;
+
+        if (encodedCursor != null && !encodedCursor.isEmpty()) {
+            String[] decodeParts = CursorUtils.decode(encodedCursor, COMMENT_CURSOR_FIELD_COUNT);
+            cursorId = Long.valueOf(decodeParts[0]);
+
+            commentValidator.validateCursor(cursorId);
         }
 
-        String[] decodeParts = CursorUtils.decode(encodedCursor, COMMENT_CURSOR_FIELD_COUNT);
-        Long cursorId = Long.valueOf(decodeParts[0]);
-
-        commentValidator.validateCursor(cursorId);
-
-        List<PlanComment> commentNextPage = commentRepositorySupport.findCommentNextPage(postId, cursorId, size);
-        return mapToResponsesWithLikedByMe(userId, commentNextPage);
+        List<PlanComment> commentPage = commentRepositorySupport.findCommentPage(postId, cursorId, size);
+        return mapToResponsesWithLikedByMe(userId, commentPage);
     }
 
     @Transactional(readOnly = true)
@@ -84,33 +87,36 @@ public class CommentService {
         int size = request.getSafeSize();
         List<CommentResponse> commentResponses = getCommentReplies(userId, postId, commentId, request.cursor(), size);
 
-        return buildCommentCursorPage(size, commentResponses);
+        Long meetId = getMeetId(postId);
+        Long creatorId = reader.findMeet(meetId).getCreator().getId();
+        Long hostId = getHostId(postId);
+        return buildCommentCursorPage(size, commentResponses, creatorId, hostId);
     }
 
-    private CursorPageResponse<CommentClientResponse> buildCommentCursorPage(int size, List<CommentResponse> commentResponses) {
+    private CursorPageResponse<CommentClientResponse> buildCommentCursorPage(int size, List<CommentResponse> commentResponses, Long creatorId, Long hostId) {
         return buildCursorPage(
                 commentResponses,
                 size,
                 c -> new String[]{
                         c.commentId().toString()
                 },
-                CommentClientResponse::ofComments
+                list -> ofComments(list, creatorId, hostId)
         );
     }
 
     private List<CommentResponse> getCommentReplies(Long userId, Long postId, Long commentId, String encodedCursor, int size) {
-        if (encodedCursor == null || encodedCursor.isEmpty()) {
-            List<PlanComment> commentReplyFirstPage = commentRepositorySupport.findCommentReplyFirstPage(postId, commentId, size);
-            return mapToResponsesWithLikedByMe(userId, commentReplyFirstPage);
+
+        Long cursorId = null;
+
+        if (encodedCursor != null && !encodedCursor.isEmpty()) {
+            String[] decodeParts = CursorUtils.decode(encodedCursor, COMMENT_CURSOR_FIELD_COUNT);
+            cursorId = Long.valueOf(decodeParts[0]);
+
+            commentValidator.validateCursor(cursorId);
         }
 
-        String[] decodeParts = CursorUtils.decode(encodedCursor, COMMENT_CURSOR_FIELD_COUNT);
-        Long cursorId = Long.valueOf(decodeParts[0]);
-
-        commentValidator.validateCursor(cursorId);
-
-        List<PlanComment> commentReplyNextPage = commentRepositorySupport.findCommentReplyNextPage(postId, commentId, cursorId, size);
-        return mapToResponsesWithLikedByMe(userId, commentReplyNextPage);
+        List<PlanComment> commentReplyPage = commentRepositorySupport.findCommentReplyPage(postId, commentId, cursorId, size);
+        return mapToResponsesWithLikedByMe(userId, commentReplyPage);
     }
 
     private List<CommentResponse> mapToResponsesWithLikedByMe(Long userId, List<PlanComment> comments) {
@@ -149,10 +155,18 @@ public class CommentService {
         String postName = getPostName(comment.getPostId());
         commentEventPublisher.publishMentionEvent(null, request.mentions(), comment, postName);
 
+        return getCommentClientResponse(userId, comment);
+    }
+
+    private CommentClientResponse getCommentClientResponse(Long userId, PlanComment comment) {
         boolean likedByMe = likeService.likedByMe(userId, comment.getId());
         List<User> mentionedUsers = mentionService.findMentionedUsers(comment.getId());
 
-        return ofComment(new CommentResponse(comment, mentionedUsers, likedByMe));
+        Long meetId = getMeetId(comment.getPostId());
+        Long creatorId = reader.findMeet(meetId).getCreator().getId();
+        Long hostId = getHostId(comment.getPostId());
+
+        return ofComment(new CommentResponse(comment, mentionedUsers, likedByMe), creatorId, hostId);
     }
 
     @Transactional
@@ -182,10 +196,7 @@ public class CommentService {
         commentEventPublisher.publishMentionEvent(null, request.mentions(), comment, postName);
         commentEventPublisher.publishReplyEvent(request.mentions(), comment, parentComment, postName);
 
-        boolean likedByMe = likeService.likedByMe(userId, comment.getId());
-        List<User> mentionedUsers = mentionService.findMentionedUsers(comment.getId());
-
-        return ofComment(new CommentResponse(comment, mentionedUsers, likedByMe));
+        return getCommentClientResponse(userId, comment);
     }
 
     @Transactional
@@ -203,10 +214,18 @@ public class CommentService {
         String postName = getPostName(comment.getPostId());
         commentEventPublisher.publishMentionEvent(originMentions, request.mentions(), comment, postName);
 
+        return getCommentUpdateClientResponse(userId, comment);
+    }
+
+    private CommentClientResponse getCommentUpdateClientResponse(Long userId, PlanComment comment) {
         boolean likedByMe = likeService.likedByMe(userId, comment.getId());
         List<User> mentionedUsers = mentionService.findMentionedUsers(comment.getId());
 
-        return ofUpdate(new CommentUpdateResponse(comment, mentionedUsers, likedByMe));
+        Long meetId = getMeetId(comment.getPostId());
+        Long creatorId = reader.findMeet(meetId).getCreator().getId();
+        Long hostId = getHostId(comment.getPostId());
+
+        return ofUpdate(new CommentUpdateResponse(comment, mentionedUsers, likedByMe), creatorId, hostId);
     }
 
     private String getPostName(Long postId) {
@@ -266,10 +285,7 @@ public class CommentService {
         PlanComment comment = reader.findComment(commentId);
         reader.findUser(userId);
 
-        boolean likedByMe = likeService.toggleLike(userId, comment);
-        List<User> mentionedUsers = mentionService.findMentionedUsers(comment.getId());
-
-        return ofComment(new CommentResponse(comment, mentionedUsers, likedByMe));
+        return getCommentClientResponse(userId, comment);
     }
 
     @Transactional(readOnly = true)
@@ -277,10 +293,30 @@ public class CommentService {
         reader.findUser(userId);
         commentValidator.validatePostId(postId);
 
-        int size = request.getSafeSize();
-        List<MeetMember> meetMembers = autoCompleteService.getMeetMembers(postId, keyword, request.cursor(), size);
+        Long meetId = getMeetId(postId);
+        Long creatorId = reader.findMeet(meetId).getCreator().getId();
+        Long hostId = getHostId(postId);
 
-        return autoCompleteService.buildAutoCompleteCursorPage(size, meetMembers);
+        int size = request.getSafeSize();
+        List<MeetMember> meetMembers = autoCompleteService.getMeetMembers(meetId, creatorId, hostId, keyword, request.cursor(), size);
+
+        return autoCompleteService.buildAutoCompleteCursorPage(size, meetMembers, creatorId, hostId);
+    }
+
+    private Long getMeetId(Long postId) {
+        try {
+            return reader.findPlan(postId).getMeet().getId();
+        } catch (ResourceNotFoundException e) {
+            return reader.findReviewByPostId(postId).getMeet().getId();
+        }
+    }
+
+    private Long getHostId(Long postId) {
+        try {
+            return reader.findPlan(postId).getCreator().getId();
+        } catch (ResourceNotFoundException e) {
+            return reader.findReviewByPostId(postId).getCreatorId();
+        }
     }
 
     @Transactional

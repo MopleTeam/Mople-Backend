@@ -7,6 +7,7 @@ import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.plan.QMeetPlan;
 import com.mople.entity.meet.review.PlanReview;
 import com.mople.entity.meet.review.QPlanReview;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.mople.entity.meet.*;
@@ -24,30 +25,21 @@ import static java.util.stream.Collectors.*;
 public class MeetRepositorySupport {
     private final JPAQueryFactory queryFactory;
 
-    public List<Meet> findMeetFirstPage(Long userId, int size) {
+    public List<Meet> findMeetPage(Long userId, Long cursorId, int size) {
         QMeet meet = QMeet.meet;
         QMeetMember meetMember = QMeetMember.meetMember;
+
+        BooleanBuilder whereCondition = new BooleanBuilder()
+                .and(meetMember.user.id.eq(userId));
+
+        if (cursorId != null) {
+            whereCondition.and(meet.id.gt(cursorId));
+        }
 
         return queryFactory
                 .selectFrom(meet)
                 .join(meetMember).on(meet.id.eq(meetMember.joinMeet.id))
-                .where(meetMember.user.id.eq(userId))
-                .orderBy(meet.id.asc())
-                .limit(size + 1)
-                .fetch();
-    }
-
-    public List<Meet> findMeetNextPage(Long userId, Long cursorId, int size) {
-        QMeet meet = QMeet.meet;
-        QMeetMember meetMember = QMeetMember.meetMember;
-
-        return queryFactory
-                .selectFrom(meet)
-                .join(meetMember).on(meet.id.eq(meetMember.joinMeet.id))
-                .where(
-                        meetMember.user.id.eq(userId)
-                                .and(meet.id.gt(cursorId))
-                )
+                .where(whereCondition)
                 .orderBy(meet.id.asc())
                 .limit(size + 1)
                 .fetch();

@@ -1,13 +1,13 @@
 package com.mople.meet.controller;
 
 import com.mople.core.annotation.auth.SignUser;
+import com.mople.dto.client.ParticipantClientResponse;
 import com.mople.dto.client.ReviewClientResponse;
 import com.mople.dto.request.meet.review.ReviewImageDeleteRequest;
 import com.mople.dto.request.meet.review.ReviewReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.response.meet.review.ReviewImageListResponse;
-import com.mople.dto.client.ReviewParticipantClientResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.meet.service.ReviewService;
 
@@ -83,7 +83,7 @@ public class ReviewController {
             description = "후기에 참가하는 유저 정보를 반환합니다."
     )
     @GetMapping("/participants/{reviewId}")
-    public ResponseEntity<ReviewParticipantClientResponse> getReviewParticipants(
+    public ResponseEntity<CursorPageResponse<ParticipantClientResponse>> getReviewParticipants(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long reviewId,
             @ParameterObject @Valid CursorPageRequest request

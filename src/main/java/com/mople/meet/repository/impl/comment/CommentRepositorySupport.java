@@ -3,6 +3,7 @@ package com.mople.meet.repository.impl.comment;
 import com.mople.entity.meet.comment.PlanComment;
 import com.mople.entity.meet.comment.QPlanComment;
 import com.mople.entity.user.QUser;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -15,81 +16,62 @@ import java.util.List;
 public class CommentRepositorySupport {
     private final JPAQueryFactory queryFactory;
 
-    public List<PlanComment> findCommentFirstPage(Long postId, int size) {
+    public List<PlanComment> findCommentPage(Long postId, Long cursorId, int size) {
         QPlanComment comment = QPlanComment.planComment;
         QUser user = QUser.user;
+
+        BooleanBuilder whereCondition = new BooleanBuilder()
+                .and(comment.postId.eq(postId))
+                .and(comment.parentId.isNull());
+
+        if (cursorId != null) {
+            LocalDateTime cursorWriteTime = queryFactory
+                    .select(comment.writeTime)
+                    .from(comment)
+                    .where(comment.id.eq(cursorId))
+                    .fetchOne();
+
+            whereCondition.and(
+                    comment.writeTime.lt(cursorWriteTime)
+                            .or(comment.writeTime.eq(cursorWriteTime)
+                                    .and(comment.id.lt(cursorId)))
+            );
+        }
 
         return queryFactory
                 .selectFrom(comment)
                 .join(comment.writer, user).fetchJoin()
-                .where(comment.postId.eq(postId), comment.parentId.isNull())
+                .where(whereCondition)
                 .orderBy(comment.writeTime.desc(), comment.id.desc())
                 .limit(size + 1)
                 .fetch();
     }
 
-    public List<PlanComment> findCommentNextPage(Long postId, Long cursorId, int size) {
+    public List<PlanComment> findCommentReplyPage(Long postId, Long commentId, Long cursorId, int size) {
         QPlanComment comment = QPlanComment.planComment;
         QUser user = QUser.user;
 
-        LocalDateTime cursorWriteTime = queryFactory
-                .select(comment.writeTime)
-                .from(comment)
-                .where(comment.id.eq(cursorId))
-                .fetchOne();
+        BooleanBuilder whereCondition = new BooleanBuilder()
+                .and(comment.postId.eq(postId))
+                .and(comment.parentId.eq(commentId));
+
+        if (cursorId != null) {
+            LocalDateTime cursorWriteTime = queryFactory
+                    .select(comment.writeTime)
+                    .from(comment)
+                    .where(comment.id.eq(cursorId))
+                    .fetchOne();
+
+            whereCondition.and(comment.writeTime.gt(cursorWriteTime)
+                    .or(comment.writeTime.eq(cursorWriteTime)
+                            .and(comment.id.gt(cursorId)))
+            );
+        }
 
         return queryFactory
                 .selectFrom(comment)
                 .join(comment.writer, user).fetchJoin()
-                .where(
-                        comment.postId.eq(postId)
-                                .and(comment.parentId.isNull())
-                                .and(
-                                        comment.writeTime.lt(cursorWriteTime)
-                                                .or(comment.writeTime.eq(cursorWriteTime)
-                                                        .and(comment.id.lt(cursorId)))
-                                )
-                )
-                .orderBy(comment.writeTime.desc(), comment.id.desc())
-                .limit(size + 1)
-                .fetch();
-    }
-
-    public List<PlanComment> findCommentReplyFirstPage(Long postId, Long commentId, int size) {
-        QPlanComment comment = QPlanComment.planComment;
-        QUser user = QUser.user;
-
-        return queryFactory
-                .selectFrom(comment)
-                .join(comment.writer, user).fetchJoin()
-                .where(comment.postId.eq(postId), comment.parentId.eq(commentId))
-                .orderBy(comment.writeTime.asc(), comment.id.asc())
-                .limit(size + 1)
-                .fetch();
-    }
-
-    public List<PlanComment> findCommentReplyNextPage(Long postId, Long commentId, Long cursorId, int size) {
-        QPlanComment comment = QPlanComment.planComment;
-        QUser user = QUser.user;
-
-        LocalDateTime cursorWriteTime = queryFactory
-                .select(comment.writeTime)
-                .from(comment)
-                .where(comment.id.eq(cursorId))
-                .fetchOne();
-
-        return queryFactory
-                .selectFrom(comment)
-                .join(comment.writer, user).fetchJoin()
-                .where(
-                        comment.postId.eq(postId)
-                                .and(comment.parentId.eq(commentId))
-                                .and(
-                                        comment.writeTime.gt(cursorWriteTime)
-                                                .or(comment.writeTime.eq(cursorWriteTime)
-                                                        .and(comment.id.gt(cursorId)))
-                                )
-                )
+                .where(whereCondition)
                 .orderBy(comment.writeTime.asc(), comment.id.asc())
                 .limit(size + 1)
                 .fetch();

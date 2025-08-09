@@ -1,7 +1,13 @@
 package com.mople.meet.repository.impl;
 
+import com.mople.global.utils.cursor.AutoCompleteCursor;
+import com.mople.global.utils.cursor.MemberCursor;
 import com.mople.entity.meet.MeetMember;
 import com.mople.entity.meet.QMeetMember;
+import com.mople.global.utils.cursor.MemberSortExpressions;
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -13,60 +19,80 @@ import java.util.List;
 public class MeetMemberRepositorySupport {
     private final JPAQueryFactory queryFactory;
 
-    public List<MeetMember> findMemberFirstPage(Long meetId, int size) {
+    public List<MeetMember> findMemberPage(Long meetId, Long creatorId, MemberCursor cursor, int size) {
         QMeetMember member = QMeetMember.meetMember;
+
+        NumberExpression<Integer> roleOrder = MemberSortExpressions.roleOrder(member.user, creatorId);
+        NumberExpression<Integer> nicknameTypeOrder = MemberSortExpressions.nicknameTypeOrder(member.user);
+        StringExpression nicknameLower = MemberSortExpressions.nicknameLower(member.user);
+
+        BooleanBuilder whereCondition = new BooleanBuilder()
+                .and(member.joinMeet.id.eq(meetId));
+
+        if (cursor != null) {
+            BooleanBuilder cursorCondition = MemberCursor.memberCursorCondition(
+                    roleOrder,
+                    nicknameTypeOrder,
+                    nicknameLower,
+                    member.id,
+                    cursor
+            );
+
+            whereCondition.and(cursorCondition);
+        }
 
         return queryFactory
                 .selectFrom(member)
-                .where(member.joinMeet.id.eq(meetId))
-                .orderBy(member.user.nickname.asc(), member.id.asc())
+                .where(whereCondition)
+                .orderBy(
+                        roleOrder.asc(),
+                        nicknameTypeOrder.asc().nullsLast(),
+                        nicknameLower.asc(),
+                        member.id.asc()
+                )
                 .limit(size + 1)
                 .fetch();
     }
 
-    public List<MeetMember> findMemberNextPage(Long meetId, String cursorNickname, Long cursorId, int size) {
+    public List<MeetMember> findMemberAutoCompletePage(
+            Long meetId,
+            Long creatorId,
+            Long hostId,
+            String keyword,
+            AutoCompleteCursor cursor,
+            int size
+    ) {
         QMeetMember member = QMeetMember.meetMember;
+
+        NumberExpression<Integer> startsWithOrder = MemberSortExpressions.startsWithOrder(member.user, keyword);
+        NumberExpression<Integer> roleOrder = MemberSortExpressions.roleOrder(member.user, creatorId, hostId);
+        StringExpression nicknameLower = MemberSortExpressions.nicknameLower(member.user);
+
+        BooleanBuilder whereCondition = new BooleanBuilder()
+                .and(member.joinMeet.id.eq(meetId))
+                .and(member.user.nickname.containsIgnoreCase(keyword));
+
+        if (cursor != null) {
+            BooleanBuilder cursorCondition = AutoCompleteCursor.autoCompleteCursorCondition(
+                    startsWithOrder,
+                    roleOrder,
+                    nicknameLower,
+                    member.id,
+                    cursor
+            );
+
+            whereCondition.and(cursorCondition);
+        }
 
         return queryFactory
                 .selectFrom(member)
-                .where(
-                        member.joinMeet.id.eq(meetId),
-                        member.user.nickname.gt(cursorNickname)
-                                .or(member.user.nickname.eq(cursorNickname)
-                                        .and(member.id.gt(cursorId)))
+                .where(whereCondition)
+                .orderBy(
+                        startsWithOrder.asc(),
+                        roleOrder.asc(),
+                        nicknameLower.asc(),
+                        member.id.asc()
                 )
-                .orderBy(member.user.nickname.asc(), member.id.asc())
-                .limit(size + 1)
-                .fetch();
-    }
-
-    public List<MeetMember> findMemberAutoCompleteFirstPage(Long meetId, String keyword, int size) {
-        QMeetMember member = QMeetMember.meetMember;
-
-        return queryFactory
-                .selectFrom(member)
-                .where(
-                        member.joinMeet.id.eq(meetId),
-                        member.user.nickname.containsIgnoreCase(keyword)
-                )
-                .orderBy(member.user.nickname.asc(), member.id.asc())
-                .limit(size + 1)
-                .fetch();
-    }
-
-    public List<MeetMember> findMemberAutoCompleteNextPage(Long meetId, String keyword, String cursorNickname, Long cursorId, int size) {
-        QMeetMember member = QMeetMember.meetMember;
-
-        return queryFactory
-                .selectFrom(member)
-                .where(
-                        member.joinMeet.id.eq(meetId),
-                        member.user.nickname.containsIgnoreCase(keyword),
-                        member.user.nickname.gt(cursorNickname)
-                                .or(member.user.nickname.eq(cursorNickname)
-                                        .and(member.id.gt(cursorId)))
-                )
-                .orderBy(member.user.nickname.asc(), member.id.asc())
                 .limit(size + 1)
                 .fetch();
     }

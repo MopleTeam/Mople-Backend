@@ -12,6 +12,7 @@ import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.plan.QMeetPlan;
 import com.mople.entity.meet.plan.QPlanParticipant;
 import com.mople.entity.meet.review.QPlanReview;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Ops;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -99,10 +100,30 @@ public class PlanRepositorySupport {
                 .fetchOne();
     }
 
-    public List<PlanListResponse> findPlanFirstPage(Long userId, Long meetId, int size) {
+    public List<PlanListResponse> findPlanPage(Long userId, Long meetId, Long cursorId, int size) {
         QMeet meet = QMeet.meet;
         QMeetPlan plan = QMeetPlan.meetPlan;
         QPlanParticipant participant = QPlanParticipant.planParticipant;
+
+        BooleanBuilder whereCondition = new BooleanBuilder()
+                .and(plan.meet.id.eq(meetId))
+                .and(plan.planTime.after(
+                        Expressions.dateTimeOperation(
+                                LocalDateTime.class, Ops.DateTimeOps.CURRENT_DATE))
+                );
+
+
+        if (cursorId != null) {
+            LocalDateTime cursorPlanTime = queryFactory
+                    .select(plan.planTime)
+                    .from(plan)
+                    .where(plan.id.eq(cursorId))
+                    .fetchOne();
+
+            whereCondition.and(plan.planTime.gt(cursorPlanTime)
+                    .or(plan.planTime.eq(cursorPlanTime).and(plan.id.gt(cursorId)))
+            );
+        }
 
         return queryFactory
                 .select(
@@ -131,65 +152,7 @@ public class PlanRepositorySupport {
                 )
                 .from(plan)
                 .join(plan.meet, meet)
-                .where(
-                        plan.meet.id.eq(meetId),
-                        plan.planTime.after(
-                                Expressions.dateTimeOperation(
-                                        LocalDateTime.class, Ops.DateTimeOps.CURRENT_DATE)
-                        )
-                )
-                .orderBy(plan.planTime.asc(), plan.id.asc())
-                .limit(size + 1)
-                .fetch();
-    }
-
-    public List<PlanListResponse> findPlanNextPage(Long userId, Long meetId, Long cursorId, int size) {
-        QMeet meet = QMeet.meet;
-        QMeetPlan plan = QMeetPlan.meetPlan;
-        QPlanParticipant participant = QPlanParticipant.planParticipant;
-
-        LocalDateTime cursorPlanTime = queryFactory
-                .select(plan.planTime)
-                .from(plan)
-                .where(plan.id.eq(cursorId))
-                .fetchOne();
-
-        return queryFactory
-                .select(
-                        Projections.constructor(
-                                PlanListResponse.class,
-                                plan.id,
-                                meet.id,
-                                meet.name,
-                                meet.meetImage,
-                                plan.name,
-                                plan.participants.size(),
-                                plan.planTime,
-                                plan.address,
-                                plan.title,
-                                plan.creator.id,
-                                plan.weatherIcon,
-                                plan.weatherAddress,
-                                plan.temperature,
-                                plan.pop,
-                                plan.participants.contains(
-                                        JPAExpressions
-                                                .selectFrom(participant)
-                                                .where(plan.id.eq(participant.plan.id).and(participant.user.id.eq(userId)))
-                                )
-                        )
-                )
-                .from(plan)
-                .join(plan.meet, meet)
-                .where(
-                        plan.meet.id.eq(meetId),
-                        plan.planTime.after(
-                                Expressions.dateTimeOperation(
-                                        LocalDateTime.class, Ops.DateTimeOps.CURRENT_DATE)
-                        ),
-                        plan.planTime.gt(cursorPlanTime)
-                                .or(plan.planTime.eq(cursorPlanTime).and(plan.id.gt(cursorId)))
-                )
+                .where(whereCondition)
                 .orderBy(plan.planTime.asc(), plan.id.asc())
                 .limit(size + 1)
                 .fetch();
