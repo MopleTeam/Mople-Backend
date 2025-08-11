@@ -11,7 +11,7 @@ public record FlatCursorPageResponse<T>(
         return new FlatCursorPageResponse<>(
                 totalCount,
                 response.content(),
-                response.cursorPage()
+                response.page()
         );
     }
 }
