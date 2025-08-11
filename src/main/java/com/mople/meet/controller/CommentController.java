@@ -6,6 +6,7 @@ import com.mople.dto.client.AutoCompleteClientResponse;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.response.pagination.CursorPageResponse;
+import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.meet.service.comment.CommentService;
 import com.mople.dto.request.meet.comment.CommentCreateRequest;
 import com.mople.dto.request.meet.comment.CommentReportRequest;
@@ -34,7 +35,7 @@ public class CommentController {
             description = "모든 댓글을 조회합니다. 후기의 경우 후기의 ID가 아닌 Post Id를 Path Variable로 전송합니다."
     )
     @GetMapping("/{postId}")
-    public ResponseEntity<CursorPageResponse<CommentClientResponse>> commentList(
+    public ResponseEntity<FlatCursorPageResponse<CommentClientResponse>> commentList(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
             @ParameterObject @Valid CursorPageRequest request

@@ -1,70 +1,120 @@
 package com.mople.meet.repository.impl.plan;
 
+import com.mople.global.utils.cursor.MemberCursor;
 import com.mople.entity.meet.plan.PlanParticipant;
 import com.mople.entity.meet.plan.QPlanParticipant;
+import com.mople.global.utils.cursor.MemberSortExpressions;
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import static com.mople.global.utils.cursor.MemberCursor.memberCursorCondition;
+
 @Repository
 @RequiredArgsConstructor
 public class ParticipantRepositorySupport {
     private final JPAQueryFactory queryFactory;
 
-    public List<PlanParticipant> findPlanParticipantFirstPage(Long planId, int size) {
+    public List<PlanParticipant> findPlanParticipantPage(Long planId, Long creatorId, Long hostId, MemberCursor cursor, int size) {
         QPlanParticipant participant = QPlanParticipant.planParticipant;
+
+        NumberExpression<Integer> roleOrder = MemberSortExpressions.roleOrder(participant.user, creatorId, hostId);
+        NumberExpression<Integer> nicknameTypeOrder = MemberSortExpressions.nicknameTypeOrder(participant.user);
+        StringExpression nicknameLower = MemberSortExpressions.nicknameLower(participant.user);
+
+        BooleanBuilder whereCondition = new BooleanBuilder()
+                .and(participant.plan.id.eq(planId));
+
+        if (cursor != null) {
+            BooleanBuilder cursorCondition = new BooleanBuilder()
+                    .and(memberCursorCondition(
+                            roleOrder,
+                            nicknameTypeOrder,
+                            nicknameLower,
+                            participant.id,
+                            cursor
+                    ));
+
+            whereCondition.and(cursorCondition);
+        }
 
         return queryFactory
                 .selectFrom(participant)
+                .where(whereCondition)
+                .orderBy(
+                        roleOrder.asc(),
+                        nicknameTypeOrder.asc().nullsLast(),
+                        nicknameLower.asc(),
+                        participant.id.asc()
+                )
+                .limit(size + 1)
+                .fetch();
+    }
+
+    public Long countPlanParticipants(Long planId) {
+        QPlanParticipant participant = QPlanParticipant.planParticipant;
+
+        Long count = queryFactory
+                .select(participant.count())
+                .from(participant)
                 .where(participant.plan.id.eq(planId))
-                .orderBy(participant.user.nickname.asc(), participant.id.asc())
-                .limit(size + 1)
-                .fetch();
+                .fetchOne();
+
+        return count != null ? count : 0L;
     }
 
-    public List<PlanParticipant> findPlanParticipantNextPage(Long planId, String cursorNickname, Long cursorId, int size) {
+    public List<PlanParticipant> findReviewParticipantPage(Long reviewId, Long creatorId, Long hostId, MemberCursor cursor, int size) {
         QPlanParticipant participant = QPlanParticipant.planParticipant;
+
+        NumberExpression<Integer> roleOrder = MemberSortExpressions.roleOrder(participant.user, creatorId, hostId);
+        NumberExpression<Integer> nicknameTypeOrder = MemberSortExpressions.nicknameTypeOrder(participant.user);
+        StringExpression nicknameLower = MemberSortExpressions.nicknameLower(participant.user);
+
+        BooleanBuilder whereCondition = new BooleanBuilder()
+                .and(participant.review.id.eq(reviewId));
+
+        if (cursor != null) {
+            BooleanBuilder cursorCondition = new BooleanBuilder()
+                    .and(participant.review.id.eq(reviewId))
+                    .and(memberCursorCondition(
+                            roleOrder,
+                            nicknameTypeOrder,
+                            nicknameLower,
+                            participant.id,
+                            cursor
+                    ));
+
+            whereCondition.and(cursorCondition);
+        }
 
         return queryFactory
                 .selectFrom(participant)
-                .where(
-                        participant.plan.id.eq(planId),
-                        participant.user.nickname.gt(cursorNickname)
-                                .or(participant.user.nickname.eq(cursorNickname)
-                                        .and(participant.id.gt(cursorId)))
+                .where(whereCondition)
+                .orderBy(
+                        roleOrder.asc(),
+                        nicknameTypeOrder.asc().nullsLast(),
+                        nicknameLower.asc(),
+                        participant.id.asc()
                 )
-                .orderBy(participant.user.nickname.asc(), participant.id.asc())
                 .limit(size + 1)
                 .fetch();
     }
 
-    public List<PlanParticipant> findReviewParticipantFirstPage(Long reviewId, int size) {
+    public Long countReviewParticipants(Long reviewId) {
         QPlanParticipant participant = QPlanParticipant.planParticipant;
 
-        return queryFactory
-                .selectFrom(participant)
+        Long count = queryFactory
+                .select(participant.count())
+                .from(participant)
                 .where(participant.review.id.eq(reviewId))
-                .orderBy(participant.user.nickname.asc(), participant.id.asc())
-                .limit(size + 1)
-                .fetch();
-    }
+                .fetchOne();
 
-    public List<PlanParticipant> findReviewParticipantNextPage(Long reviewId, String cursorNickname, Long cursorId, int size) {
-        QPlanParticipant participant = QPlanParticipant.planParticipant;
-
-        return queryFactory
-                .selectFrom(participant)
-                .where(
-                        participant.review.id.eq(reviewId),
-                        participant.user.nickname.gt(cursorNickname)
-                                .or(participant.user.nickname.eq(cursorNickname)
-                                        .and(participant.id.gt(cursorId)))
-                )
-                .orderBy(participant.user.nickname.asc(), participant.id.asc())
-                .limit(size + 1)
-                .fetch();
+        return count != null ? count : 0L;
     }
 
     public boolean isCursorInvalid(String cursorNickname, Long cursorId) {

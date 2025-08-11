@@ -8,6 +8,7 @@ import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.client.MeetMemberClientResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
+import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.meet.service.MeetService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -82,7 +83,7 @@ public class MeetController {
             description = "모임 유저 목록을 조회합니다."
     )
     @GetMapping("/members/{meetId}")
-    public ResponseEntity<MeetMemberClientResponse> getMeetMembers(
+    public ResponseEntity<FlatCursorPageResponse<MeetMemberClientResponse>> getMeetMembers(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long meetId,
             @ParameterObject @Valid CursorPageRequest request

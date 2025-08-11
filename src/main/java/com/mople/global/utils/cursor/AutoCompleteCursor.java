@@ -1,0 +1,52 @@
+package com.mople.global.utils.cursor;
+
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.core.types.dsl.StringExpression;
+import lombok.Getter;
+
+import static com.mople.global.utils.cursor.MemberSortExpressions.calculateRoleOrder;
+
+@Getter
+public class AutoCompleteCursor {
+
+    private final int startsWithOrder;
+    private final int roleOrder;
+    private final String nicknameLower;
+    private final Long id;
+
+    public AutoCompleteCursor(String nickname, String keyword, Long userId, Long creatorId, Long hostId) {
+        this.startsWithOrder = nickname.toLowerCase().startsWith(keyword.toLowerCase()) ? 1 : 2;
+        this.roleOrder = calculateRoleOrder(userId, creatorId, hostId);
+        this.nicknameLower = nickname.toLowerCase();
+        this.id = userId;
+    }
+
+    public static BooleanBuilder autoCompleteCursorCondition(
+            NumberExpression<Integer> startsWithOrder,
+            NumberExpression<Integer> roleOrder,
+            StringExpression nicknameLower,
+            NumberExpression<Long> idPath,
+            AutoCompleteCursor cursor
+    ) {
+        BooleanBuilder condition = new BooleanBuilder();
+
+        condition.or(startsWithOrder.gt(cursor.getStartsWithOrder()));
+
+        BooleanExpression sameGroup = startsWithOrder.eq(cursor.getStartsWithOrder());
+
+        condition.or(sameGroup.and(roleOrder.gt(cursor.getRoleOrder())));
+
+        condition.or(sameGroup
+                .and(roleOrder.eq(cursor.getRoleOrder()))
+                .and(nicknameLower.gt(cursor.getNicknameLower())));
+
+        condition.or(sameGroup
+                .and(roleOrder.eq(cursor.getRoleOrder()))
+                .and(nicknameLower.eq(cursor.getNicknameLower()))
+                .and(idPath.gt(cursor.getId())));
+
+        return condition;
+    }
+}

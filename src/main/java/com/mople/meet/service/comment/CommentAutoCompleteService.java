@@ -1,18 +1,18 @@
 package com.mople.meet.service.comment;
 
 import com.mople.core.exception.custom.CursorException;
-import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.AutoCompleteClientResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
+import com.mople.global.utils.cursor.AutoCompleteCursor;
 import com.mople.entity.meet.MeetMember;
 import com.mople.global.utils.cursor.CursorUtils;
-import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.impl.MeetMemberRepositorySupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import static com.mople.dto.client.AutoCompleteClientResponse.ofTargets;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
@@ -23,33 +23,25 @@ public class CommentAutoCompleteService {
     private static final int MEET_MEMBER_CURSOR_FIELD_COUNT = 2;
 
     private final MeetMemberRepositorySupport memberRepositorySupport;
-    private final EntityReader reader;
 
-    public List<MeetMember> getMeetMembers(Long postId, String keyword, String encodedCursor, int size) {
-        if (encodedCursor == null || encodedCursor.isEmpty()) {
-            Long meetId = getMeetId(postId);
-            return memberRepositorySupport.findMemberAutoCompleteFirstPage(meetId, keyword, size);
+    public List<MeetMember> getMeetMembers(Long meetId, Long creatorId, Long hostId, String keyword, String encodedCursor, int size) {
+
+        AutoCompleteCursor cursor = null;
+
+        if (encodedCursor != null && !encodedCursor.isEmpty()) {
+            String[] decodeParts = CursorUtils.decode(encodedCursor, MEET_MEMBER_CURSOR_FIELD_COUNT);
+
+            String cursorNickname = decodeParts[0];
+            Long cursorId = Long.parseLong(decodeParts[1]);
+            validateCursor(cursorNickname, cursorId);
+
+            cursor = new AutoCompleteCursor(cursorNickname, keyword, cursorId, creatorId, hostId);
         }
 
-        String[] decodeParts = CursorUtils.decode(encodedCursor, MEET_MEMBER_CURSOR_FIELD_COUNT);
-
-        String cursorNickname = decodeParts[0];
-        Long cursorId = Long.parseLong(decodeParts[1]);
-
-        validateCursor(cursorNickname, cursorId);
-
-        return memberRepositorySupport.findMemberAutoCompleteNextPage(postId, keyword, cursorNickname, cursorId, size);
+        return memberRepositorySupport.findMemberAutoCompletePage(meetId, creatorId, hostId, keyword, cursor, size);
     }
 
-    private Long getMeetId(Long postId) {
-        try {
-            return reader.findPlan(postId).getMeet().getId();
-        } catch (ResourceNotFoundException e) {
-            return reader.findReviewByPostId(postId).getMeet().getId();
-        }
-    }
-
-    public CursorPageResponse<AutoCompleteClientResponse> buildAutoCompleteCursorPage(int size, List<MeetMember> memberNextPage) {
+    public CursorPageResponse<AutoCompleteClientResponse> buildAutoCompleteCursorPage(int size, List<MeetMember> memberNextPage, Long creatorId, Long hostId) {
         return buildCursorPage(
                 memberNextPage,
                 size,
@@ -57,7 +49,7 @@ public class CommentAutoCompleteService {
                         c.getUser().getNickname(),
                         c.getId().toString()
                 },
-                AutoCompleteClientResponse::ofTargets
+                list -> ofTargets(list, creatorId, hostId)
         );
     }
 

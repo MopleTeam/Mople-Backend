@@ -3,16 +3,17 @@ package com.mople.meet.service;
 import com.mople.core.exception.custom.BadRequestException;
 import com.mople.core.exception.custom.CursorException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
+import com.mople.dto.client.ParticipantClientResponse;
 import com.mople.dto.client.ReviewClientResponse;
-import com.mople.dto.client.ReviewParticipantClientResponse;
 import com.mople.dto.event.data.review.ReviewUpdateEventData;
 import com.mople.dto.request.meet.review.ReviewImageDeleteRequest;
 import com.mople.dto.request.meet.review.ReviewReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.meet.review.PlanReviewDetailResponse;
 import com.mople.dto.response.meet.review.ReviewImageListResponse;
-import com.mople.dto.response.meet.review.ReviewParticipantResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
+import com.mople.dto.response.pagination.FlatCursorPageResponse;
+import com.mople.global.utils.cursor.MemberCursor;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.plan.PlanParticipant;
 import com.mople.entity.meet.review.PlanReview;
@@ -44,8 +45,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static com.mople.dto.client.ParticipantClientResponse.ofParticipantList;
 import static com.mople.dto.client.ReviewClientResponse.*;
-import static com.mople.dto.client.ReviewParticipantClientResponse.ofParticipants;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
@@ -70,7 +71,7 @@ public class ReviewService {
     private final ApplicationEventPublisher publisher;
 
     @Transactional(readOnly = true)
-    public CursorPageResponse<ReviewClientResponse> getAllMeetReviews(Long userId, Long meetId, CursorPageRequest request) {
+    public FlatCursorPageResponse<ReviewClientResponse> getAllMeetReviews(Long userId, Long meetId, CursorPageRequest request) {
         validateMemberByMeetId(userId, meetId);
 
         int size = request.getSafeSize();
@@ -79,20 +80,24 @@ public class ReviewService {
                 .map(PlanReviewInfoResponse::new)
                 .toList();
 
-        return buildReviewCursorPage(size, reviewInfoResponses);
+        return FlatCursorPageResponse.of(
+                reviewRepositorySupport.countReviews(meetId),
+                buildReviewCursorPage(size, reviewInfoResponses)
+        );
     }
 
     private List<PlanReview> getReviews(Long meetId, String encodedCursor, int size) {
-        if (encodedCursor == null || encodedCursor.isEmpty()) {
-            return reviewRepositorySupport.findReviewFirstPage(meetId, size);
+
+        Long cursorId = null;
+
+        if (encodedCursor != null && !encodedCursor.isEmpty()) {
+            String[] decodeParts = CursorUtils.decode(encodedCursor, REVIEW_CURSOR_FIELD_COUNT);
+            cursorId = Long.valueOf(decodeParts[0]);
+
+            validateReviewCursor(cursorId);
         }
 
-        String[] decodeParts = CursorUtils.decode(encodedCursor, REVIEW_CURSOR_FIELD_COUNT);
-        Long cursorId = Long.valueOf(decodeParts[0]);
-
-        validateReviewCursor(cursorId);
-
-        return reviewRepositorySupport.findReviewNextPage(meetId, cursorId, size);
+        return reviewRepositorySupport.findReviewPage(meetId, cursorId, size);
     }
 
     private void validateReviewCursor(Long cursorId) {
@@ -149,35 +154,39 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    public ReviewParticipantClientResponse getReviewParticipants(Long userId, Long reviewId, CursorPageRequest request) {
+    public FlatCursorPageResponse<ParticipantClientResponse> getReviewParticipants(Long userId, Long reviewId, CursorPageRequest request) {
         PlanReview review = reader.findReview(reviewId);
         validateMemberByReviewId(userId, reviewId);
 
         int size = request.getSafeSize();
-        List<PlanParticipant> participants = getReviewParticipants(reviewId, request.cursor(), size);
+        Long creatorId = review.getMeet().getCreator().getId();
+        Long hostId = review.getCreatorId();
+        List<PlanParticipant> participants = getReviewParticipants(reviewId, creatorId, hostId, request.cursor(), size);
 
-        return ofParticipants(
-                review.getCreatorId(),
-                buildParticipantCursorPage(size, participants)
+        return FlatCursorPageResponse.of(
+                participantRepositorySupport.countReviewParticipants(reviewId),
+                buildParticipantCursorPage(size, participants, creatorId, hostId)
         );
     }
 
-    private List<PlanParticipant> getReviewParticipants(Long reviewId, String encodedCursor, int size) {
-        if (encodedCursor == null || encodedCursor.isEmpty()) {
-            return participantRepositorySupport.findReviewParticipantFirstPage(reviewId, size);
+    private List<PlanParticipant> getReviewParticipants(Long reviewId, Long creatorId, Long hostId, String encodedCursor, int size) {
+
+        MemberCursor cursor = null;
+
+        if (encodedCursor != null && !encodedCursor.isEmpty()) {
+            String[] decodeParts = CursorUtils.decode(encodedCursor, REVIEW_PARTICIPANT_CURSOR_FIELD_COUNT);
+
+            String cursorNickname = decodeParts[0];
+            Long cursorId = Long.valueOf(decodeParts[1]);
+            validateParticipantCursor(cursorNickname, cursorId);
+
+            cursor = new MemberCursor(cursorNickname, cursorId, creatorId, hostId);
         }
 
-        String[] decodeParts = CursorUtils.decode(encodedCursor, REVIEW_PARTICIPANT_CURSOR_FIELD_COUNT);
-
-        String cursorNickname = decodeParts[0];
-        Long cursorId = Long.valueOf(decodeParts[1]);
-
-        validateParticipantCursor(cursorNickname, cursorId);
-
-        return participantRepositorySupport.findReviewParticipantNextPage(reviewId, cursorNickname, cursorId, size);
+        return participantRepositorySupport.findReviewParticipantPage(reviewId, creatorId, hostId, cursor, size);
     }
 
-    private CursorPageResponse<ReviewParticipantResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants) {
+    private CursorPageResponse<ParticipantClientResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants, Long creatorId, Long hostId) {
         return buildCursorPage(
                 participants,
                 size,
@@ -185,7 +194,7 @@ public class ReviewService {
                         c.getUser().getNickname(),
                         c.getId().toString()
                 },
-                ReviewParticipantResponse::ofParticipantList
+                list -> ofParticipantList(list, creatorId, hostId)
         );
     }
 
