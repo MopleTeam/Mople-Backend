@@ -2,7 +2,7 @@ package com.mople.meet.service.comment;
 
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.CommentClientResponse;
-import com.mople.dto.client.AutoCompleteClientResponse;
+import com.mople.dto.client.UserClientResponse;
 import com.mople.dto.request.meet.comment.CommentCreateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.meet.comment.CommentResponse;
@@ -59,13 +59,9 @@ public class CommentService {
         int size = request.getSafeSize();
         List<CommentResponse> commentResponses = getComments(userId, postId, request.cursor(), size);
 
-        Long meetId = getMeetId(postId);
-        Long creatorId = reader.findMeet(meetId).getCreator().getId();
-        Long hostId = getHostId(postId);
-
         return FlatCursorPageResponse.of(
                 commentRepositorySupport.countComments(postId),
-                buildCommentCursorPage(size, commentResponses, creatorId, hostId)
+                buildCommentCursorPage(size, commentResponses)
         );
     }
 
@@ -92,21 +88,17 @@ public class CommentService {
         int size = request.getSafeSize();
         List<CommentResponse> commentResponses = getCommentReplies(userId, postId, commentId, request.cursor(), size);
 
-        Long meetId = getMeetId(postId);
-        Long creatorId = reader.findMeet(meetId).getCreator().getId();
-        Long hostId = getHostId(postId);
-
-        return buildCommentCursorPage(size, commentResponses, creatorId, hostId);
+        return buildCommentCursorPage(size, commentResponses);
     }
 
-    private CursorPageResponse<CommentClientResponse> buildCommentCursorPage(int size, List<CommentResponse> commentResponses, Long creatorId, Long hostId) {
+    private CursorPageResponse<CommentClientResponse> buildCommentCursorPage(int size, List<CommentResponse> commentResponses) {
         return buildCursorPage(
                 commentResponses,
                 size,
                 c -> new String[]{
                         c.commentId().toString()
                 },
-                list -> ofComments(list, creatorId, hostId)
+                CommentClientResponse::ofComments
         );
     }
 
@@ -168,11 +160,7 @@ public class CommentService {
         boolean likedByMe = likeService.likedByMe(userId, comment.getId());
         List<User> mentionedUsers = mentionService.findMentionedUsers(comment.getId());
 
-        Long meetId = getMeetId(comment.getPostId());
-        Long creatorId = reader.findMeet(meetId).getCreator().getId();
-        Long hostId = getHostId(comment.getPostId());
-
-        return ofComment(new CommentResponse(comment, mentionedUsers, likedByMe), creatorId, hostId);
+        return ofComment(new CommentResponse(comment, mentionedUsers, likedByMe));
     }
 
     @Transactional
@@ -227,11 +215,7 @@ public class CommentService {
         boolean likedByMe = likeService.likedByMe(userId, comment.getId());
         List<User> mentionedUsers = mentionService.findMentionedUsers(comment.getId());
 
-        Long meetId = getMeetId(comment.getPostId());
-        Long creatorId = reader.findMeet(meetId).getCreator().getId();
-        Long hostId = getHostId(comment.getPostId());
-
-        return ofUpdate(new CommentUpdateResponse(comment, mentionedUsers, likedByMe), creatorId, hostId);
+        return ofUpdate(new CommentUpdateResponse(comment, mentionedUsers, likedByMe));
     }
 
     private String getPostName(Long postId) {

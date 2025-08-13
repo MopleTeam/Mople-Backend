@@ -5,7 +5,6 @@ import com.mople.dto.response.meet.comment.CommentUpdateResponse;
 
 import com.mople.dto.response.user.UserInfo;
 import com.mople.entity.user.User;
-import com.mople.global.enums.UserRole;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -26,11 +25,11 @@ public class CommentClientResponse {
     private final List<UserInfo> mentions;
     private final LocalDateTime time;
 
-    public static List<CommentClientResponse> ofComments(List<CommentResponse> commentResponses, Long creatorId, Long hostId) {
-        return commentResponses.stream().map(c -> ofComment(c, creatorId, hostId)).toList();
+    public static List<CommentClientResponse> ofComments(List<CommentResponse> commentResponses) {
+        return commentResponses.stream().map(CommentClientResponse::ofComment).toList();
     }
 
-    public static CommentClientResponse ofComment(CommentResponse commentResponse, Long creatorId, Long hostId) {
+    public static CommentClientResponse ofComment(CommentResponse commentResponse) {
         return CommentClientResponse.builder()
                 .commentId(commentResponse.commentId())
                 .content(commentResponse.content())
@@ -39,13 +38,13 @@ public class CommentClientResponse {
                 .replyCount(commentResponse.replyCount())
                 .likeCount(commentResponse.likeCount())
                 .likedByMe(commentResponse.likedByMe())
-                .writer(ofWriter(commentResponse.writer(), creatorId, hostId))
-                .mentions(ofMentions(commentResponse.mentions(), creatorId, hostId))
+                .writer(UserInfo.from(commentResponse.writer()))
+                .mentions(ofMentions(commentResponse.mentions()))
                 .time(commentResponse.time())
                 .build();
     }
 
-    public static CommentClientResponse ofUpdate(CommentUpdateResponse updateResponse, Long creatorId, Long hostId) {
+    public static CommentClientResponse ofUpdate(CommentUpdateResponse updateResponse) {
         return CommentClientResponse.builder()
                 .commentId(updateResponse.commentId())
                 .content(updateResponse.content())
@@ -54,19 +53,15 @@ public class CommentClientResponse {
                 .replyCount(updateResponse.replyCount())
                 .likeCount(updateResponse.likeCount())
                 .likedByMe(updateResponse.likedByMe())
-                .writer(ofWriter(updateResponse.writer(), creatorId, hostId))
-                .mentions(ofMentions(updateResponse.mentions(), creatorId, hostId))
+                .writer(UserInfo.from(updateResponse.writer()))
+                .mentions(ofMentions(updateResponse.mentions()))
                 .time(updateResponse.time())
                 .build();
     }
 
-    private static UserInfo ofWriter(User writer, Long creatorId, Long hostId) {
-        return UserInfo.from(writer, UserRole.getRole(writer.getId(), creatorId, hostId));
-    }
-
-    private static List<UserInfo> ofMentions(List<User> mentions, Long creatorId, Long hostId) {
+    private static List<UserInfo> ofMentions(List<User> mentions) {
         return mentions.stream()
-                .map(m -> UserInfo.from(m, UserRole.getRole(m.getId(), creatorId, hostId)))
+                .map(UserInfo::from)
                 .toList();
     }
 }
