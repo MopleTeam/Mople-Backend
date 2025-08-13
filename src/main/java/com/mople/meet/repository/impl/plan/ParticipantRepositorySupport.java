@@ -31,16 +31,15 @@ public class ParticipantRepositorySupport {
                 .and(participant.plan.id.eq(planId));
 
         if (cursor != null) {
-            BooleanBuilder cursorCondition = new BooleanBuilder()
-                    .and(memberCursorCondition(
+            whereCondition.and(
+                    memberCursorCondition(
                             roleOrder,
                             nicknameTypeOrder,
                             nicknameLower,
                             participant.id,
                             cursor
-                    ));
-
-            whereCondition.and(cursorCondition);
+                    )
+            );
         }
 
         return queryFactory
@@ -79,17 +78,15 @@ public class ParticipantRepositorySupport {
                 .and(participant.review.id.eq(reviewId));
 
         if (cursor != null) {
-            BooleanBuilder cursorCondition = new BooleanBuilder()
-                    .and(participant.review.id.eq(reviewId))
-                    .and(memberCursorCondition(
+            whereCondition.and(
+                    memberCursorCondition(
                             roleOrder,
                             nicknameTypeOrder,
                             nicknameLower,
                             participant.id,
                             cursor
-                    ));
-
-            whereCondition.and(cursorCondition);
+                    )
+            );
         }
 
         return queryFactory
