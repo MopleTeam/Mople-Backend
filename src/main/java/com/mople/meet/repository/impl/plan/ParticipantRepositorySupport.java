@@ -20,10 +20,10 @@ import static com.mople.global.utils.cursor.MemberCursor.memberCursorCondition;
 public class ParticipantRepositorySupport {
     private final JPAQueryFactory queryFactory;
 
-    public List<PlanParticipant> findPlanParticipantPage(Long planId, Long creatorId, Long hostId, MemberCursor cursor, int size) {
+    public List<PlanParticipant> findPlanParticipantPage(Long planId, Long hostId, Long creatorId, MemberCursor cursor, int size) {
         QPlanParticipant participant = QPlanParticipant.planParticipant;
 
-        NumberExpression<Integer> roleOrder = MemberSortExpressions.roleOrder(participant.user, creatorId, hostId);
+        NumberExpression<Integer> roleOrder = MemberSortExpressions.roleOrder(participant.user, hostId, creatorId);
         NumberExpression<Integer> nicknameTypeOrder = MemberSortExpressions.nicknameTypeOrder(participant.user);
         StringExpression nicknameLower = MemberSortExpressions.nicknameLower(participant.user);
 
@@ -31,16 +31,15 @@ public class ParticipantRepositorySupport {
                 .and(participant.plan.id.eq(planId));
 
         if (cursor != null) {
-            BooleanBuilder cursorCondition = new BooleanBuilder()
-                    .and(memberCursorCondition(
+            whereCondition.and(
+                    memberCursorCondition(
                             roleOrder,
                             nicknameTypeOrder,
                             nicknameLower,
                             participant.id,
                             cursor
-                    ));
-
-            whereCondition.and(cursorCondition);
+                    )
+            );
         }
 
         return queryFactory
@@ -68,10 +67,10 @@ public class ParticipantRepositorySupport {
         return count != null ? count : 0L;
     }
 
-    public List<PlanParticipant> findReviewParticipantPage(Long reviewId, Long creatorId, Long hostId, MemberCursor cursor, int size) {
+    public List<PlanParticipant> findReviewParticipantPage(Long reviewId, Long hostId, Long creatorId, MemberCursor cursor, int size) {
         QPlanParticipant participant = QPlanParticipant.planParticipant;
 
-        NumberExpression<Integer> roleOrder = MemberSortExpressions.roleOrder(participant.user, creatorId, hostId);
+        NumberExpression<Integer> roleOrder = MemberSortExpressions.roleOrder(participant.user, hostId, creatorId);
         NumberExpression<Integer> nicknameTypeOrder = MemberSortExpressions.nicknameTypeOrder(participant.user);
         StringExpression nicknameLower = MemberSortExpressions.nicknameLower(participant.user);
 
@@ -79,17 +78,15 @@ public class ParticipantRepositorySupport {
                 .and(participant.review.id.eq(reviewId));
 
         if (cursor != null) {
-            BooleanBuilder cursorCondition = new BooleanBuilder()
-                    .and(participant.review.id.eq(reviewId))
-                    .and(memberCursorCondition(
+            whereCondition.and(
+                    memberCursorCondition(
                             roleOrder,
                             nicknameTypeOrder,
                             nicknameLower,
                             participant.id,
                             cursor
-                    ));
-
-            whereCondition.and(cursorCondition);
+                    )
+            );
         }
 
         return queryFactory

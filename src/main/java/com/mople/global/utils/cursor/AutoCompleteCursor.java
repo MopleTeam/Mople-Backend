@@ -16,37 +16,28 @@ public class AutoCompleteCursor {
     private final String nicknameLower;
     private final Long id;
 
-    public AutoCompleteCursor(String nickname, String keyword, Long userId, Long creatorId, Long hostId) {
+    public AutoCompleteCursor(String nickname, String keyword, Long userId, Long hostId, Long creatorId) {
         this.startsWithOrder = nickname.toLowerCase().startsWith(keyword.toLowerCase()) ? 1 : 2;
-        this.roleOrder = calculateRoleOrder(userId, creatorId, hostId);
+        this.roleOrder = calculateRoleOrder(userId, hostId, creatorId);
         this.nicknameLower = nickname.toLowerCase();
         this.id = userId;
     }
 
-    public static BooleanBuilder autoCompleteCursorCondition(
+    public static BooleanExpression autoCompleteCursorCondition(
             NumberExpression<Integer> startsWithOrder,
             NumberExpression<Integer> roleOrder,
             StringExpression nicknameLower,
             NumberExpression<Long> idPath,
             AutoCompleteCursor cursor
     ) {
-        BooleanBuilder condition = new BooleanBuilder();
-
-        condition.or(startsWithOrder.gt(cursor.getStartsWithOrder()));
-
         BooleanExpression sameGroup = startsWithOrder.eq(cursor.getStartsWithOrder());
 
-        condition.or(sameGroup.and(roleOrder.gt(cursor.getRoleOrder())));
-
-        condition.or(sameGroup
-                .and(roleOrder.eq(cursor.getRoleOrder()))
-                .and(nicknameLower.gt(cursor.getNicknameLower())));
-
-        condition.or(sameGroup
-                .and(roleOrder.eq(cursor.getRoleOrder()))
-                .and(nicknameLower.eq(cursor.getNicknameLower()))
-                .and(idPath.gt(cursor.getId())));
-
-        return condition;
+        return startsWithOrder.gt(cursor.getStartsWithOrder())
+                .or(sameGroup.and(roleOrder.gt(cursor.getRoleOrder())))
+                .or(sameGroup.and(roleOrder.eq(cursor.getRoleOrder()))
+                        .and(nicknameLower.gt(cursor.getNicknameLower())))
+                .or(sameGroup.and(roleOrder.eq(cursor.getRoleOrder()))
+                        .and(nicknameLower.eq(cursor.getNicknameLower()))
+                        .and(idPath.gt(cursor.getId())));
     }
 }

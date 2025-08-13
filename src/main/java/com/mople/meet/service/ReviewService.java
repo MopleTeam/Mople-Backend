@@ -3,8 +3,8 @@ package com.mople.meet.service;
 import com.mople.core.exception.custom.BadRequestException;
 import com.mople.core.exception.custom.CursorException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
-import com.mople.dto.client.ParticipantClientResponse;
 import com.mople.dto.client.ReviewClientResponse;
+import com.mople.dto.client.UserClientResponse;
 import com.mople.dto.event.data.review.ReviewUpdateEventData;
 import com.mople.dto.request.meet.review.ReviewImageDeleteRequest;
 import com.mople.dto.request.meet.review.ReviewReportRequest;
@@ -37,7 +37,6 @@ import com.mople.meet.repository.review.ReviewReportRepository;
 import jakarta.validation.constraints.NotNull;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -45,12 +44,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static com.mople.dto.client.ParticipantClientResponse.ofParticipantList;
 import static com.mople.dto.client.ReviewClientResponse.*;
+import static com.mople.dto.client.UserClientResponse.ofParticipants;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReviewService {
@@ -154,22 +152,22 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    public FlatCursorPageResponse<ParticipantClientResponse> getReviewParticipants(Long userId, Long reviewId, CursorPageRequest request) {
+    public FlatCursorPageResponse<UserClientResponse> getReviewParticipants(Long userId, Long reviewId, CursorPageRequest request) {
         PlanReview review = reader.findReview(reviewId);
         validateMemberByReviewId(userId, reviewId);
 
         int size = request.getSafeSize();
-        Long creatorId = review.getMeet().getCreator().getId();
-        Long hostId = review.getCreatorId();
-        List<PlanParticipant> participants = getReviewParticipants(reviewId, creatorId, hostId, request.cursor(), size);
+        Long hostId = review.getMeet().getCreator().getId();
+        Long creatorId = review.getCreatorId();
+        List<PlanParticipant> participants = getReviewParticipants(reviewId, hostId, creatorId, request.cursor(), size);
 
         return FlatCursorPageResponse.of(
                 participantRepositorySupport.countReviewParticipants(reviewId),
-                buildParticipantCursorPage(size, participants, creatorId, hostId)
+                buildParticipantCursorPage(size, participants, hostId, creatorId)
         );
     }
 
-    private List<PlanParticipant> getReviewParticipants(Long reviewId, Long creatorId, Long hostId, String encodedCursor, int size) {
+    private List<PlanParticipant> getReviewParticipants(Long reviewId, Long hostId, Long creatorId, String encodedCursor, int size) {
 
         MemberCursor cursor = null;
 
@@ -180,13 +178,13 @@ public class ReviewService {
             Long cursorId = Long.valueOf(decodeParts[1]);
             validateParticipantCursor(cursorNickname, cursorId);
 
-            cursor = new MemberCursor(cursorNickname, cursorId, creatorId, hostId);
+            cursor = new MemberCursor(cursorNickname, cursorId, hostId, creatorId);
         }
 
-        return participantRepositorySupport.findReviewParticipantPage(reviewId, creatorId, hostId, cursor, size);
+        return participantRepositorySupport.findReviewParticipantPage(reviewId, hostId, creatorId, cursor, size);
     }
 
-    private CursorPageResponse<ParticipantClientResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants, Long creatorId, Long hostId) {
+    private CursorPageResponse<UserClientResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants, Long hostId, Long creatorId) {
         return buildCursorPage(
                 participants,
                 size,
@@ -194,7 +192,7 @@ public class ReviewService {
                         c.getUser().getNickname(),
                         c.getId().toString()
                 },
-                list -> ofParticipantList(list, creatorId, hostId)
+                list -> ofParticipants(list, hostId, creatorId)
         );
     }
 

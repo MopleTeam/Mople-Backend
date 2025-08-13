@@ -4,8 +4,8 @@ import com.mople.core.exception.custom.AuthException;
 import com.mople.core.exception.custom.BadRequestException;
 import com.mople.core.exception.custom.CursorException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
-import com.mople.dto.client.ParticipantClientResponse;
 import com.mople.dto.client.PlanClientResponse;
+import com.mople.dto.client.UserClientResponse;
 import com.mople.dto.event.data.plan.PlanCreateEventData;
 import com.mople.dto.event.data.plan.PlanDeleteEventData;
 import com.mople.dto.event.data.plan.PlanUpdateEventData;
@@ -56,8 +56,8 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-import static com.mople.dto.client.ParticipantClientResponse.ofParticipantList;
 import static com.mople.dto.client.PlanClientResponse.*;
+import static com.mople.dto.client.UserClientResponse.ofParticipants;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
@@ -320,22 +320,22 @@ public class PlanService {
     }
 
     @Transactional(readOnly = true)
-    public FlatCursorPageResponse<ParticipantClientResponse> getParticipantList(Long userId, Long planId, CursorPageRequest request) {
+    public FlatCursorPageResponse<UserClientResponse> getParticipantList(Long userId, Long planId, CursorPageRequest request) {
         MeetPlan plan = reader.findPlan(planId);
         validateMemberByPlanId(userId, planId);
 
-        Long creatorId = plan.getMeet().getCreator().getId();
-        Long hostId = plan.getCreator().getId();
+        Long hostId = plan.getMeet().getCreator().getId();
+        Long creatorId = plan.getCreator().getId();
         int size = request.getSafeSize();
-        List<PlanParticipant> participants = getPlanParticipants(planId, creatorId, hostId, request.cursor(), size);
+        List<PlanParticipant> participants = getPlanParticipants(planId, hostId, creatorId, request.cursor(), size);
 
         return FlatCursorPageResponse.of(
                 participantRepositorySupport.countPlanParticipants(planId),
-                buildParticipantCursorPage(size, participants, creatorId, hostId)
+                buildParticipantCursorPage(size, participants, hostId, creatorId)
         );
     }
 
-    private List<PlanParticipant> getPlanParticipants(Long planId, Long creatorId, Long hostId, String encodedCursor, int size) {
+    private List<PlanParticipant> getPlanParticipants(Long planId, Long hostId, Long creatorId, String encodedCursor, int size) {
 
         MemberCursor cursor = null;
 
@@ -346,13 +346,13 @@ public class PlanService {
             Long cursorId = Long.valueOf(decodeParts[1]);
             validateParticipantCursor(cursorNickname, cursorId);
 
-            cursor = new MemberCursor(cursorNickname, cursorId, creatorId, hostId);
+            cursor = new MemberCursor(cursorNickname, cursorId, hostId, creatorId);
         }
 
-        return participantRepositorySupport.findPlanParticipantPage(planId, creatorId, hostId, cursor, size);
+        return participantRepositorySupport.findPlanParticipantPage(planId, hostId, creatorId, cursor, size);
     }
 
-    private CursorPageResponse<ParticipantClientResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants, Long creatorId, Long hostId) {
+    private CursorPageResponse<UserClientResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants, Long hostId, Long creatorId) {
         return buildCursorPage(
                 participants,
                 size,
@@ -360,7 +360,7 @@ public class PlanService {
                         c.getUser().getNickname(),
                         c.getId().toString()
                 },
-                list -> ofParticipantList(list, creatorId, hostId)
+                list -> ofParticipants(list, hostId, creatorId)
         );
     }
 

@@ -2,11 +2,11 @@ package com.mople.meet.controller;
 
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.MeetClientResponse;
+import com.mople.dto.client.UserClientResponse;
 import com.mople.dto.request.meet.MeetCreateRequest;
 import com.mople.dto.request.meet.MeetUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
-import com.mople.dto.client.MeetMemberClientResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.meet.service.MeetService;
@@ -83,7 +83,7 @@ public class MeetController {
             description = "모임 유저 목록을 조회합니다."
     )
     @GetMapping("/members/{meetId}")
-    public ResponseEntity<FlatCursorPageResponse<MeetMemberClientResponse>> getMeetMembers(
+    public ResponseEntity<FlatCursorPageResponse<UserClientResponse>> getMeetMembers(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long meetId,
             @ParameterObject @Valid CursorPageRequest request
