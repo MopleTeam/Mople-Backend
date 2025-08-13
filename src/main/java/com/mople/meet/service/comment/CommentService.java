@@ -279,18 +279,18 @@ public class CommentService {
     }
 
     @Transactional(readOnly = true)
-    public CursorPageResponse<AutoCompleteClientResponse> searchMeetMember(Long userId, Long postId, String keyword, CursorPageRequest request) {
+    public CursorPageResponse<UserClientResponse> searchMeetMember(Long userId, Long postId, String keyword, CursorPageRequest request) {
         reader.findUser(userId);
         commentValidator.validatePostId(postId);
 
         Long meetId = getMeetId(postId);
-        Long creatorId = reader.findMeet(meetId).getCreator().getId();
-        Long hostId = getHostId(postId);
+        Long hostId = reader.findMeet(meetId).getCreator().getId();
+        Long creatorId = getHostId(postId);
 
         int size = request.getSafeSize();
-        List<MeetMember> meetMembers = autoCompleteService.getMeetMembers(meetId, creatorId, hostId, keyword, request.cursor(), size);
+        List<MeetMember> meetMembers = autoCompleteService.getMeetMembers(meetId, hostId, creatorId, keyword, request.cursor(), size);
 
-        return autoCompleteService.buildAutoCompleteCursorPage(size, meetMembers, creatorId, hostId);
+        return autoCompleteService.buildAutoCompleteCursorPage(size, meetMembers, hostId, creatorId);
     }
 
     private Long getMeetId(Long postId) {

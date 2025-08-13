@@ -13,16 +13,16 @@ public class MemberSortExpressions {
                 .otherwise(2);
     }
 
-    public static NumberExpression<Integer> roleOrder(QUser user, Long creatorId) {
+    public static NumberExpression<Integer> roleOrder(QUser user, Long hostId) {
         return new CaseBuilder()
-                .when(user.id.eq(creatorId)).then(1)
+                .when(user.id.eq(hostId)).then(1)
                 .otherwise(2);
     }
 
-    public static NumberExpression<Integer> roleOrder(QUser user, Long creatorId, Long hostId) {
+    public static NumberExpression<Integer> roleOrder(QUser user, Long hostId, Long creatorId) {
         return new CaseBuilder()
-                .when(user.id.eq(creatorId)).then(1)
-                .when(user.id.eq(hostId)).then(2)
+                .when(user.id.eq(hostId)).then(1)
+                .when(user.id.eq(creatorId)).then(2)
                 .otherwise(3);
     }
 
@@ -40,18 +40,18 @@ public class MemberSortExpressions {
         return user.nickname.lower();
     }
 
-    public static int calculateRoleOrder(Long userId, Long creatorId) {
-        if (userId.equals(creatorId)) {
+    public static int calculateRoleOrder(Long userId, Long hostId) {
+        if (userId.equals(hostId)) {
             return 1;
         }  else {
             return 2;
         }
     }
 
-    public static int calculateRoleOrder(Long userId, Long creatorId, Long hostId) {
-        if (userId.equals(creatorId)) {
+    public static int calculateRoleOrder(Long userId, Long hostId, Long creatorId) {
+        if (userId.equals(hostId)) {
             return 1;
-        } else if (userId.equals(hostId)) {
+        } else if (userId.equals(creatorId)) {
             return 2;
         } else {
             return 3;

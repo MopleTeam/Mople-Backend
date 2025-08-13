@@ -1,7 +1,7 @@
 package com.mople.meet.service.comment;
 
 import com.mople.core.exception.custom.CursorException;
-import com.mople.dto.client.AutoCompleteClientResponse;
+import com.mople.dto.client.UserClientResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.global.utils.cursor.AutoCompleteCursor;
 import com.mople.entity.meet.MeetMember;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-import static com.mople.dto.client.AutoCompleteClientResponse.ofTargets;
+import static com.mople.dto.client.UserClientResponse.ofAutoCompleteUsers;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
@@ -24,7 +24,7 @@ public class CommentAutoCompleteService {
 
     private final MeetMemberRepositorySupport memberRepositorySupport;
 
-    public List<MeetMember> getMeetMembers(Long meetId, Long creatorId, Long hostId, String keyword, String encodedCursor, int size) {
+    public List<MeetMember> getMeetMembers(Long meetId, Long hostId, Long creatorId, String keyword, String encodedCursor, int size) {
 
         AutoCompleteCursor cursor = null;
 
@@ -35,21 +35,21 @@ public class CommentAutoCompleteService {
             Long cursorId = Long.parseLong(decodeParts[1]);
             validateCursor(cursorNickname, cursorId);
 
-            cursor = new AutoCompleteCursor(cursorNickname, keyword, cursorId, creatorId, hostId);
+            cursor = new AutoCompleteCursor(cursorNickname, keyword, cursorId, hostId, creatorId);
         }
 
-        return memberRepositorySupport.findMemberAutoCompletePage(meetId, creatorId, hostId, keyword, cursor, size);
+        return memberRepositorySupport.findMemberAutoCompletePage(meetId, hostId, creatorId, keyword, cursor, size);
     }
 
-    public CursorPageResponse<AutoCompleteClientResponse> buildAutoCompleteCursorPage(int size, List<MeetMember> memberNextPage, Long creatorId, Long hostId) {
+    public CursorPageResponse<UserClientResponse> buildAutoCompleteCursorPage(int size, List<MeetMember> members, Long hostId, Long creatorId) {
         return buildCursorPage(
-                memberNextPage,
+                members,
                 size,
                 c -> new String[]{
                         c.getUser().getNickname(),
                         c.getId().toString()
                 },
-                list -> ofTargets(list, creatorId, hostId)
+                list -> ofAutoCompleteUsers(list, hostId, creatorId)
         );
     }
 

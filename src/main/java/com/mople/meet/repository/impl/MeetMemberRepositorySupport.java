@@ -19,10 +19,10 @@ import java.util.List;
 public class MeetMemberRepositorySupport {
     private final JPAQueryFactory queryFactory;
 
-    public List<MeetMember> findMemberPage(Long meetId, Long creatorId, MemberCursor cursor, int size) {
+    public List<MeetMember> findMemberPage(Long meetId, Long hostId, MemberCursor cursor, int size) {
         QMeetMember member = QMeetMember.meetMember;
 
-        NumberExpression<Integer> roleOrder = MemberSortExpressions.roleOrder(member.user, creatorId);
+        NumberExpression<Integer> roleOrder = MemberSortExpressions.roleOrder(member.user, hostId);
         NumberExpression<Integer> nicknameTypeOrder = MemberSortExpressions.nicknameTypeOrder(member.user);
         StringExpression nicknameLower = MemberSortExpressions.nicknameLower(member.user);
 

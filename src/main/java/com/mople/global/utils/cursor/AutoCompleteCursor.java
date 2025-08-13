@@ -16,9 +16,9 @@ public class AutoCompleteCursor {
     private final String nicknameLower;
     private final Long id;
 
-    public AutoCompleteCursor(String nickname, String keyword, Long userId, Long creatorId, Long hostId) {
+    public AutoCompleteCursor(String nickname, String keyword, Long userId, Long hostId, Long creatorId) {
         this.startsWithOrder = nickname.toLowerCase().startsWith(keyword.toLowerCase()) ? 1 : 2;
-        this.roleOrder = calculateRoleOrder(userId, creatorId, hostId);
+        this.roleOrder = calculateRoleOrder(userId, hostId, creatorId);
         this.nicknameLower = nickname.toLowerCase();
         this.id = userId;
     }

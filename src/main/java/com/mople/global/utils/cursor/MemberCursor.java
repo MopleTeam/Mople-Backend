@@ -16,15 +16,15 @@ public class MemberCursor {
     private final String nicknameLower;
     private final Long id;
 
-    public MemberCursor(String nickname, Long userId, Long creatorId) {
-        this.roleOrder = calculateRoleOrder(userId, creatorId);
+    public MemberCursor(String nickname, Long userId, Long hostId) {
+        this.roleOrder = calculateRoleOrder(userId, hostId);
         this.nicknameTypeOrder = calculateNicknameTypeOrder(nickname);
         this.nicknameLower = nickname.toLowerCase();
         this.id = userId;
     }
 
-    public MemberCursor(String nickname, Long userId, Long creatorId, Long hostId) {
-        this.roleOrder = calculateRoleOrder(userId, creatorId, hostId);
+    public MemberCursor(String nickname, Long userId, Long hostId, Long creatorId) {
+        this.roleOrder = calculateRoleOrder(userId, hostId, creatorId);
         this.nicknameTypeOrder = calculateNicknameTypeOrder(nickname);
         this.nicknameLower = nickname.toLowerCase();
         this.id = userId;
