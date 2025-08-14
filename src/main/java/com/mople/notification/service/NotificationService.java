@@ -1,12 +1,14 @@
 package com.mople.notification.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mople.core.exception.custom.BadRequestException;
 import com.mople.core.exception.custom.CursorException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.request.notification.topic.PushTopicRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
-import com.mople.dto.response.notification.NotificationListResponse;
+import com.mople.dto.response.notification.NotificationResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
+import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.review.PlanReview;
 import com.mople.entity.notification.Notification;
@@ -97,15 +99,15 @@ public class NotificationService {
     }
 
     @Transactional(readOnly = true)
-    public CursorPageResponse<NotificationListResponse> getUserNotificationList(Long userId, CursorPageRequest request) {
+    public FlatCursorPageResponse<NotificationResponse> getUserNotificationList(Long userId, CursorPageRequest request) {
         reader.findUser(userId);
 
         int size = request.getSafeSize();
-        List<NotificationListResponse.NotificationListInterface> notifications = getNotifications(userId, request.cursor(), size);
+        List<NotificationResponse.NotificationListInterface> notifications = getNotifications(userId, request.cursor(), size);
 
         List<Long> planIds = notifications
                 .stream()
-                .map(NotificationListResponse.NotificationListInterface::getPlanId)
+                .map(NotificationResponse.NotificationListInterface::getPlanId)
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
@@ -129,16 +131,19 @@ public class NotificationService {
                         )
         );
 
-        List<NotificationListResponse> notificationListResponses = NotificationListResponse.of(objectMapper, notifications, planMap);
+        List<NotificationResponse> notificationListResponses = NotificationResponse.of(objectMapper, notifications, planMap);
 
-        return buildNotificationCursorPage(size, notificationListResponses);
+        return FlatCursorPageResponse.of(
+                notificationRepository.countBadgeCount(userId, Action.COMPLETE.name(), LocalDateTime.now().minusDays(30)),
+                buildNotificationCursorPage(size, notificationListResponses)
+        );
     }
 
-    private List<NotificationListResponse.NotificationListInterface> getNotifications(Long userId, String encodedCursor, int size) {
+    private List<NotificationResponse.NotificationListInterface> getNotifications(Long userId, String encodedCursor, int size) {
         int limit = size + 1;
 
         if (encodedCursor == null || encodedCursor.isEmpty()) {
-            return notificationRepository.findNotificationFirstPage(userId, Action.COMPLETE, limit);
+            return notificationRepository.findNotificationFirstPage(userId, Action.COMPLETE.name(), limit);
         }
 
         String[] decodeParts = CursorUtils.decode(encodedCursor, NOTIFICATION_CURSOR_FIELD_COUNT);
@@ -146,7 +151,7 @@ public class NotificationService {
 
         validateCursor(cursorId);
 
-        return notificationRepository.findNotificationNextPage(userId, Action.COMPLETE, cursorId, limit);
+        return notificationRepository.findNotificationNextPage(userId, Action.COMPLETE.name(), cursorId, limit);
     }
 
     private void validateCursor(Long cursorId) {
@@ -155,7 +160,7 @@ public class NotificationService {
         }
     }
 
-    private CursorPageResponse<NotificationListResponse> buildNotificationCursorPage(int size, List<NotificationListResponse> notificationListResponses) {
+    private CursorPageResponse<NotificationResponse> buildNotificationCursorPage(int size, List<NotificationResponse> notificationListResponses) {
         return buildCursorPage(
                 notificationListResponses,
                 size,
@@ -167,27 +172,31 @@ public class NotificationService {
     }
 
     @Transactional
-    public void userBadgeCountClear(Long userId) {
+    public void readAllNotifications(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_USER));
 
-        user.clearBadgeCount();
-
         notificationRepository
-                .getUserNotificationList(userId, Action.COMPLETE)
+                .getUserNotificationList(user.getId(), Action.COMPLETE)
                 .forEach(Notification::updateReadAt);
     }
 
     @Transactional
-    public void userBadgeCountMinus(Long userId, Long notificationId) {
+    public void readSingleNotification(Long userId, Long notificationId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_USER));
-
-        user.minusBadgeCount();
 
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_NOTIFY));
 
+        validateNotification(user.getId(), notification);
+
         notification.updateReadAt();
+    }
+
+    private void validateNotification(Long userId, Notification notification) {
+        if (!notification.getUser().getId().equals(userId)) {
+            throw new BadRequestException(NOT_OWNER_OF_NOTIFICATION);
+        }
     }
 }

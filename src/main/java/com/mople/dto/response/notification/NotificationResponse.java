@@ -9,7 +9,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
-public record NotificationListResponse(
+public record NotificationResponse(
         Long notificationId,
         Long meetId,
         Long planId,
@@ -21,13 +21,17 @@ public record NotificationListResponse(
         String sendAt,
         LocalDateTime planDate
 ) {
-    public static List<NotificationListResponse> of(ObjectMapper mapper, List<NotificationListInterface> notificationList, Map<Long, LocalDateTime> timeMap) {
+    public static List<NotificationResponse> of(
+            ObjectMapper mapper,
+            List<NotificationListInterface> notificationList,
+            Map<Long, LocalDateTime> timeMap
+    ) {
 
         return notificationList.stream()
                 .map(notification ->
                         {
                             try {
-                                return new NotificationListResponse(
+                                return new NotificationResponse(
                                         notification.getNotificationId(),
                                         notification.getMeetId(),
                                         notification.getPlanId(),
