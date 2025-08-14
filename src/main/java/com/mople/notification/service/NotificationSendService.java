@@ -8,6 +8,7 @@ import com.mople.dto.response.notification.NotifySendRequest;
 import com.mople.entity.notification.FirebaseToken;
 import com.mople.entity.notification.Notification;
 import com.mople.entity.user.User;
+import com.mople.global.enums.Action;
 import com.mople.global.enums.NotifyType;
 import com.mople.global.event.data.notify.NotificationEvent;
 import com.mople.global.event.data.notify.handler.NotifyHandler;
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.mople.global.enums.ExceptionReturnCode.NOT_FOUND_NOTIFY_TYPE;
@@ -43,12 +45,17 @@ public class NotificationSendService {
                             .stream()
                             .map(token -> {
                                 User user = sendRequest.findUserByToken(token);
-                                return buildMessage(notify, token, user, sendRequest);
+                                Long badgeCount = notificationRepository.countBadgeCount(
+                                        user.getId(),
+                                        Action.COMPLETE.name(),
+                                        LocalDateTime.now().minusDays(30)
+                                );
+
+                                return buildMessage(notify, token, sendRequest, badgeCount);
                             })
                             .toList()
             );
         }
-        sendRequest.users().forEach(User::updateBadgeCount);
 
         List<Notification> notifications = handler.getNotifications(data, notify, sendRequest.users());
         notificationRepository.saveAll(notifications);
@@ -66,7 +73,10 @@ public class NotificationSendService {
         return (NotifyHandler<EventData>) rawHandler;
     }
 
-    private Message buildMessage(NotificationEvent notify, FirebaseToken token, User findUser, NotifySendRequest sendRequest) {
+    private Message buildMessage(NotificationEvent notify, FirebaseToken token, NotifySendRequest sendRequest, Long badgeCount) {
+
+        int nextBadgeCount = Math.toIntExact(badgeCount + 1);
+
         return Message
                 .builder()
                 .setNotification(
@@ -82,7 +92,7 @@ public class NotificationSendService {
                                 .builder()
                                 .setAps(Aps.builder()
                                         .setSound("default")
-                                        .setBadge(findUser.getBadgeCount() + 1)
+                                        .setBadge(nextBadgeCount)
                                         .build()
                                 )
                                 .build()
@@ -96,7 +106,7 @@ public class NotificationSendService {
                                                 .setTitle(notify.payload().title())
                                                 .setBody(notify.payload().message())
                                                 .setDefaultSound(true)
-                                                .setNotificationCount(findUser.getBadgeCount() + 1)
+                                                .setNotificationCount(nextBadgeCount)
                                                 .build()
                                 )
                                 .build()

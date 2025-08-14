@@ -4,8 +4,8 @@ import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.request.notification.topic.PushTopicRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
-import com.mople.dto.response.notification.NotificationListResponse;
-import com.mople.dto.response.pagination.CursorPageResponse;
+import com.mople.dto.response.notification.NotificationResponse;
+import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.global.enums.PushTopic;
 import com.mople.notification.service.NotificationService;
 
@@ -72,7 +72,7 @@ public class NotificationController {
             description = "알림 항목을 조회합니다."
     )
     @GetMapping("/list")
-    public ResponseEntity<CursorPageResponse<NotificationListResponse>> notificationList(
+    public ResponseEntity<FlatCursorPageResponse<NotificationResponse>> notificationList(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @ParameterObject @Valid CursorPageRequest request
     ) {
@@ -80,27 +80,27 @@ public class NotificationController {
     }
 
     @Operation(
-            summary = "Notify Count 초기화 API",
-            description = "유저의 알림 카운트를 초기화합니다."
+            summary = "모든 Notify 읽음 처리 API",
+            description = "모든 알림을 읽음 처리합니다."
     )
     @PutMapping("/clear")
-    public ResponseEntity<Void> badgeClearCount(
+    public ResponseEntity<Void> readAllNotifications(
             @Parameter(hidden = true) @SignUser AuthUserRequest user
     ) {
-        service.userBadgeCountClear(user.id());
+        service.readAllNotifications(user.id());
         return ResponseEntity.ok().build();
     }
 
     @Operation(
-            summary = "Notify Count 차감 API",
-            description = "알림을 조회했을 때 알림 카운트를 1 줄입니다."
+            summary = "특정 Notify 읽음 처리 API",
+            description = "특정 알림을 읽음 처리합니다."
     )
-    @PutMapping("/minus/{notificationId}")
-    public ResponseEntity<Void> badgeMinusCount(
+    @PutMapping("/read/{notificationId}")
+    public ResponseEntity<Void> readSingleNotification(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long notificationId
     ) {
-        service.userBadgeCountMinus(user.id(), notificationId);
+        service.readSingleNotification(user.id(), notificationId);
         return ResponseEntity.ok().build();
     }
 }

@@ -29,9 +29,6 @@ public class User {
     @Column(name = "profile_img")
     private String profileImg;
 
-    @Column(name = "badge_count")
-    private int badgeCount;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "social_provider", nullable = false, length = 10)
     private SocialProvider socialProvider;
@@ -69,18 +66,6 @@ public class User {
     public void updateImageAndNickname(String imageName, String nickname) {
         this.profileImg = imageName;
         this.nickname = nickname;
-    }
-
-    public void updateBadgeCount() {
-        this.badgeCount++;
-    }
-
-    public void clearBadgeCount() {
-        this.badgeCount = 0;
-    }
-
-    public void minusBadgeCount() {
-        this.badgeCount = Math.max(this.badgeCount - 1, 0);
     }
 
     public boolean imageValid() {
