@@ -153,11 +153,12 @@ public class CommentService {
         String postName = getPostName(comment.getPostId());
         commentEventPublisher.publishMentionEvent(null, request.mentions(), comment, postName);
 
-        return getCommentClientResponse(userId, comment);
+        boolean likedByMe = likeService.likedByMe(userId, comment.getId());
+
+        return getCommentClientResponse(comment, likedByMe);
     }
 
-    private CommentClientResponse getCommentClientResponse(Long userId, PlanComment comment) {
-        boolean likedByMe = likeService.likedByMe(userId, comment.getId());
+    private CommentClientResponse getCommentClientResponse(PlanComment comment, boolean likedByMe) {
         List<User> mentionedUsers = mentionService.findMentionedUsers(comment.getId());
 
         return ofComment(new CommentResponse(comment, mentionedUsers, likedByMe));
@@ -190,7 +191,9 @@ public class CommentService {
         commentEventPublisher.publishMentionEvent(null, request.mentions(), comment, postName);
         commentEventPublisher.publishReplyEvent(request.mentions(), comment, parentComment, postName);
 
-        return getCommentClientResponse(userId, comment);
+        boolean likedByMe = likeService.likedByMe(userId, comment.getId());
+
+        return getCommentClientResponse(comment, likedByMe);
     }
 
     @Transactional
@@ -275,7 +278,10 @@ public class CommentService {
         PlanComment comment = reader.findComment(commentId);
         reader.findUser(userId);
 
-        return getCommentClientResponse(userId, comment);
+        boolean likedByMe = likeService.toggleLike(userId, comment);
+        PlanComment updatedComment = reader.findComment(commentId);
+
+        return getCommentClientResponse(updatedComment, likedByMe);
     }
 
     @Transactional(readOnly = true)
