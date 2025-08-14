@@ -54,7 +54,7 @@ public class SecurityConfig {
                 // swagger
                 .requestMatchers("/docs", "/swagger-ui.html", "/swagger-ui/**", "/api-docs", "/api-docs/**", "/v3/api-docs/**").permitAll()
                 // user registry
-                .requestMatchers("/auth/**", "/user/nickname/**", "/image/upload/**", "/image/review/**").permitAll()
+                .requestMatchers("/auth/**", "/user/nickname/**", "/image/upload/**").permitAll()
                 // admin path
                 .requestMatchers("/v1/**").permitAll()
                 // invite path
