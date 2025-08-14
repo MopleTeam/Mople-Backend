@@ -18,7 +18,7 @@ repositories {
 dependencyManagement {
     imports {
         mavenBom("org.springframework.cloud:spring-cloud-dependencies:${libs.versions.spring.cloud.get()}")
-        mavenBom("io.awspring.cloud:spring-cloud-aws-dependencies:${libs.versions.aws.get()}")
+        mavenBom("com.oracle.cloud.spring:spring-cloud-oci-dependencies:${libs.versions.oci.get()}")
     }
 }
 
@@ -37,8 +37,7 @@ dependencies {
     implementation(libs.spring.cloud.starter.openfeign) // client
     implementation(libs.okhttp)
 
-    implementation(libs.spring.cloud.aws.starter.s3) // s3
-    implementation(libs.xml.bind.api)
+    implementation(libs.oci.storage) // oci storage
 
     runtimeOnly(libs.postgresql) // db, orm
     implementation(libs.spring.boot.starter.data.jpa)
