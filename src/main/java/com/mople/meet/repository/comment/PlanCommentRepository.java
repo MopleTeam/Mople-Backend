@@ -21,7 +21,7 @@ public interface PlanCommentRepository extends JpaRepository<PlanComment, Long> 
     void increaseLikeCount(Long id);
 
     @Modifying(clearAutomatically = true)
-    @Query("UPDATE PlanComment c SET c.likeCount = c.likeCount - 1 WHERE c.id = :id")
+    @Query("UPDATE PlanComment c SET c.likeCount = c.likeCount - 1 WHERE c.id = :id AND c.likeCount > 0")
     void decreaseLikeCount(Long id);
 
     @Modifying(clearAutomatically = true)
@@ -29,6 +29,6 @@ public interface PlanCommentRepository extends JpaRepository<PlanComment, Long> 
     void increaseReplyCount(Long id);
 
     @Modifying(clearAutomatically = true)
-    @Query("UPDATE PlanComment c SET c.replyCount = c.replyCount - 1 WHERE c.id = :id")
+    @Query("UPDATE PlanComment c SET c.replyCount = c.replyCount - 1 WHERE c.id = :id AND c.replyCount > 0")
     void decreaseReplyCount(Long id);
 }
