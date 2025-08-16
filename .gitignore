@@ -24,6 +24,8 @@ bin/
 *.iml
 *.ipr
 
+.java-version
+
 src/main/resources/application-*.yml
 firebase*.json
 
