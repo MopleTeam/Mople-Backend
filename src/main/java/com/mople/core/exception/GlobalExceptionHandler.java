@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
-@RequiredArgsConstructor
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
     private final ExceptionLogger exceptionLogger;
     private final LoggingContextManager loggingContextManager;
@@ -155,7 +155,7 @@ public class GlobalExceptionHandler {
                 );
     }
 
-    //    @ExceptionHandler(Exception.class)
+//        @ExceptionHandler(Exception.class)
 //    public ResponseEntity<ExceptionResponse<Object>> handleOtherException(Exception e) {
 //        return ResponseEntity
 //                .status(HttpStatus.INTERNAL_SERVER_ERROR)
