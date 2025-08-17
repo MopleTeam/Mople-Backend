@@ -2,6 +2,7 @@ package com.mople.meet.repository.comment;
 
 import com.mople.entity.meet.comment.CommentLike;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
@@ -13,6 +14,14 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, Long> 
     List<Long> findLikedCommentIds(Long userId, List<Long> commentIds);
 
     Optional<CommentLike> findByUserIdAndCommentId(Long userId, Long commentId);
+
+    @Modifying
+    @Query(value =
+            "insert into comment_like (comment_id, user_id) " +
+            "       values (:commentId, :userId) " +
+            "       on conflict do nothing"
+            , nativeQuery = true)
+    void insertIfNotExists(Long commentId, Long userId);
 
     boolean existsByUserIdAndCommentId(Long userId, Long commentId);
 

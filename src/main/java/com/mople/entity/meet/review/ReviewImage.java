@@ -14,7 +14,7 @@ public class ReviewImage {
     @Column(name = "image_id")
     private Long id;
 
-    @Column(name = "image", length = 100)
+    @Column(name = "image")
     private String reviewImage;
 
     @ManyToOne
