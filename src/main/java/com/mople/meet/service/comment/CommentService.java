@@ -150,8 +150,8 @@ public class CommentService {
         commentRepository.save(comment);
         mentionService.createMentions(request.mentions(), comment.getId());
 
-        String postName = getPostName(comment.getPostId());
-        commentEventPublisher.publishMentionEvent(null, request.mentions(), comment, postName);
+        String meetName = getMeetName(comment.getPostId());
+        commentEventPublisher.publishMentionEvent(null, request.mentions(), comment, meetName);
 
         boolean likedByMe = likeService.likedByMe(userId, comment.getId());
 
@@ -187,9 +187,9 @@ public class CommentService {
 
         commentRepository.increaseReplyCount(parentComment.getId());
 
-        String postName = getPostName(comment.getPostId());
-        commentEventPublisher.publishMentionEvent(null, request.mentions(), comment, postName);
-        commentEventPublisher.publishReplyEvent(request.mentions(), comment, parentComment, postName);
+        String meetName = getMeetName(comment.getPostId());
+        commentEventPublisher.publishMentionEvent(null, request.mentions(), comment, meetName);
+        commentEventPublisher.publishReplyEvent(request.mentions(), comment, parentComment, meetName);
 
         boolean likedByMe = likeService.likedByMe(userId, comment.getId());
 
@@ -208,8 +208,8 @@ public class CommentService {
         comment.updateContent(request.contents());
         mentionService.updateMentions(request.mentions(), comment.getId());
 
-        String postName = getPostName(comment.getPostId());
-        commentEventPublisher.publishMentionEvent(originMentions, request.mentions(), comment, postName);
+        String meetName = getMeetName(comment.getPostId());
+        commentEventPublisher.publishMentionEvent(originMentions, request.mentions(), comment, meetName);
 
         return getCommentUpdateClientResponse(userId, comment);
     }
@@ -221,11 +221,11 @@ public class CommentService {
         return ofUpdate(new CommentUpdateResponse(comment, mentionedUsers, likedByMe));
     }
 
-    private String getPostName(Long postId) {
+    private String getMeetName(Long postId) {
         try {
-            return reader.findPlan(postId).getName();
+            return reader.findPlan(postId).getMeet().getName();
         } catch (ResourceNotFoundException e) {
-            return reader.findReviewByPostId(postId).getName();
+            return reader.findReviewByPostId(postId).getMeet().getName();
         }
     }
 
