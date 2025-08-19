@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,12 +25,14 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                     "m.meet_image as meetImg, " +
                     "n.type as type, " +
                     "n.payload as payload, " +
-                    "n.send_at as sendAt " +
+                    "n.send_at as sendAt, " +
+                    "n.read_at as readAt " +
             "  from notification n " +
             "  join meet m " +
             "    on m.meet_id = n.meet_id " +
             " where n.user_id = :userId " +
             "   and n.action = :action " +
+            "   and n.expired_at > now() " +
             " order by n.notification_id DESC " +
             "limit :limit",
             nativeQuery = true
@@ -47,12 +48,14 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                     "m.meet_image as meetImg, " +
                     "n.type as type, " +
                     "n.payload as payload, " +
-                    "n.send_at as sendAt " +
+                    "n.send_at as sendAt, " +
+                    "n.read_at as readAt " +
             "  from notification n " +
             "  join meet m " +
             "    on m.meet_id = n.meet_id " +
             " where n.user_id = :userId " +
             "   and n.action = :action " +
+            "   and n.expired_at > now() " +
             "   and n.notification_id < :cursorId " +
             " order by n.notification_id DESC " +
             "limit :limit",
@@ -71,11 +74,11 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
         "  from notification n " +
         " where n.user_id = :userId " +
         "   and n.action = :action " +
-        "   and n.read_at is null " +
-        "   and n.send_at >= :startDate",
+        "   and n.expired_at > now() " +
+        "   and n.read_at is null ",
             nativeQuery = true
     )
-    Long countBadgeCount(Long userId, String action, LocalDateTime startDate);
+    Long countBadgeCount(Long userId, String action);
 
     @Query(value =
             "select 1 " +

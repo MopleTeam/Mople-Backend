@@ -19,6 +19,7 @@ public record NotificationResponse(
         NotifyType type,
         NotificationPayload payload,
         String sendAt,
+        boolean isRead,
         LocalDateTime planDate
 ) {
     public static List<NotificationResponse> of(
@@ -41,6 +42,7 @@ public record NotificationResponse(
                                         notification.getType(),
                                         mapper.readValue(notification.getPayload(), NotificationPayload.class),
                                         notification.getSendAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                                        notification.getReadAt() != null,
                                         getDate(notification.getPlanId(), notification.getReviewId(), timeMap)
                                 );
                             } catch (JsonProcessingException e) {
@@ -69,6 +71,8 @@ public record NotificationResponse(
         String getPayload();
 
         LocalDateTime getSendAt();
+
+        LocalDateTime getReadAt();
     }
 
     private static LocalDateTime getDate(Long planId, Long reviewId, Map<Long, LocalDateTime> timeMap) {

@@ -47,8 +47,7 @@ public class NotificationSendService {
                                 User user = sendRequest.findUserByToken(token);
                                 Long badgeCount = notificationRepository.countBadgeCount(
                                         user.getId(),
-                                        Action.COMPLETE.name(),
-                                        LocalDateTime.now().minusDays(30)
+                                        Action.COMPLETE.name()
                                 );
 
                                 return buildMessage(notify, token, sendRequest, badgeCount);
