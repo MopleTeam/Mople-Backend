@@ -2,7 +2,7 @@ package com.mople.meet.controller;
 
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.ReviewClientResponse;
-import com.mople.dto.client.UserClientResponse;
+import com.mople.dto.client.UserRoleClientResponse;
 import com.mople.dto.request.meet.review.ReviewImageDeleteRequest;
 import com.mople.dto.request.meet.review.ReviewReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
@@ -83,7 +83,7 @@ public class ReviewController {
             description = "후기에 참가하는 유저 정보를 반환합니다."
     )
     @GetMapping("/participants/{reviewId}")
-    public ResponseEntity<FlatCursorPageResponse<UserClientResponse>> getReviewParticipants(
+    public ResponseEntity<FlatCursorPageResponse<UserRoleClientResponse>> getReviewParticipants(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long reviewId,
             @ParameterObject @Valid CursorPageRequest request

@@ -5,7 +5,7 @@ import com.mople.core.exception.custom.BadRequestException;
 import com.mople.core.exception.custom.CursorException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.PlanClientResponse;
-import com.mople.dto.client.UserClientResponse;
+import com.mople.dto.client.UserRoleClientResponse;
 import com.mople.dto.event.data.plan.PlanCreateEventData;
 import com.mople.dto.event.data.plan.PlanDeleteEventData;
 import com.mople.dto.event.data.plan.PlanUpdateEventData;
@@ -57,7 +57,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static com.mople.dto.client.PlanClientResponse.*;
-import static com.mople.dto.client.UserClientResponse.ofParticipants;
+import static com.mople.dto.client.UserRoleClientResponse.ofParticipants;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
@@ -320,7 +320,7 @@ public class PlanService {
     }
 
     @Transactional(readOnly = true)
-    public FlatCursorPageResponse<UserClientResponse> getParticipantList(Long userId, Long planId, CursorPageRequest request) {
+    public FlatCursorPageResponse<UserRoleClientResponse> getParticipantList(Long userId, Long planId, CursorPageRequest request) {
         MeetPlan plan = reader.findPlan(planId);
         validateMemberByPlanId(userId, planId);
 
@@ -352,7 +352,7 @@ public class PlanService {
         return participantRepositorySupport.findPlanParticipantPage(planId, hostId, creatorId, cursor, size);
     }
 
-    private CursorPageResponse<UserClientResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants, Long hostId, Long creatorId) {
+    private CursorPageResponse<UserRoleClientResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants, Long hostId, Long creatorId) {
         return buildCursorPage(
                 participants,
                 size,

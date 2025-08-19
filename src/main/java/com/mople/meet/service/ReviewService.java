@@ -4,7 +4,7 @@ import com.mople.core.exception.custom.BadRequestException;
 import com.mople.core.exception.custom.CursorException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.ReviewClientResponse;
-import com.mople.dto.client.UserClientResponse;
+import com.mople.dto.client.UserRoleClientResponse;
 import com.mople.dto.event.data.review.ReviewUpdateEventData;
 import com.mople.dto.request.meet.review.ReviewImageDeleteRequest;
 import com.mople.dto.request.meet.review.ReviewReportRequest;
@@ -45,7 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 import static com.mople.dto.client.ReviewClientResponse.*;
-import static com.mople.dto.client.UserClientResponse.ofParticipants;
+import static com.mople.dto.client.UserRoleClientResponse.ofParticipants;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
@@ -152,7 +152,7 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    public FlatCursorPageResponse<UserClientResponse> getReviewParticipants(Long userId, Long reviewId, CursorPageRequest request) {
+    public FlatCursorPageResponse<UserRoleClientResponse> getReviewParticipants(Long userId, Long reviewId, CursorPageRequest request) {
         PlanReview review = reader.findReview(reviewId);
         validateMemberByReviewId(userId, reviewId);
 
@@ -184,7 +184,7 @@ public class ReviewService {
         return participantRepositorySupport.findReviewParticipantPage(reviewId, hostId, creatorId, cursor, size);
     }
 
-    private CursorPageResponse<UserClientResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants, Long hostId, Long creatorId) {
+    private CursorPageResponse<UserRoleClientResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants, Long hostId, Long creatorId) {
         return buildCursorPage(
                 participants,
                 size,
