@@ -16,7 +16,7 @@ public class PlanRemindEventData implements EventData {
     private final Long planId;
     private final String planName;
     private final LocalDateTime planTime;
-    private final Long creatorId;
+    private final Long planCreatorId;
     private final Double temperature;
     private final String iconImage;
 

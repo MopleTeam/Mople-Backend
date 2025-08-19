@@ -258,7 +258,7 @@ public class ReviewService {
                                     .meetName(review.getMeet().getName())
                                     .reviewId(review.getId())
                                     .reviewName(review.getName())
-                                    .creatorId(review.getCreatorId())
+                                    .reviewUpdatedBy(review.getCreatorId())
                                     .build()
                     )
             );

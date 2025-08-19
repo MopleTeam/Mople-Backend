@@ -36,7 +36,7 @@ public class PlanRemindNotifyHandler implements NotifyHandler<PlanRemindEventDat
 
     @Override
     public NotifySendRequest getSendRequest(PlanRemindEventData data, NotificationEvent notify) {
-        return requestFactory.getPlanRemindToken(data.getPlanId(), notify.topic());
+        return requestFactory.getPlanPushTokensAll(data.getPlanId(), notify.topic());
     }
 
     @Override

@@ -143,7 +143,7 @@ public class PlanService {
                                 .planId(plan.getId())
                                 .planName(plan.getName())
                                 .planTime(plan.getPlanTime())
-                                .creatorId(user.getId())
+                                .planCreatorId(user.getId())
                                 .build()
                 )
         );
@@ -200,7 +200,7 @@ public class PlanService {
                                 .meetName(plan.getMeet().getName())
                                 .planId(plan.getId())
                                 .planName(plan.getName())
-                                .updatedBy(plan.getCreator().getId())
+                                .planUpdatedBy(plan.getCreator().getId())
                                 .build()
                 )
         );
@@ -224,7 +224,7 @@ public class PlanService {
                                 .meetName(plan.getMeet().getName())
                                 .planId(plan.getId())
                                 .planName(plan.getName())
-                                .deletedBy(plan.getCreator().getId())
+                                .planDeletedBy(plan.getCreator().getId())
                                 .build()
                 )
         );

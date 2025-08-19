@@ -98,7 +98,7 @@ public class PlanScheduleJob {
                                 .planId(meetPlan.getId())
                                 .planName(meetPlan.getName())
                                 .planTime(meetPlan.getPlanTime())
-                                .creatorId(userId)
+                                .planCreatorId(userId)
                                 .temperature(weather.temperature())
                                 .iconImage(weather.weatherIconImage())
                                 .build()
@@ -130,7 +130,7 @@ public class PlanScheduleJob {
                                     .meetName(review.getMeet().getName())
                                     .reviewId(review.getId())
                                     .reviewName(review.getName())
-                                    .creatorId(review.getCreatorId())
+                                    .reviewCreatorId(review.getCreatorId())
                                     .build()
                     )
             );
