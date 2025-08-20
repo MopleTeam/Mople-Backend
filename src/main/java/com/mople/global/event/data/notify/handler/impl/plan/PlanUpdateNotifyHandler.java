@@ -34,7 +34,7 @@ public class PlanUpdateNotifyHandler implements NotifyHandler<PlanUpdateEventDat
 
     @Override
     public NotifySendRequest getSendRequest(PlanUpdateEventData data, NotificationEvent notify) {
-        return requestFactory.getPlanPushToken(data.getUpdatedBy(), data.getPlanId(), notify.topic());
+        return requestFactory.getPlanPushTokens(data.getPlanUpdatedBy(), data.getPlanId(), notify.topic());
     }
 
     @Override

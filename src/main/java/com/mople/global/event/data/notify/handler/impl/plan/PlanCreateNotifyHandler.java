@@ -34,7 +34,7 @@ public class PlanCreateNotifyHandler implements NotifyHandler<PlanCreateEventDat
 
     @Override
     public NotifySendRequest getSendRequest(PlanCreateEventData data, NotificationEvent notify) {
-        return requestFactory.getPlanPushToken(data.getCreatorId(), data.getPlanId(), notify.topic());
+        return requestFactory.getMeetPushTokens(data.getPlanCreatorId(), data.getMeetId(), notify.topic());
     }
 
     @Override

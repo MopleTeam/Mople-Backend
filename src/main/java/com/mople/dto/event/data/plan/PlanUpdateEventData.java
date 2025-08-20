@@ -14,7 +14,7 @@ public class PlanUpdateEventData implements EventData {
     private final String meetName;
     private final Long planId;
     private final String planName;
-    private final Long updatedBy;
+    private final Long planUpdatedBy;
 
     @Override
     public String getTitle() {

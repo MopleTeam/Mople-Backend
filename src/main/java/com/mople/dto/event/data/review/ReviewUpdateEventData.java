@@ -14,7 +14,7 @@ public class ReviewUpdateEventData implements EventData {
     private final String meetName;
     private final Long reviewId;
     private final String reviewName;
-    private final Long creatorId;
+    private final Long reviewUpdatedBy;
 
     @Override
     public String getTitle() {

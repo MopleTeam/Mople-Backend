@@ -10,8 +10,8 @@ import java.util.Map;
 @Getter
 public class CommentReplyEventData implements EventData {
 
+    private final String meetName;
     private final Long postId;
-    private final String postName;
     private final Long commentId;
     private final String commentContent;
     private final Long senderId;
@@ -20,12 +20,12 @@ public class CommentReplyEventData implements EventData {
 
     @Override
     public String getTitle() {
-        return postName + "에서 " + senderNickname + "님이 답글을 남겼어요!";
+        return meetName + "의 새로운 대댓글 👀";
     }
 
     @Override
     public String getBody() {
-        return commentContent;
+        return meetName + "에서 " + senderNickname + "님이 답글을 남겼어요!";
     }
 
     @Override

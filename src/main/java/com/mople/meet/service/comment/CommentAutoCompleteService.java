@@ -1,7 +1,7 @@
 package com.mople.meet.service.comment;
 
 import com.mople.core.exception.custom.CursorException;
-import com.mople.dto.client.UserClientResponse;
+import com.mople.dto.client.UserRoleClientResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.global.utils.cursor.AutoCompleteCursor;
 import com.mople.entity.meet.MeetMember;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-import static com.mople.dto.client.UserClientResponse.ofAutoCompleteUsers;
+import static com.mople.dto.client.UserRoleClientResponse.ofAutoCompleteUsers;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
@@ -41,7 +41,7 @@ public class CommentAutoCompleteService {
         return memberRepositorySupport.findMemberAutoCompletePage(meetId, hostId, creatorId, keyword, cursor, size);
     }
 
-    public CursorPageResponse<UserClientResponse> buildAutoCompleteCursorPage(int size, List<MeetMember> members, Long hostId, Long creatorId) {
+    public CursorPageResponse<UserRoleClientResponse> buildAutoCompleteCursorPage(int size, List<MeetMember> members, Long hostId, Long creatorId) {
         return buildCursorPage(
                 members,
                 size,

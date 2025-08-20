@@ -39,7 +39,7 @@ public class PlanDeleteNotifyHandler implements NotifyHandler<PlanDeleteEventDat
 
     @Override
     public NotifySendRequest getSendRequest(PlanDeleteEventData data, NotificationEvent notify) {
-        return requestFactory.getPlanPushToken(data.getDeletedBy(), data.getPlanId(), notify.topic());
+        return requestFactory.getPlanPushTokens(data.getPlanDeletedBy(), data.getPlanId(), notify.topic());
     }
 
     @Override

@@ -19,14 +19,14 @@ public class CommentEventPublisher {
     private final ApplicationEventPublisher publisher;
     private final NotificationUserReader userReader;
 
-    public void publishMentionEvent(List<Long> originMentions, List<Long> newMentions, PlanComment comment, String postName) {
+    public void publishMentionEvent(List<Long> originMentions, List<Long> newMentions, PlanComment comment, String meetName) {
         if (newMentions == null || newMentions.isEmpty()) return;
 
         publisher.publishEvent(
                 NotifyEventPublisher.commentMention(
                         CommentMentionEventData.builder()
                                 .postId(comment.getPostId())
-                                .postName(postName)
+                                .meetName(meetName)
                                 .commentId(comment.getId())
                                 .commentContent(comment.getContent())
                                 .senderId(comment.getWriter().getId())
@@ -37,7 +37,7 @@ public class CommentEventPublisher {
         );
     }
 
-    public void publishReplyEvent(List<Long> mentions, PlanComment comment, PlanComment parentComment, String postName) {
+    public void publishReplyEvent(List<Long> mentions, PlanComment comment, PlanComment parentComment, String meetName) {
         boolean parentIsMentioned = false;
 
         if (mentions != null && !mentions.isEmpty()) {
@@ -52,7 +52,7 @@ public class CommentEventPublisher {
                     NotifyEventPublisher.commentReply(
                             CommentReplyEventData.builder()
                                     .postId(comment.getPostId())
-                                    .postName(postName)
+                                    .meetName(meetName)
                                     .commentId(comment.getId())
                                     .commentContent(comment.getContent())
                                     .senderId(comment.getWriter().getId())

@@ -14,7 +14,7 @@ public class ReviewRemindEventData implements EventData {
     private final String meetName;
     private final Long reviewId;
     private final String reviewName;
-    private final Long creatorId;
+    private final Long reviewCreatorId;
 
     @Override
     public String getTitle() {

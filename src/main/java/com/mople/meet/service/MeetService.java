@@ -2,7 +2,7 @@ package com.mople.meet.service;
 
 import com.mople.core.exception.custom.*;
 import com.mople.dto.client.MeetClientResponse;
-import com.mople.dto.client.UserClientResponse;
+import com.mople.dto.client.UserRoleClientResponse;
 import com.mople.dto.event.data.meet.MeetJoinEventData;
 import com.mople.dto.request.meet.MeetCreateRequest;
 import com.mople.dto.request.meet.MeetUpdateRequest;
@@ -32,7 +32,7 @@ import org.springframework.ui.Model;
 import java.util.*;
 
 import static com.mople.dto.client.MeetClientResponse.*;
-import static com.mople.dto.client.UserClientResponse.ofMembers;
+import static com.mople.dto.client.UserRoleClientResponse.ofMembers;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
@@ -172,7 +172,7 @@ public class MeetService {
     }
 
     @Transactional(readOnly = true)
-    public FlatCursorPageResponse<UserClientResponse> meetMemberList(Long userId, Long meetId, CursorPageRequest request) {
+    public FlatCursorPageResponse<UserRoleClientResponse> meetMemberList(Long userId, Long meetId, CursorPageRequest request) {
         reader.findUser(userId);
         Meet meet = reader.findMeet(meetId);
         validateMember(userId, meetId);
@@ -204,7 +204,7 @@ public class MeetService {
         return meetMemberRepositorySupport.findMemberPage(meetId, hostId, cursor, size);
     }
 
-    private CursorPageResponse<UserClientResponse> buildMemberCursorPage(int size, List<MeetMember> members, Long hostId) {
+    private CursorPageResponse<UserRoleClientResponse> buildMemberCursorPage(int size, List<MeetMember> members, Long hostId) {
         return buildCursorPage(
                 members,
                 size,
