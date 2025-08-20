@@ -34,7 +34,7 @@ public class ReviewRemindNotifyHandler implements NotifyHandler<ReviewRemindEven
 
     @Override
     public NotifySendRequest getSendRequest(ReviewRemindEventData data, NotificationEvent notify) {
-        return requestFactory.getReviewCreatorPushToken(data.getCreatorId(), notify.topic());
+        return requestFactory.getCreatorPushToken(data.getReviewCreatorId(), notify.topic());
     }
 
     @Override

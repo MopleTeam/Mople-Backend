@@ -34,7 +34,7 @@ public class ReviewUpdateNotifyHandler implements NotifyHandler<ReviewUpdateEven
 
     @Override
     public NotifySendRequest getSendRequest(ReviewUpdateEventData data, NotificationEvent notify) {
-        return requestFactory.getReviewPushToken(data.getCreatorId(), data.getReviewId(), notify.topic());
+        return requestFactory.getReviewPushToken(data.getReviewUpdatedBy(), data.getReviewId(), notify.topic());
     }
 
     @Override

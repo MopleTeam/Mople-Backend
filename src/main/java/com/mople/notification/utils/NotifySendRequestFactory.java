@@ -16,7 +16,7 @@ public class NotifySendRequestFactory {
     private final NotificationUserReader userReader;
     private final PushTokenReader tokenReader;
 
-    public NotifySendRequest getMeetPushToken(Long triggeredBy, Long meetId, PushTopic pushTopic) {
+    public NotifySendRequest getMeetPushTokens(Long triggeredBy, Long meetId, PushTopic pushTopic) {
 
         List<User> allUser = userReader.findMeetAllUser(triggeredBy, meetId);
         List<Long> users = tokenReader.findAllTokenId(userReader.findUserIds(triggeredBy, allUser), pushTopic);
@@ -27,7 +27,7 @@ public class NotifySendRequestFactory {
         );
     }
 
-    public NotifySendRequest getPlanPushToken(Long triggeredBy, Long planId, PushTopic pushTopic) {
+    public NotifySendRequest getPlanPushTokens(Long triggeredBy, Long planId, PushTopic pushTopic) {
 
         List<User> allUser = userReader.findPlanUsers(triggeredBy, planId);
         List<Long> users = tokenReader.findAllTokenId(userReader.findUserIds(triggeredBy, allUser), pushTopic);
@@ -38,7 +38,7 @@ public class NotifySendRequestFactory {
         );
     }
 
-    public NotifySendRequest getPlanRemindToken(Long planId, PushTopic pushTopic) {
+    public NotifySendRequest getPlanPushTokensAll(Long planId, PushTopic pushTopic) {
 
         List<User> allUser = userReader.findAllPlanUser(planId);
         List<Long> users = tokenReader.findAllTokenId(userReader.findAllUserId(allUser), pushTopic);
@@ -49,7 +49,7 @@ public class NotifySendRequestFactory {
         );
     }
 
-    public NotifySendRequest getReviewCreatorPushToken(Long creatorId, PushTopic pushTopic) {
+    public NotifySendRequest getCreatorPushToken(Long creatorId, PushTopic pushTopic) {
 
         List<User> allUser = userReader.findAllReviewCreatorUser(creatorId);
         List<Long> users = tokenReader.findAllTokenId(userReader.findAllUserId(allUser), pushTopic);
@@ -60,10 +60,10 @@ public class NotifySendRequestFactory {
         );
     }
 
-    public NotifySendRequest getReviewPushToken(Long creatorId, Long reviewId, PushTopic pushTopic) {
+    public NotifySendRequest getReviewPushToken(Long triggeredBy, Long reviewId, PushTopic pushTopic) {
 
-        List<User> allUser = userReader.findAllReviewUser(creatorId, reviewId);
-        List<Long> users = tokenReader.findAllTokenId(userReader.findUserIds(creatorId, allUser), pushTopic);
+        List<User> allUser = userReader.findAllReviewUser(triggeredBy, reviewId);
+        List<Long> users = tokenReader.findAllTokenId(userReader.findUserIds(triggeredBy, allUser), pushTopic);
 
         return new NotifySendRequest(
                 allUser,

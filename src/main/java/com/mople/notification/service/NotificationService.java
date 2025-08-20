@@ -1,7 +1,6 @@
 package com.mople.notification.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mople.core.exception.custom.BadRequestException;
 import com.mople.core.exception.custom.CursorException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.request.notification.topic.PushTopicRequest;
@@ -134,7 +133,7 @@ public class NotificationService {
         List<NotificationResponse> notificationListResponses = NotificationResponse.of(objectMapper, notifications, planMap);
 
         return FlatCursorPageResponse.of(
-                notificationRepository.countBadgeCount(userId, Action.COMPLETE.name(), LocalDateTime.now().minusDays(30)),
+                notificationRepository.countBadgeCount(userId, Action.COMPLETE.name()),
                 buildNotificationCursorPage(size, notificationListResponses)
         );
     }
@@ -179,24 +178,5 @@ public class NotificationService {
         notificationRepository
                 .getUserNotificationList(user.getId(), Action.COMPLETE)
                 .forEach(Notification::updateReadAt);
-    }
-
-    @Transactional
-    public void readSingleNotification(Long userId, Long notificationId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException(NOT_USER));
-
-        Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_NOTIFY));
-
-        validateNotification(user.getId(), notification);
-
-        notification.updateReadAt();
-    }
-
-    private void validateNotification(Long userId, Notification notification) {
-        if (!notification.getUser().getId().equals(userId)) {
-            throw new BadRequestException(NOT_OWNER_OF_NOTIFICATION);
-        }
     }
 }

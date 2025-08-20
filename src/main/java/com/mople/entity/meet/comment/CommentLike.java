@@ -10,17 +10,16 @@ import lombok.NoArgsConstructor;
 @Table(name = "comment_like")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@IdClass(CommentLikeId.class)
 public class CommentLike {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private Long id;
-
-    @Column(name = "user_id")
-    private Long userId;
-
     @Column(name = "comment_id")
     private Long commentId;
+
+    @Id
+    @Column(name = "user_id")
+    private Long userId;
 
     @Builder
     public CommentLike(Long userId, Long commentId) {

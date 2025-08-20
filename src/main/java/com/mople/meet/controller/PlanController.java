@@ -3,7 +3,7 @@ package com.mople.meet.controller;
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.core.annotation.log.BusinessLogicLogging;
 import com.mople.dto.client.PlanClientResponse;
-import com.mople.dto.client.UserClientResponse;
+import com.mople.dto.client.UserRoleClientResponse;
 import com.mople.dto.request.meet.plan.PlanReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
@@ -151,7 +151,7 @@ public class PlanController {
             description = "일정에 참가하는 유저 정보를 반환합니다."
     )
     @GetMapping("/participants/{planId}")
-    public ResponseEntity<FlatCursorPageResponse<UserClientResponse>> getParticipants(
+    public ResponseEntity<FlatCursorPageResponse<UserRoleClientResponse>> getParticipants(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long planId,
             @ParameterObject @Valid CursorPageRequest request

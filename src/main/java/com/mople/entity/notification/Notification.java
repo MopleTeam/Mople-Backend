@@ -75,7 +75,7 @@ public class Notification {
         this.user = user;
         this.payload = payload;
         this.sendAt = LocalDateTime.now();
-        this.expiredAt = LocalDateTime.now().plusYears(99);
+        this.expiredAt = LocalDateTime.now().plusDays(30);
         this.scheduledAt = scheduledAt;
     }
 

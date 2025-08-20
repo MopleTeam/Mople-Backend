@@ -14,7 +14,7 @@ public class PlanDeleteEventData implements EventData {
     private final String meetName;
     private final Long planId;
     private final String planName;
-    private final Long deletedBy;
+    private final Long planDeletedBy;
 
     @Override
     public String getTitle() {

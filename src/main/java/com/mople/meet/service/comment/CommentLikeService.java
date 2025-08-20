@@ -29,11 +29,7 @@ public class CommentLikeService {
         }
 
         commentRepository.increaseLikeCount(comment.getId());
-        CommentLike like = CommentLike.builder()
-                .userId(userId)
-                .commentId(comment.getId())
-                .build();
-        likeRepository.save(like);
+        likeRepository.insertIfNotExists(comment.getId(), userId);
 
         return true;
     }

@@ -90,17 +90,4 @@ public class NotificationController {
         service.readAllNotifications(user.id());
         return ResponseEntity.ok().build();
     }
-
-    @Operation(
-            summary = "특정 Notify 읽음 처리 API",
-            description = "특정 알림을 읽음 처리합니다."
-    )
-    @PutMapping("/read/{notificationId}")
-    public ResponseEntity<Void> readSingleNotification(
-            @Parameter(hidden = true) @SignUser AuthUserRequest user,
-            @PathVariable Long notificationId
-    ) {
-        service.readSingleNotification(user.id(), notificationId);
-        return ResponseEntity.ok().build();
-    }
 }

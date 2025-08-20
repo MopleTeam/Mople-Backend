@@ -11,8 +11,8 @@ import java.util.Map;
 @Getter
 public class CommentMentionEventData implements EventData {
 
+    private final String meetName;
     private final Long postId;
-    private final String postName;
     private final Long commentId;
     private final String commentContent;
     private final Long senderId;
@@ -21,12 +21,12 @@ public class CommentMentionEventData implements EventData {
 
     @Override
     public String getTitle() {
-        return postName + "에서 " + senderNickname + "님이 회원님을 멘션했어요!";
+        return meetName + "의 새로운 멘션 👀";
     }
 
     @Override
     public String getBody() {
-        return commentContent;
+        return meetName + "에서 " + senderNickname + "님이 회원님을 멘션했어요!";
     }
 
     @Override

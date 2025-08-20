@@ -1,9 +1,9 @@
 package com.mople.user.controller;
 
 import com.mople.core.annotation.auth.SignUser;
+import com.mople.dto.client.UserClientResponse;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.request.user.UserInfoRequest;
-import com.mople.dto.response.user.UserInfo;
 import com.mople.user.service.UserService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,7 +29,7 @@ public class UserController {
             description = "유저 정보를 반환합니다."
     )
     @GetMapping("/info")
-    public ResponseEntity<UserInfo> getMyInfo(
+    public ResponseEntity<UserClientResponse> getMyInfo(
             @Parameter(hidden = true) @SignUser AuthUserRequest user
     ) {
         return ResponseEntity.ok(userService.getInfo(user.id()));
@@ -40,7 +40,7 @@ public class UserController {
             description = "DB에 저장된 유저 정보를 갱신합니다."
     )
     @PatchMapping("/info")
-    public ResponseEntity<UserInfo> updateInfo(
+    public ResponseEntity<UserClientResponse> updateInfo(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @Valid @RequestBody UserInfoRequest userInfoRequest
     ) {

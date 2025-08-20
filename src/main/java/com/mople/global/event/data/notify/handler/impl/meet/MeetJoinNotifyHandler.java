@@ -34,7 +34,7 @@ public class MeetJoinNotifyHandler implements NotifyHandler<MeetJoinEventData> {
 
     @Override
     public NotifySendRequest getSendRequest(MeetJoinEventData data, NotificationEvent notify) {
-        return requestFactory.getMeetPushToken(data.getNewMemberId(), data.getMeetId(), notify.topic());
+        return requestFactory.getMeetPushTokens(data.getNewMemberId(), data.getMeetId(), notify.topic());
     }
 
     @Override
