@@ -1,6 +1,6 @@
 package com.mople.global.event.data.notify.handler.impl.review;
 
-import com.mople.dto.event.data.review.ReviewUpdateEventData;
+import com.mople.dto.event.data.notify.review.ReviewUpdateNotifyEvent;
 import com.mople.dto.response.notification.NotifySendRequest;
 import com.mople.entity.notification.Notification;
 import com.mople.entity.user.User;
@@ -18,7 +18,7 @@ import static com.mople.global.enums.NotifyType.REVIEW_UPDATE;
 
 @Component
 @RequiredArgsConstructor
-public class ReviewUpdateNotifyHandler implements NotifyHandler<ReviewUpdateEventData> {
+public class ReviewUpdateNotifyHandler implements NotifyHandler<ReviewUpdateNotifyEvent> {
 
     private final NotifySendRequestFactory requestFactory;
 
@@ -28,17 +28,17 @@ public class ReviewUpdateNotifyHandler implements NotifyHandler<ReviewUpdateEven
     }
 
     @Override
-    public Class<ReviewUpdateEventData> getHandledType() {
-        return ReviewUpdateEventData.class;
+    public Class<ReviewUpdateNotifyEvent> getHandledType() {
+        return ReviewUpdateNotifyEvent.class;
     }
 
     @Override
-    public NotifySendRequest getSendRequest(ReviewUpdateEventData data, NotificationEvent notify) {
+    public NotifySendRequest getSendRequest(ReviewUpdateNotifyEvent data, NotificationEvent notify) {
         return requestFactory.getReviewPushToken(data.getReviewUpdatedBy(), data.getReviewId(), notify.topic());
     }
 
     @Override
-    public List<Notification> getNotifications(ReviewUpdateEventData data, NotificationEvent notify, List<User> users) {
+    public List<Notification> getNotifications(ReviewUpdateNotifyEvent data, NotificationEvent notify, List<User> users) {
         return users.stream()
                 .map(u ->
                         Notification.builder()

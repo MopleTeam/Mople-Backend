@@ -5,7 +5,7 @@ import com.mople.core.exception.custom.CursorException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.ReviewClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
-import com.mople.dto.event.data.review.ReviewUpdateEventData;
+import com.mople.dto.event.data.notify.review.ReviewUpdateNotifyEvent;
 import com.mople.dto.request.meet.review.ReviewImageDeleteRequest;
 import com.mople.dto.request.meet.review.ReviewReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
@@ -253,7 +253,7 @@ public class ReviewService {
 
             publisher.publishEvent(
                     NotifyEventPublisher.reviewUpdate(
-                            ReviewUpdateEventData.builder()
+                            ReviewUpdateNotifyEvent.builder()
                                     .meetId(review.getMeet().getId())
                                     .meetName(review.getMeet().getName())
                                     .reviewId(review.getId())

@@ -6,9 +6,8 @@ import com.mople.core.exception.custom.CursorException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.PlanClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
-import com.mople.dto.event.data.plan.PlanCreateEventData;
-import com.mople.dto.event.data.plan.PlanDeleteEventData;
-import com.mople.dto.event.data.plan.PlanUpdateEventData;
+import com.mople.dto.event.data.notify.plan.PlanDeleteNotifyEvent;
+import com.mople.dto.event.data.notify.plan.PlanUpdateNotifyEvent;
 import com.mople.dto.request.meet.plan.PlanReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.weather.CoordinateRequest;
@@ -137,7 +136,7 @@ public class PlanService {
 
         publisher.publishEvent(
                 NotifyEventPublisher.planNew(
-                        PlanCreateEventData.builder()
+                        PlanCreateNotifyEvent.builder()
                                 .meetId(meet.getId())
                                 .meetName(meet.getName())
                                 .planId(plan.getId())
@@ -195,7 +194,7 @@ public class PlanService {
 
         publisher.publishEvent(
                 NotifyEventPublisher.planUpdate(
-                        PlanUpdateEventData.builder()
+                        PlanUpdateNotifyEvent.builder()
                                 .meetId(plan.getMeet().getId())
                                 .meetName(plan.getMeet().getName())
                                 .planId(plan.getId())
@@ -219,7 +218,7 @@ public class PlanService {
 
         publisher.publishEvent(
                 NotifyEventPublisher.planRemove(
-                        PlanDeleteEventData.builder()
+                        PlanDeleteNotifyEvent.builder()
                                 .meetId(plan.getMeet().getId())
                                 .meetName(plan.getMeet().getName())
                                 .planId(plan.getId())

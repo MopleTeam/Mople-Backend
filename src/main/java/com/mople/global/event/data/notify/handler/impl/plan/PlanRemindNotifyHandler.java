@@ -1,6 +1,6 @@
 package com.mople.global.event.data.notify.handler.impl.plan;
 
-import com.mople.dto.event.data.plan.PlanRemindEventData;
+import com.mople.dto.event.data.notify.plan.PlanRemindNotifyEvent;
 import com.mople.dto.response.notification.NotifySendRequest;
 import com.mople.entity.notification.Notification;
 import com.mople.entity.user.User;
@@ -19,7 +19,7 @@ import static com.mople.global.enums.NotifyType.PLAN_REMIND;
 
 @Component
 @RequiredArgsConstructor
-public class PlanRemindNotifyHandler implements NotifyHandler<PlanRemindEventData> {
+public class PlanRemindNotifyHandler implements NotifyHandler<PlanRemindNotifyEvent> {
 
     private final NotifySendRequestFactory requestFactory;
     private final NotificationRepository notificationRepository;
@@ -30,17 +30,17 @@ public class PlanRemindNotifyHandler implements NotifyHandler<PlanRemindEventDat
     }
 
     @Override
-    public Class<PlanRemindEventData> getHandledType() {
-        return PlanRemindEventData.class;
+    public Class<PlanRemindNotifyEvent> getHandledType() {
+        return PlanRemindNotifyEvent.class;
     }
 
     @Override
-    public NotifySendRequest getSendRequest(PlanRemindEventData data, NotificationEvent notify) {
+    public NotifySendRequest getSendRequest(PlanRemindNotifyEvent data, NotificationEvent notify) {
         return requestFactory.getPlanPushTokensAll(data.getPlanId(), notify.topic());
     }
 
     @Override
-    public List<Notification> getNotifications(PlanRemindEventData data, NotificationEvent notify, List<User> users) {
+    public List<Notification> getNotifications(PlanRemindNotifyEvent data, NotificationEvent notify, List<User> users) {
         List<Notification> existing =
                 notificationRepository.findPlanRemindNotification(data.getPlanId(), Action.PENDING);
 

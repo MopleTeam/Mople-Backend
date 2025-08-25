@@ -3,7 +3,7 @@ package com.mople.meet.service;
 import com.mople.core.exception.custom.*;
 import com.mople.dto.client.MeetClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
-import com.mople.dto.event.data.meet.MeetJoinEventData;
+import com.mople.dto.event.data.notify.meet.MeetJoinNotifyEvent;
 import com.mople.dto.request.meet.MeetCreateRequest;
 import com.mople.dto.request.meet.MeetUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
@@ -292,7 +292,7 @@ public class MeetService {
 
         publisher.publishEvent(
                 NotifyEventPublisher.meetNewMember(
-                        MeetJoinEventData.builder()
+                        MeetJoinNotifyEvent.builder()
                                 .meetId(meet.getId())
                                 .meetName(meet.getName())
                                 .newMemberId(user.getId())

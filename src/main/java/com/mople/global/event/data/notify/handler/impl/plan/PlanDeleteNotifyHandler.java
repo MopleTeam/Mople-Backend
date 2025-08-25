@@ -1,7 +1,7 @@
 package com.mople.global.event.data.notify.handler.impl.plan;
 
 import com.mople.core.exception.custom.ResourceNotFoundException;
-import com.mople.dto.event.data.plan.PlanDeleteEventData;
+import com.mople.dto.event.data.notify.plan.PlanDeleteNotifyEvent;
 import com.mople.dto.response.notification.NotifySendRequest;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.notification.Notification;
@@ -22,7 +22,7 @@ import static com.mople.global.enums.NotifyType.PLAN_DELETE;
 
 @Component
 @RequiredArgsConstructor
-public class PlanDeleteNotifyHandler implements NotifyHandler<PlanDeleteEventData> {
+public class PlanDeleteNotifyHandler implements NotifyHandler<PlanDeleteNotifyEvent> {
 
     private final NotifySendRequestFactory requestFactory;
     private final MeetPlanRepository planRepository;
@@ -33,17 +33,17 @@ public class PlanDeleteNotifyHandler implements NotifyHandler<PlanDeleteEventDat
     }
 
     @Override
-    public Class<PlanDeleteEventData> getHandledType() {
-        return PlanDeleteEventData.class;
+    public Class<PlanDeleteNotifyEvent> getHandledType() {
+        return PlanDeleteNotifyEvent.class;
     }
 
     @Override
-    public NotifySendRequest getSendRequest(PlanDeleteEventData data, NotificationEvent notify) {
+    public NotifySendRequest getSendRequest(PlanDeleteNotifyEvent data, NotificationEvent notify) {
         return requestFactory.getPlanPushTokens(data.getPlanDeletedBy(), data.getPlanId(), notify.topic());
     }
 
     @Override
-    public List<Notification> getNotifications(PlanDeleteEventData data, NotificationEvent notify, List<User> users) {
+    public List<Notification> getNotifications(PlanDeleteNotifyEvent data, NotificationEvent notify, List<User> users) {
         deletePlan(data.getPlanId());
 
         return users.stream()

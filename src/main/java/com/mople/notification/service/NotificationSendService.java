@@ -3,7 +3,7 @@ package com.mople.notification.service;
 import com.google.firebase.messaging.*;
 
 import com.mople.core.exception.custom.BadRequestException;
-import com.mople.dto.event.data.EventData;
+import com.mople.dto.event.data.notify.NotifyEvent;
 import com.mople.dto.response.notification.NotifySendRequest;
 import com.mople.entity.notification.FirebaseToken;
 import com.mople.entity.notification.Notification;
@@ -20,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.mople.global.enums.ExceptionReturnCode.NOT_FOUND_NOTIFY_TYPE;
@@ -34,8 +33,8 @@ public class NotificationSendService {
     private final NotificationRepository notificationRepository;
 
     @Transactional
-    public void sendMultiNotification(NotificationEvent notify, NotifyType type, EventData data) {
-        NotifyHandler<EventData> handler = findHandler(type, data);
+    public void sendMultiNotification(NotificationEvent notify, NotifyType type, NotifyEvent data) {
+        NotifyHandler<NotifyEvent> handler = findHandler(type, data);
         NotifySendRequest sendRequest = handler.getSendRequest(data, notify);
 
         if (!sendRequest.tokens().isEmpty()) {
@@ -61,15 +60,15 @@ public class NotificationSendService {
     }
 
     @SuppressWarnings("unchecked")
-    private NotifyHandler<EventData> findHandler(NotifyType type, EventData data) {
-        NotifyHandler<? extends EventData> rawHandler = handlerRegistry.getHandler(type);
-        Class<? extends EventData> handledType = handlerRegistry.getHandledType(type);
+    private NotifyHandler<NotifyEvent> findHandler(NotifyType type, NotifyEvent data) {
+        NotifyHandler<? extends NotifyEvent> rawHandler = handlerRegistry.getHandler(type);
+        Class<? extends NotifyEvent> handledType = handlerRegistry.getHandledType(type);
 
         if (!handledType.isInstance(data)) {
             throw new BadRequestException(NOT_FOUND_NOTIFY_TYPE);
         }
 
-        return (NotifyHandler<EventData>) rawHandler;
+        return (NotifyHandler<NotifyEvent>) rawHandler;
     }
 
     private Message buildMessage(NotificationEvent notify, FirebaseToken token, NotifySendRequest sendRequest, Long badgeCount) {

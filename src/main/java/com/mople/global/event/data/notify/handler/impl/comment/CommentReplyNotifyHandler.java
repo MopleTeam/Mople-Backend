@@ -1,7 +1,7 @@
 package com.mople.global.event.data.notify.handler.impl.comment;
 
 import com.mople.core.exception.custom.ResourceNotFoundException;
-import com.mople.dto.event.data.comment.CommentReplyEventData;
+import com.mople.dto.event.data.notify.comment.CommentReplyNotifyEvent;
 import com.mople.dto.response.notification.NotifySendRequest;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.review.PlanReview;
@@ -25,7 +25,7 @@ import static com.mople.global.enums.NotifyType.COMMENT_REPLY;
 
 @Component
 @RequiredArgsConstructor
-public class CommentReplyNotifyHandler implements NotifyHandler<CommentReplyEventData> {
+public class CommentReplyNotifyHandler implements NotifyHandler<CommentReplyNotifyEvent> {
 
     private final NotifySendRequestFactory requestFactory;
     private final MeetPlanRepository planRepository;
@@ -37,17 +37,17 @@ public class CommentReplyNotifyHandler implements NotifyHandler<CommentReplyEven
     }
 
     @Override
-    public Class<CommentReplyEventData> getHandledType() {
-        return CommentReplyEventData.class;
+    public Class<CommentReplyNotifyEvent> getHandledType() {
+        return CommentReplyNotifyEvent.class;
     }
 
     @Override
-    public NotifySendRequest getSendRequest(CommentReplyEventData data, NotificationEvent notify) {
+    public NotifySendRequest getSendRequest(CommentReplyNotifyEvent data, NotificationEvent notify) {
         return requestFactory.getCommentReplyPushToken(data.getSenderId(), data.getParentCommentId(), notify.topic());
     }
 
     @Override
-    public List<Notification> getNotifications(CommentReplyEventData data, NotificationEvent notify, List<User> users) {
+    public List<Notification> getNotifications(CommentReplyNotifyEvent data, NotificationEvent notify, List<User> users) {
         Optional<MeetPlan> plan = planRepository.findById(data.getPostId());
 
         if (plan.isPresent()) {

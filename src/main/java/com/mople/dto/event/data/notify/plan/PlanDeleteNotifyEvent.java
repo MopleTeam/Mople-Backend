@@ -1,6 +1,6 @@
-package com.mople.dto.event.data.plan;
+package com.mople.dto.event.data.notify.plan;
 
-import com.mople.dto.event.data.EventData;
+import com.mople.dto.event.data.notify.NotifyEvent;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -8,26 +8,26 @@ import java.util.Map;
 
 @Builder
 @Getter
-public class PlanUpdateEventData implements EventData {
+public class PlanDeleteNotifyEvent implements NotifyEvent {
 
     private final Long meetId;
     private final String meetName;
     private final Long planId;
     private final String planName;
-    private final Long planUpdatedBy;
+    private final Long planDeletedBy;
 
     @Override
     public String getTitle() {
-        return meetName + "의 일정변경";
+        return meetName + "의 일정취소";
     }
 
     @Override
     public String getBody() {
-        return planName + " 일정이 변경됐어요";
+        return planName + " 일정이 취소됐어요";
     }
 
     @Override
     public Map<String, String> getRoutingKey() {
-        return Map.of("planId", planId.toString());
+        return Map.of("meetId", meetId.toString());
     }
 }

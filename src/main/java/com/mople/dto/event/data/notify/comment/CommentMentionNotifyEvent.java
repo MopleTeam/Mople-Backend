@@ -1,6 +1,6 @@
-package com.mople.dto.event.data.comment;
+package com.mople.dto.event.data.notify.comment;
 
-import com.mople.dto.event.data.EventData;
+import com.mople.dto.event.data.notify.NotifyEvent;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,7 +9,7 @@ import java.util.Map;
 
 @Builder
 @Getter
-public class CommentMentionEventData implements EventData {
+public class CommentMentionNotifyEvent implements NotifyEvent {
 
     private final String meetName;
     private final Long postId;

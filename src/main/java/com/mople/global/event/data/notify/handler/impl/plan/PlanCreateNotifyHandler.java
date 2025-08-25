@@ -1,6 +1,6 @@
 package com.mople.global.event.data.notify.handler.impl.plan;
 
-import com.mople.dto.event.data.plan.PlanCreateEventData;
+import com.mople.dto.event.data.notify.plan.PlanCreateNotifyEvent;
 import com.mople.dto.response.notification.NotifySendRequest;
 import com.mople.entity.notification.Notification;
 import com.mople.entity.user.User;
@@ -18,7 +18,7 @@ import static com.mople.global.enums.NotifyType.PLAN_CREATE;
 
 @Component
 @RequiredArgsConstructor
-public class PlanCreateNotifyHandler implements NotifyHandler<PlanCreateEventData> {
+public class PlanCreateNotifyHandler implements NotifyHandler<PlanCreateNotifyEvent> {
 
     private final NotifySendRequestFactory requestFactory;
 
@@ -28,17 +28,17 @@ public class PlanCreateNotifyHandler implements NotifyHandler<PlanCreateEventDat
     }
 
     @Override
-    public Class<PlanCreateEventData> getHandledType() {
-        return PlanCreateEventData.class;
+    public Class<PlanCreateNotifyEvent> getHandledType() {
+        return PlanCreateNotifyEvent.class;
     }
 
     @Override
-    public NotifySendRequest getSendRequest(PlanCreateEventData data, NotificationEvent notify) {
+    public NotifySendRequest getSendRequest(PlanCreateNotifyEvent data, NotificationEvent notify) {
         return requestFactory.getMeetPushTokens(data.getPlanCreatorId(), data.getMeetId(), notify.topic());
     }
 
     @Override
-    public List<Notification> getNotifications(PlanCreateEventData data, NotificationEvent notify, List<User> users) {
+    public List<Notification> getNotifications(PlanCreateNotifyEvent data, NotificationEvent notify, List<User> users) {
         return users.stream()
                 .map(u -> Notification.builder()
                         .type(getType())

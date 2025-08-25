@@ -1,6 +1,6 @@
-package com.mople.dto.event.data.review;
+package com.mople.dto.event.data.notify.review;
 
-import com.mople.dto.event.data.EventData;
+import com.mople.dto.event.data.notify.NotifyEvent;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -8,7 +8,7 @@ import java.util.Map;
 
 @Builder
 @Getter
-public class ReviewRemindEventData implements EventData {
+public class ReviewRemindNotifyEvent implements NotifyEvent {
 
     private final Long meetId;
     private final String meetName;

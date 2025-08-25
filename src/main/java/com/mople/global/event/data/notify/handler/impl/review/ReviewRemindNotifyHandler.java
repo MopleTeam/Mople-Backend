@@ -1,6 +1,6 @@
 package com.mople.global.event.data.notify.handler.impl.review;
 
-import com.mople.dto.event.data.review.ReviewRemindEventData;
+import com.mople.dto.event.data.notify.review.ReviewRemindNotifyEvent;
 import com.mople.dto.response.notification.NotifySendRequest;
 import com.mople.entity.notification.Notification;
 import com.mople.entity.user.User;
@@ -18,7 +18,7 @@ import static com.mople.global.enums.NotifyType.REVIEW_REMIND;
 
 @Component
 @RequiredArgsConstructor
-public class ReviewRemindNotifyHandler implements NotifyHandler<ReviewRemindEventData> {
+public class ReviewRemindNotifyHandler implements NotifyHandler<ReviewRemindNotifyEvent> {
 
     private final NotifySendRequestFactory requestFactory;
 
@@ -28,17 +28,17 @@ public class ReviewRemindNotifyHandler implements NotifyHandler<ReviewRemindEven
     }
 
     @Override
-    public Class<ReviewRemindEventData> getHandledType() {
-        return ReviewRemindEventData.class;
+    public Class<ReviewRemindNotifyEvent> getHandledType() {
+        return ReviewRemindNotifyEvent.class;
     }
 
     @Override
-    public NotifySendRequest getSendRequest(ReviewRemindEventData data, NotificationEvent notify) {
+    public NotifySendRequest getSendRequest(ReviewRemindNotifyEvent data, NotificationEvent notify) {
         return requestFactory.getCreatorPushToken(data.getReviewCreatorId(), notify.topic());
     }
 
     @Override
-    public List<Notification> getNotifications(ReviewRemindEventData data, NotificationEvent notify, List<User> users) {
+    public List<Notification> getNotifications(ReviewRemindNotifyEvent data, NotificationEvent notify, List<User> users) {
         return users.stream()
                 .map(u ->
                         Notification.builder()

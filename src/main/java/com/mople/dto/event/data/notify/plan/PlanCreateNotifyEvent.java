@@ -1,6 +1,6 @@
-package com.mople.dto.event.data.plan;
+package com.mople.dto.event.data.notify.plan;
 
-import com.mople.dto.event.data.EventData;
+import com.mople.dto.event.data.notify.NotifyEvent;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,7 +9,7 @@ import java.util.Map;
 
 @Builder
 @Getter
-public class PlanCreateEventData implements EventData {
+public class PlanCreateNotifyEvent implements NotifyEvent {
 
     private final Long meetId;
     private final String meetName;

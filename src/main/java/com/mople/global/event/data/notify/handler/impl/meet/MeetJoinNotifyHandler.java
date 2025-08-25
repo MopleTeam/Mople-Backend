@@ -1,6 +1,6 @@
 package com.mople.global.event.data.notify.handler.impl.meet;
 
-import com.mople.dto.event.data.meet.MeetJoinEventData;
+import com.mople.dto.event.data.notify.meet.MeetJoinNotifyEvent;
 import com.mople.dto.response.notification.NotifySendRequest;
 import com.mople.entity.notification.Notification;
 import com.mople.entity.user.User;
@@ -18,7 +18,7 @@ import static com.mople.global.enums.NotifyType.MEET_NEW_MEMBER;
 
 @Component
 @RequiredArgsConstructor
-public class MeetJoinNotifyHandler implements NotifyHandler<MeetJoinEventData> {
+public class MeetJoinNotifyHandler implements NotifyHandler<MeetJoinNotifyEvent> {
 
     private final NotifySendRequestFactory requestFactory;
 
@@ -28,17 +28,17 @@ public class MeetJoinNotifyHandler implements NotifyHandler<MeetJoinEventData> {
     }
 
     @Override
-    public Class<MeetJoinEventData> getHandledType() {
-        return MeetJoinEventData.class;
+    public Class<MeetJoinNotifyEvent> getHandledType() {
+        return MeetJoinNotifyEvent.class;
     }
 
     @Override
-    public NotifySendRequest getSendRequest(MeetJoinEventData data, NotificationEvent notify) {
+    public NotifySendRequest getSendRequest(MeetJoinNotifyEvent data, NotificationEvent notify) {
         return requestFactory.getMeetPushTokens(data.getNewMemberId(), data.getMeetId(), notify.topic());
     }
 
     @Override
-    public List<Notification> getNotifications(MeetJoinEventData data, NotificationEvent notify, List<User> users) {
+    public List<Notification> getNotifications(MeetJoinNotifyEvent data, NotificationEvent notify, List<User> users) {
         return users.stream()
                 .map(u -> Notification.builder()
                         .type(getType())

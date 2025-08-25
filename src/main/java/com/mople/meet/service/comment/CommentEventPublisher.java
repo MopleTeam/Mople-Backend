@@ -1,7 +1,7 @@
 package com.mople.meet.service.comment;
 
-import com.mople.dto.event.data.comment.CommentMentionEventData;
-import com.mople.dto.event.data.comment.CommentReplyEventData;
+import com.mople.dto.event.data.notify.comment.CommentMentionNotifyEvent;
+import com.mople.dto.event.data.notify.comment.CommentReplyNotifyEvent;
 import com.mople.entity.meet.comment.PlanComment;
 import com.mople.entity.user.User;
 import com.mople.global.event.data.notify.NotifyEventPublisher;
@@ -24,7 +24,7 @@ public class CommentEventPublisher {
 
         publisher.publishEvent(
                 NotifyEventPublisher.commentMention(
-                        CommentMentionEventData.builder()
+                        CommentMentionNotifyEvent.builder()
                                 .postId(comment.getPostId())
                                 .meetName(meetName)
                                 .commentId(comment.getId())
@@ -50,7 +50,7 @@ public class CommentEventPublisher {
         if (!parentIsMentioned) {
             publisher.publishEvent(
                     NotifyEventPublisher.commentReply(
-                            CommentReplyEventData.builder()
+                            CommentReplyNotifyEvent.builder()
                                     .postId(comment.getPostId())
                                     .meetName(meetName)
                                     .commentId(comment.getId())

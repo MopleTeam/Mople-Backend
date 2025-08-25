@@ -1,8 +1,8 @@
-package com.mople.dto.event.data;
+package com.mople.dto.event.data.notify;
 
 import java.util.Map;
 
-public interface EventData {
+public interface NotifyEvent {
 
     String getTitle();
 

@@ -1,8 +1,8 @@
 package com.mople.meet.schedule;
 
 import com.mople.core.exception.custom.ResourceNotFoundException;
-import com.mople.dto.event.data.plan.PlanRemindEventData;
-import com.mople.dto.event.data.review.ReviewRemindEventData;
+import com.mople.dto.event.data.notify.plan.PlanRemindNotifyEvent;
+import com.mople.dto.event.data.notify.review.ReviewRemindNotifyEvent;
 import com.mople.dto.request.weather.CoordinateRequest;
 import com.mople.dto.response.weather.OpenWeatherResponse;
 import com.mople.dto.response.weather.WeatherInfoScheduleResponse;
@@ -92,7 +92,7 @@ public class PlanScheduleJob {
 
         publisher.publishEvent(
                 NotifyEventPublisher.planRemind(
-                        PlanRemindEventData.builder()
+                        PlanRemindNotifyEvent.builder()
                                 .meetId(meetPlan.getMeet().getId())
                                 .meetName(meetPlan.getMeet().getName())
                                 .planId(meetPlan.getId())
@@ -125,7 +125,7 @@ public class PlanScheduleJob {
 
             publisher.publishEvent(
                     NotifyEventPublisher.reviewRemind(
-                            ReviewRemindEventData.builder()
+                            ReviewRemindNotifyEvent.builder()
                                     .meetId(review.getMeet().getId())
                                     .meetName(review.getMeet().getName())
                                     .reviewId(review.getId())
