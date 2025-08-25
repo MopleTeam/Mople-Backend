@@ -1,6 +1,8 @@
 package com.mople.dto.event.data.notify.comment;
 
 import com.mople.dto.event.data.notify.NotifyEvent;
+import com.mople.dto.response.notification.NotificationPayload;
+import com.mople.global.enums.NotifyType;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -19,17 +21,20 @@ public class CommentReplyNotifyEvent implements NotifyEvent {
     private final Long parentCommentId;
 
     @Override
-    public String getTitle() {
-        return meetName + "의 새로운 대댓글 👀";
+    public NotificationPayload payload() {
+        return new NotificationPayload(
+                meetName + "의 새로운 대댓글 👀",
+                meetName + "에서 " + senderNickname + "님이 답글을 남겼어요!"
+        );
     }
 
     @Override
-    public String getBody() {
-        return meetName + "에서 " + senderNickname + "님이 답글을 남겼어요!";
-    }
-
-    @Override
-    public Map<String, String> getRoutingKey() {
+    public Map<String, String> routing() {
         return Map.of("commentId", commentId.toString());
+    }
+
+    @Override
+    public NotifyType notifyType() {
+        return NotifyType.COMMENT_REPLY;
     }
 }

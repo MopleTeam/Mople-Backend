@@ -1,12 +1,15 @@
 package com.mople.dto.event.data.notify;
 
+import com.mople.dto.response.notification.NotificationPayload;
+import com.mople.global.enums.NotifyType;
+
 import java.util.Map;
 
 public interface NotifyEvent {
 
-    String getTitle();
+    NotificationPayload payload();
 
-    String getBody();
+    Map<String, String> routing();
 
-    Map<String, String> getRoutingKey();
+    NotifyType notifyType();
 }

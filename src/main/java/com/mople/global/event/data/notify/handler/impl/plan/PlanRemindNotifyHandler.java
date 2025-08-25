@@ -5,8 +5,6 @@ import com.mople.dto.response.notification.NotifySendRequest;
 import com.mople.entity.notification.Notification;
 import com.mople.entity.user.User;
 import com.mople.global.enums.Action;
-import com.mople.global.enums.NotifyType;
-import com.mople.global.event.data.notify.NotificationEvent;
 import com.mople.global.event.data.notify.handler.NotifyHandler;
 import com.mople.notification.repository.NotificationRepository;
 import com.mople.notification.utils.NotifySendRequestFactory;
@@ -14,8 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-
-import static com.mople.global.enums.NotifyType.PLAN_REMIND;
 
 @Component
 @RequiredArgsConstructor
@@ -25,26 +21,21 @@ public class PlanRemindNotifyHandler implements NotifyHandler<PlanRemindNotifyEv
     private final NotificationRepository notificationRepository;
 
     @Override
-    public NotifyType getType() {
-        return PLAN_REMIND;
-    }
-
-    @Override
     public Class<PlanRemindNotifyEvent> getHandledType() {
         return PlanRemindNotifyEvent.class;
     }
 
     @Override
-    public NotifySendRequest getSendRequest(PlanRemindNotifyEvent data, NotificationEvent notify) {
-        return requestFactory.getPlanPushTokensAll(data.getPlanId(), notify.topic());
+    public NotifySendRequest getSendRequest(PlanRemindNotifyEvent event) {
+        return requestFactory.getPlanPushTokensAll(event.getPlanId(), event.notifyType().getTopic());
     }
 
     @Override
-    public List<Notification> getNotifications(PlanRemindNotifyEvent data, NotificationEvent notify, List<User> users) {
+    public List<Notification> getNotifications(PlanRemindNotifyEvent event, List<User> users) {
         List<Notification> existing =
-                notificationRepository.findPlanRemindNotification(data.getPlanId(), Action.PENDING);
+                notificationRepository.findPlanRemindNotification(event.getPlanId(), Action.PENDING);
 
-        existing.forEach(n -> n.updateNotification(notify, getType()));
+        existing.forEach(n -> n.updateNotification(event));
         return existing;
     }
 }

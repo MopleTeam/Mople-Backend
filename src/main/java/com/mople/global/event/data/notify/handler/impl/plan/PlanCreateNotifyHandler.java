@@ -4,8 +4,6 @@ import com.mople.dto.event.data.notify.plan.PlanCreateNotifyEvent;
 import com.mople.dto.response.notification.NotifySendRequest;
 import com.mople.entity.notification.Notification;
 import com.mople.entity.user.User;
-import com.mople.global.enums.NotifyType;
-import com.mople.global.event.data.notify.NotificationEvent;
 import com.mople.global.event.data.notify.handler.NotifyHandler;
 import com.mople.notification.utils.NotifySendRequestFactory;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +12,6 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 import static com.mople.global.enums.Action.COMPLETE;
-import static com.mople.global.enums.NotifyType.PLAN_CREATE;
 
 @Component
 @RequiredArgsConstructor
@@ -23,30 +20,25 @@ public class PlanCreateNotifyHandler implements NotifyHandler<PlanCreateNotifyEv
     private final NotifySendRequestFactory requestFactory;
 
     @Override
-    public NotifyType getType() {
-        return PLAN_CREATE;
-    }
-
-    @Override
     public Class<PlanCreateNotifyEvent> getHandledType() {
         return PlanCreateNotifyEvent.class;
     }
 
     @Override
-    public NotifySendRequest getSendRequest(PlanCreateNotifyEvent data, NotificationEvent notify) {
-        return requestFactory.getMeetPushTokens(data.getPlanCreatorId(), data.getMeetId(), notify.topic());
+    public NotifySendRequest getSendRequest(PlanCreateNotifyEvent event) {
+        return requestFactory.getMeetPushTokens(event.getPlanCreatorId(), event.getMeetId(), event.notifyType().getTopic());
     }
 
     @Override
-    public List<Notification> getNotifications(PlanCreateNotifyEvent data, NotificationEvent notify, List<User> users) {
+    public List<Notification> getNotifications(PlanCreateNotifyEvent event, List<User> users) {
         return users.stream()
                 .map(u -> Notification.builder()
-                        .type(getType())
+                        .type(event.notifyType())
                         .action(COMPLETE)
-                        .meetId(data.getMeetId())
-                        .planId(data.getPlanId())
-                        .payload(notify.payload())
-                        .user(u)
+                        .meetId(event.getMeetId())
+                        .planId(event.getPlanId())
+                        .payload(event.payload())
+                        .userId(u.getId())
                         .build())
                 .toList();
     }

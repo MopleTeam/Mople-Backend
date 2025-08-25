@@ -63,10 +63,10 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     )
     List<NotificationResponse.NotificationListInterface> findNotificationNextPage(Long userId, String action, Long cursorId, int limit);
 
-    @Query(value = "select n from Notification n join fetch n.user where n.user.id = :userId and n.action = :action")
+    @Query(value = "select n from Notification n where n.userId = :userId and n.action = :action")
     List<Notification> getUserNotificationList(Long userId, Action action);
 
-    @Query("select n from Notification n join fetch n.user where n.user.id = :userId")
+    @Query("select n from Notification n where n.userId = :userId")
     List<Notification> findAllNotificationByUser(Long userId);
 
     @Query(value =

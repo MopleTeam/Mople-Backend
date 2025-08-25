@@ -7,8 +7,6 @@ import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.review.PlanReview;
 import com.mople.entity.notification.Notification;
 import com.mople.entity.user.User;
-import com.mople.global.enums.NotifyType;
-import com.mople.global.event.data.notify.NotificationEvent;
 import com.mople.global.event.data.notify.handler.NotifyHandler;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.meet.repository.review.PlanReviewRepository;
@@ -21,7 +19,6 @@ import java.util.Optional;
 
 import static com.mople.global.enums.Action.COMPLETE;
 import static com.mople.global.enums.ExceptionReturnCode.NOT_FOUND_REVIEW;
-import static com.mople.global.enums.NotifyType.COMMENT_MENTION;
 
 @Component
 @RequiredArgsConstructor
@@ -32,51 +29,46 @@ public class CommentMentionNotifyHandler implements NotifyHandler<CommentMention
     private final PlanReviewRepository reviewRepository;
 
     @Override
-    public NotifyType getType() {
-        return COMMENT_MENTION;
-    }
-
-    @Override
     public Class<CommentMentionNotifyEvent> getHandledType() {
         return CommentMentionNotifyEvent.class;
     }
 
     @Override
-    public NotifySendRequest getSendRequest(CommentMentionNotifyEvent data, NotificationEvent notify) {
-        return requestFactory.getCommentMentionPushToken(data.getOriginMentions(), data.getSenderId(), data.getCommentId(), notify.topic());
+    public NotifySendRequest getSendRequest(CommentMentionNotifyEvent event) {
+        return requestFactory.getCommentMentionPushToken(event.getOriginMentions(), event.getSenderId(), event.getCommentId(), event.notifyType().getTopic());
     }
 
     @Override
-    public List<Notification> getNotifications(CommentMentionNotifyEvent data, NotificationEvent notify, List<User> users) {
-        Optional<MeetPlan> plan = planRepository.findById(data.getPostId());
+    public List<Notification> getNotifications(CommentMentionNotifyEvent event, List<User> users) {
+        Optional<MeetPlan> plan = planRepository.findById(event.getPostId());
 
         if (plan.isPresent()) {
             return users.stream()
                     .map(u ->
                             Notification.builder()
-                                    .type(getType())
+                                    .type(event.notifyType())
                                     .action(COMPLETE)
-                                    .meetId(plan.get().getMeet().getId())
+                                    .meetId(plan.get().getMeetId())
                                     .planId(plan.get().getId())
-                                    .payload(notify.payload())
-                                    .user(u)
+                                    .payload(event.payload())
+                                    .userId(u.getId())
                                     .build()
                     )
                     .toList();
         }
 
-        PlanReview review = reviewRepository.findReviewByPostId(data.getPostId())
+        PlanReview review = reviewRepository.findReviewByPostId(event.getPostId())
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_REVIEW));
 
         return users.stream()
                 .map(u ->
                         Notification.builder()
-                                .type(getType())
+                                .type(event.notifyType())
                                 .action(COMPLETE)
-                                .meetId(review.getMeet().getId())
+                                .meetId(review.getMeetId())
                                 .reviewId(review.getId())
-                                .payload(notify.payload())
-                                .user(u)
+                                .payload(event.payload())
+                                .userId(u.getId())
                                 .build()
                 )
                 .toList();

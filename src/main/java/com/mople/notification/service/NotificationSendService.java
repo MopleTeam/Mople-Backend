@@ -9,8 +9,6 @@ import com.mople.entity.notification.FirebaseToken;
 import com.mople.entity.notification.Notification;
 import com.mople.entity.user.User;
 import com.mople.global.enums.Action;
-import com.mople.global.enums.NotifyType;
-import com.mople.global.event.data.notify.NotificationEvent;
 import com.mople.global.event.data.notify.handler.NotifyHandler;
 import com.mople.global.event.data.notify.handler.NotifyHandlerRegistry;
 import com.mople.notification.repository.NotificationRepository;
@@ -33,9 +31,9 @@ public class NotificationSendService {
     private final NotificationRepository notificationRepository;
 
     @Transactional
-    public void sendMultiNotification(NotificationEvent notify, NotifyType type, NotifyEvent data) {
-        NotifyHandler<NotifyEvent> handler = findHandler(type, data);
-        NotifySendRequest sendRequest = handler.getSendRequest(data, notify);
+    public void sendMultiNotification(NotifyEvent event) {
+        NotifyHandler<NotifyEvent> handler = findHandler(event);
+        NotifySendRequest sendRequest = handler.getSendRequest(event);
 
         if (!sendRequest.tokens().isEmpty()) {
             sender.sendEachAsync(
@@ -49,29 +47,29 @@ public class NotificationSendService {
                                         Action.COMPLETE.name()
                                 );
 
-                                return buildMessage(notify, token, sendRequest, badgeCount);
+                                return buildMessage(event, token, sendRequest, badgeCount);
                             })
                             .toList()
             );
         }
 
-        List<Notification> notifications = handler.getNotifications(data, notify, sendRequest.users());
+        List<Notification> notifications = handler.getNotifications(event, sendRequest.users());
         notificationRepository.saveAll(notifications);
     }
 
     @SuppressWarnings("unchecked")
-    private NotifyHandler<NotifyEvent> findHandler(NotifyType type, NotifyEvent data) {
-        NotifyHandler<? extends NotifyEvent> rawHandler = handlerRegistry.getHandler(type);
-        Class<? extends NotifyEvent> handledType = handlerRegistry.getHandledType(type);
+    private NotifyHandler<NotifyEvent> findHandler(NotifyEvent event) {
+        NotifyHandler<? extends NotifyEvent> rawHandler = handlerRegistry.getHandler(event.notifyType());
+        Class<? extends NotifyEvent> handledType = handlerRegistry.getHandledType(event.notifyType());
 
-        if (!handledType.isInstance(data)) {
+        if (!handledType.isInstance(event)) {
             throw new BadRequestException(NOT_FOUND_NOTIFY_TYPE);
         }
 
         return (NotifyHandler<NotifyEvent>) rawHandler;
     }
 
-    private Message buildMessage(NotificationEvent notify, FirebaseToken token, NotifySendRequest sendRequest, Long badgeCount) {
+    private Message buildMessage(NotifyEvent event, FirebaseToken token, NotifySendRequest sendRequest, Long badgeCount) {
 
         int nextBadgeCount = Math.toIntExact(badgeCount + 1);
 
@@ -80,11 +78,11 @@ public class NotificationSendService {
                 .setNotification(
                         com.google.firebase.messaging.Notification
                                 .builder()
-                                .setTitle(notify.payload().title())
-                                .setBody(notify.payload().message())
+                                .setTitle(event.payload().title())
+                                .setBody(event.payload().message())
                                 .build()
                 )
-                .putAllData(notify.body())
+                .putAllData(event.routing())
                 .setApnsConfig(
                         ApnsConfig
                                 .builder()
@@ -101,8 +99,8 @@ public class NotificationSendService {
                                 .setNotification(
                                         AndroidNotification
                                                 .builder()
-                                                .setTitle(notify.payload().title())
-                                                .setBody(notify.payload().message())
+                                                .setTitle(event.payload().title())
+                                                .setBody(event.payload().message())
                                                 .setDefaultSound(true)
                                                 .setNotificationCount(nextBadgeCount)
                                                 .build()

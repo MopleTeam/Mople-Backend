@@ -1,20 +1,17 @@
 package com.mople.entity.notification;
 
+import com.mople.dto.event.data.notify.NotifyEvent;
 import com.mople.dto.response.notification.NotificationPayload;
-import com.mople.entity.user.User;
 import com.mople.global.enums.Action;
 import com.mople.global.enums.NotifyType;
 
-import com.mople.global.event.data.notify.NotificationEvent;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 
 import jakarta.persistence.*;
 
 import lombok.*;
 
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Type;
-import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -23,6 +20,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Notification {
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "notification_id")
@@ -45,9 +43,8 @@ public class Notification {
     @Column(name = "review_id", length = 30)
     private Long reviewId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
+    @Column(name = "user_id")
+    private Long userId;
 
     @Type(JsonType.class)
     @Column(columnDefinition = "json")
@@ -66,22 +63,22 @@ public class Notification {
     private LocalDateTime expiredAt;
 
     @Builder
-    public Notification(Action action, Long meetId, Long planId, Long reviewId, User user, NotificationPayload payload, NotifyType type, LocalDateTime scheduledAt) {
+    public Notification(Action action, Long meetId, Long planId, Long reviewId, Long userId, NotificationPayload payload, NotifyType type, LocalDateTime scheduledAt) {
         this.type = type;
         this.action = action;
         this.meetId = meetId;
         this.planId = planId;
         this.reviewId = reviewId;
-        this.user = user;
+        this.userId = userId;
         this.payload = payload;
         this.sendAt = LocalDateTime.now();
         this.expiredAt = LocalDateTime.now().plusDays(30);
         this.scheduledAt = scheduledAt;
     }
 
-    public void updateNotification(NotificationEvent notify, NotifyType type){
-        this.type = type;
-        this.payload = notify.payload();
+    public void updateNotification(NotifyEvent event){
+        this.type = event.notifyType();
+        this.payload = event.payload();
         this.sendAt = LocalDateTime.now();
         this.action = Action.COMPLETE;
     }
