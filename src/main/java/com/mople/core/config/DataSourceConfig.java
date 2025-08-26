@@ -42,6 +42,7 @@ public class DataSourceConfig {
     @Primary
     @Bean
     public DataSource loggingDataSource(@Qualifier("realDataSource") DataSource realDataSource) {
+
         return ProxyDataSourceBuilder
                 .create(realDataSource)
                 .name("SlowQueryLogger")

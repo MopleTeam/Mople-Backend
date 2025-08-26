@@ -3,6 +3,7 @@ package com.mople.core.aspect;
 import com.mople.global.async.message.DiscordExceptionSender;
 import com.mople.global.event.data.exception.DiscordMessage;
 import com.mople.global.event.data.exception.DiscordMessagePayload;
+import com.mople.global.event.data.exception.DiscordField;
 import com.mople.global.event.filter.DiscordAlertFilter;
 
 import com.mople.global.logging.LoggingContextManager;
@@ -59,31 +60,21 @@ public class BusinessLogicLoggingAspect {
 
         // Discord 알림이 필요한 경우만 전송
         if (discordAlertFilter.shouldAlert(ex, request)) {
-            String message =
-                            """
-                            Request - Method: %s\s
-                            URI: %s
-                            Arguments: %s
-                            exception: %s(message=%s)
-                            Stacktrace: %s
-                            """
-                            .formatted(
-                                    request.getMethod(),
-                                    request.getRequestURI(),
-                                    sensitiveLogger.sensitiveArgs(point.getArgs()),
-                                    ex.getClass(),
-                                    ex.getMessage(),
-                                    getStackTracePreview(ex)
-                            );
-
             var discordMessage = DiscordMessage
                     .builder()
-                    .content("# 🚨 Server Critical Exception")
+                    .content("🚨 **Server Exception Detected**")
                     .embeds(
                             List.of(
                                     DiscordMessagePayload.builder()
-                                            .title("ℹ️ Error Details")
-                                            .description(message)
+                                            .title("🎯 " + ex.getClass().getSimpleName())
+                                            .color(15158332) // 빨간색
+                                            .fields(List.of(
+                                                    DiscordField.createField("Method", point.getSignature().toShortString(), true),
+                                                    DiscordField.createField("Request", request.getMethod() + " " + request.getRequestURI(), true),
+                                                    DiscordField.createField("Request ID", loggingContextManager.getRequestId(), true),
+                                                    DiscordField.createField("Error Message", ex.getMessage(), false),
+                                                    DiscordField.createField("Stack Trace", "```\n" + getStackTracePreview(ex) + "```", false)
+                                            ))
                                             .build()
                             )
                     )

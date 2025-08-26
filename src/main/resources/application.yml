@@ -13,9 +13,3 @@ spring:
 server:
   tomcat:
     max-http-form-post-size: 30MB
-
-logging:
-  thresholds:
-    slow:
-      api: 3000
-      query: 1000
