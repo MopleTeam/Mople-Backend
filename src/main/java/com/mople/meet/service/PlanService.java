@@ -1,11 +1,9 @@
 package com.mople.meet.service;
 
-import com.mople.core.exception.custom.AuthException;
-import com.mople.core.exception.custom.BadRequestException;
-import com.mople.core.exception.custom.CursorException;
-import com.mople.core.exception.custom.ResourceNotFoundException;
+import com.mople.core.exception.custom.*;
 import com.mople.dto.client.PlanClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
+import com.mople.dto.event.data.domain.plan.PlanCreateEvent;
 import com.mople.dto.event.data.notify.plan.PlanDeleteNotifyEvent;
 import com.mople.dto.event.data.notify.plan.PlanUpdateNotifyEvent;
 import com.mople.dto.request.meet.plan.PlanReportRequest;
@@ -26,8 +24,8 @@ import com.mople.entity.meet.plan.PlanReport;
 import com.mople.entity.user.User;
 import com.mople.global.event.data.notify.NotifyEventPublisher;
 import com.mople.global.utils.cursor.CursorUtils;
-import com.mople.meet.mapper.PlanMapper;
 import com.mople.meet.reader.EntityReader;
+import com.mople.meet.repository.MeetMemberRepository;
 import com.mople.meet.repository.MeetTimeRepository;
 import com.mople.meet.repository.impl.comment.CommentRepositorySupport;
 import com.mople.meet.repository.impl.plan.ParticipantRepositorySupport;
@@ -37,12 +35,11 @@ import com.mople.meet.repository.plan.PlanParticipantRepository;
 import com.mople.dto.request.meet.plan.PlanCreateRequest;
 import com.mople.dto.request.meet.plan.PlanUpdateRequest;
 import com.mople.meet.repository.plan.PlanReportRepository;
-import com.mople.meet.schedule.PlanScheduleJob;
+import com.mople.meet.schedule.PlanReminderScheduleJob;
 import com.mople.weather.service.WeatherService;
 
 import lombok.RequiredArgsConstructor;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
@@ -57,10 +54,10 @@ import java.util.List;
 
 import static com.mople.dto.client.PlanClientResponse.*;
 import static com.mople.dto.client.UserRoleClientResponse.ofParticipants;
+import static com.mople.dto.response.meet.plan.PlanViewResponse.ofPlanView;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PlanService {
@@ -71,6 +68,7 @@ public class PlanService {
 
     private final WeatherService weatherService;
     private final MeetPlanRepository meetPlanRepository;
+    private final MeetMemberRepository memberRepository;
     private final PlanReportRepository planReportRepository;
     private final PlanParticipantRepository planParticipantRepository;
     private final ParticipantRepositorySupport participantRepositorySupport;
@@ -78,11 +76,10 @@ public class PlanService {
     private final MeetTimeRepository timeRepository;
     private final CommentRepositorySupport commentRepositorySupport;
 
-    private final PlanMapper mapper;
     private final EntityReader reader;
 
     private final TaskScheduler taskScheduler;
-    private final PlanScheduleJob planScheduleJob;
+    private final PlanReminderScheduleJob planScheduleJob;
     private final ApplicationEventPublisher publisher;
 
     @Transactional(readOnly = true)
@@ -95,12 +92,11 @@ public class PlanService {
             Long creatorId,
             PlanCreateRequest request
     ) {
-        LocalDateTime now = LocalDateTime.now();
-
         var user = reader.findUser(creatorId);
         var meet = reader.findMeet(request.meetId());
 
-        if (meet.matchMember(user.getId())) {
+        boolean isMeetMember = memberRepository.existsByMeetIdAndUserId(meet.getId(), user.getId());
+        if (!isMeetMember) {
             throw new AuthException(NOT_FOUND_MEMBER);
         }
 
@@ -114,49 +110,49 @@ public class PlanService {
                                 .longitude(request.lot())
                                 .latitude(request.lat())
                                 .weatherAddress(request.weatherAddress())
-                                .creator(user)
-                                .meet(meet)
+                                .creatorId(user.getId())
+                                .meetId(meet.getId())
                                 .build()
                 );
 
-        PlanParticipant participant = PlanParticipant.builder()
-                .user(user)
-                .build();
-
-        plan.addParticipant(participant);
-        planParticipantRepository.save(participant);
-
-        meet.addPlan(plan);
-
-        timeRepository.save(new MeetTime(plan.getMeet().getId(), plan.getId(), request.planTime()));
-
-        if (request.planTime().isBefore(now.plusDays(5))) {
-            plan.updateWeather(getPlanWeather(request.lot(), request.lat(), request.planTime()));
-        }
-
-        publisher.publishEvent(
-                NotifyEventPublisher.planNew(
-                        PlanCreateNotifyEvent.builder()
-                                .meetId(meet.getId())
-                                .meetName(meet.getName())
-                                .planId(plan.getId())
-                                .planName(plan.getName())
-                                .planTime(plan.getPlanTime())
-                                .planCreatorId(user.getId())
-                                .build()
-                )
+        planParticipantRepository.save(
+                PlanParticipant.builder()
+                        .userId(user.getId())
+                        .planId(plan.getId())
+                        .build()
         );
 
-        if (request.planTime().isAfter(now.plusHours(1))) {
-            long hour = now.until(request.planTime(), ChronoUnit.HOURS) == 1 ? 1 : 2;
+        timeRepository.save(
+                MeetTime.builder()
+                        .meetId(plan.getMeetId())
+                        .planId(plan.getId())
+                        .planTime(request.planTime())
+                        .build()
+        );
 
-            taskScheduler.schedule(
-                    () -> planScheduleJob.planRemindSchedule(plan.getId(), plan.getPlanTime(), creatorId),
-                    plan.getPlanTime().minusHours(hour).atZone(ZoneId.systemDefault()).toInstant()
-            );
-        }
+        publisher.publishEvent(
+                PlanCreateEvent.builder()
+                        .meetId(plan.getMeetId())
+                        .meetName(meet.getName())
+                        .planId(plan.getId())
+                        .planName(plan.getName())
+                        .planTime(plan.getPlanTime())
+                        .lat(plan.getLatitude())
+                        .lot(plan.getLongitude())
+                        .planCreatorId(plan.getCreatorId())
+                        .build()
+        );
 
-        return ofView(mapper.getPlanView(plan), commentRepositorySupport.countComment(plan.getId()));
+        List<PlanParticipant> participants = planParticipantRepository.findParticipantsByPlanId(plan.getId());
+
+        return ofView(
+                ofPlanView(
+                        plan,
+                        meet.getName(),
+                        meet.getMeetImage(),
+                        participants.size()
+                ),
+                commentRepositorySupport.countComment(plan.getId()));
     }
 
     @Transactional

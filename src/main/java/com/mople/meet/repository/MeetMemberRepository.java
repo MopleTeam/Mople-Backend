@@ -14,4 +14,6 @@ public interface MeetMemberRepository extends JpaRepository<MeetMember, Long> {
     @Modifying(clearAutomatically = true)
     @Query("delete MeetMember m where m.meetId = :meetId and m.userId = :userId")
     void deleteMember(Long meetId, Long userId);
+
+    boolean existsByMeetIdAndUserId(Long meetId, Long userId);
 }
