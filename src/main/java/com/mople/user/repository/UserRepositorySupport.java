@@ -35,36 +35,36 @@ public class UserRepositorySupport {
         QUser user = QUser.user;
 
         // participants
-        List<Long> meets = queryFactory.select(meet.id).from(meet).where(meet.creator.id.eq(userId)).fetch();
-        List<Long> reviewMeetIds = queryFactory.select(review.id).from(review).where(review.meet.id.in(meets)).fetch();
+        List<Long> meets = queryFactory.select(meet.id).from(meet).where(meet.creatorId.eq(userId)).fetch();
+        List<Long> reviewMeetIds = queryFactory.select(review.id).from(review).where(review.meetId.in(meets)).fetch();
         List<Long> reviewIds = queryFactory.select(review.id).from(review).where(review.creatorId.eq(userId)).fetch();
-        List<Long> planIds = queryFactory.select(plan.id).from(plan).where(plan.creator.id.eq(userId)).fetch();
-        List<Long> planMeetIds = queryFactory.select(plan.id).from(plan).where(plan.meet.id.in(meets)).fetch();
+        List<Long> planIds = queryFactory.select(plan.id).from(plan).where(plan.creatorId.eq(userId)).fetch();
+        List<Long> planMeetIds = queryFactory.select(plan.id).from(plan).where(plan.meetId.in(meets)).fetch();
 
-        queryFactory.delete(participant).where(participant.user.id.eq(userId)).execute();
-        queryFactory.delete(participant).where(participant.review.id.in(reviewIds)).execute();
-        queryFactory.delete(participant).where(participant.review.id.in(reviewMeetIds)).execute();
-        queryFactory.delete(participant).where(participant.plan.id.in(planIds)).execute();
-        queryFactory.delete(participant).where(participant.plan.id.in(planMeetIds)).execute();
+        queryFactory.delete(participant).where(participant.userId.eq(userId)).execute();
+        queryFactory.delete(participant).where(participant.reviewId.in(reviewIds)).execute();
+        queryFactory.delete(participant).where(participant.reviewId.in(reviewMeetIds)).execute();
+        queryFactory.delete(participant).where(participant.planId.in(planIds)).execute();
+        queryFactory.delete(participant).where(participant.planId.in(planMeetIds)).execute();
 
         // plan, review
-        queryFactory.delete(reviewImage).where(reviewImage.review.id.in(reviewIds)).execute();
-        queryFactory.delete(reviewImage).where(reviewImage.review.id.in(reviewMeetIds)).execute();
+        queryFactory.delete(reviewImage).where(reviewImage.reviewId.in(reviewIds)).execute();
+        queryFactory.delete(reviewImage).where(reviewImage.reviewId.in(reviewMeetIds)).execute();
 
         queryFactory.delete(review).where(review.id.in(reviewIds)).execute();
-        queryFactory.delete(review).where(review.meet.id.in(meets)).execute();
+        queryFactory.delete(review).where(review.meetId.in(meets)).execute();
 
         queryFactory.delete(plan).where(plan.id.in(planIds)).execute();
-        queryFactory.delete(plan).where(plan.meet.id.in(meets)).execute();
+        queryFactory.delete(plan).where(plan.meetId.in(meets)).execute();
 
         // meet, meetMember
-        queryFactory.delete(meetMember).where(meetMember.user.id.eq(userId)).execute();
-        queryFactory.delete(meetMember).where(meetMember.joinMeet.id.in(meets)).execute();
+        queryFactory.delete(meetMember).where(meetMember.userId.eq(userId)).execute();
+        queryFactory.delete(meetMember).where(meetMember.meetId.in(meets)).execute();
         queryFactory.delete(meet).where(meet.id.in(meets)).execute();
 
         // etc
-        queryFactory.delete(comment).where(comment.writer.id.eq(userId)).execute();
-        queryFactory.delete(notification).where(notification.user.id.eq(userId)).execute();
+        queryFactory.delete(comment).where(comment.writerId.eq(userId)).execute();
+        queryFactory.delete(notification).where(notification.userId.eq(userId)).execute();
         queryFactory.delete(token).where(token.userId.eq(userId)).execute();
 
         // user

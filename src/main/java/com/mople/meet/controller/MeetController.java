@@ -49,9 +49,10 @@ public class MeetController {
     public ResponseEntity<MeetClientResponse> update(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long meetId,
-            @RequestBody MeetUpdateRequest updateRequest
+            @RequestBody MeetUpdateRequest updateRequest,
+            @RequestParam Long version
     ) {
-        return ResponseEntity.ok(meetService.updateMeet(user.id(), meetId, updateRequest));
+        return ResponseEntity.ok(meetService.updateMeet(user.id(), meetId, updateRequest, version));
     }
 
     @Operation(
@@ -98,9 +99,10 @@ public class MeetController {
     @DeleteMapping("/{meetId}")
     public ResponseEntity<Void> deleteMeet(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
-            @PathVariable Long meetId
+            @PathVariable Long meetId,
+            @RequestParam Long version
     ) {
-        meetService.removeMeet(user.id(), meetId);
+        meetService.removeMeet(user.id(), meetId, version);
         return ResponseEntity.ok().build();
     }
 

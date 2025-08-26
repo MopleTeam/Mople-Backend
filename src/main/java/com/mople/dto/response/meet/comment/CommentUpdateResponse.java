@@ -8,6 +8,7 @@ import java.util.List;
 
 public record CommentUpdateResponse(
         Long commentId,
+        Long version,
         String content,
         Long postId,
         Long parentId,
@@ -19,16 +20,17 @@ public record CommentUpdateResponse(
         LocalDateTime time,
         boolean update
 ) {
-    public CommentUpdateResponse(PlanComment comment, List<User> mentions, boolean likedByMe) {
+    public CommentUpdateResponse(PlanComment comment, User writer, List<User> mentions, boolean likedByMe) {
         this(
                 comment.getId(),
+                comment.getVersion(),
                 comment.getContent(),
                 comment.getPostId(),
                 comment.getParentId(),
                 comment.getReplyCount(),
                 comment.getLikeCount(),
                 likedByMe,
-                comment.getWriter(),
+                writer,
                 mentions,
                 comment.getWriteTime(),
                 true

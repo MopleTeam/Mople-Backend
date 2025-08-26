@@ -8,6 +8,7 @@ import java.util.List;
 
 public record CommentResponse(
         Long commentId,
+        Long version,
         String content,
         Long postId,
         Long parentId,
@@ -18,16 +19,17 @@ public record CommentResponse(
         List<User> mentions,
         LocalDateTime time
 ) {
-    public CommentResponse(PlanComment comment, List<User> mentions, boolean likedByMe) {
+    public CommentResponse(PlanComment comment, User writer, List<User> mentions, boolean likedByMe) {
         this(
                 comment.getId(),
+                comment.getVersion(),
                 comment.getContent(),
                 comment.getPostId(),
                 comment.getParentId(),
                 comment.getReplyCount(),
                 comment.getLikeCount(),
                 likedByMe,
-                comment.getWriter(),
+                writer,
                 mentions,
                 comment.getWriteTime()
         );

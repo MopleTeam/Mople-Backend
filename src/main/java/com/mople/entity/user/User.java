@@ -15,10 +15,14 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "user_id")
     private Long id;
+
+    @Version
+    private Long version;
 
     @Column(name = "email", unique = true, length = 50)
     private String email;

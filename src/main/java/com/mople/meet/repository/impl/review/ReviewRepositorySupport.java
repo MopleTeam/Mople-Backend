@@ -19,7 +19,7 @@ public class ReviewRepositorySupport {
         QPlanReview review = QPlanReview.planReview;
 
         BooleanBuilder whereCondition = new BooleanBuilder()
-                .and(review.meet.id.eq(meetId));
+                .and(review.meetId.eq(meetId));
 
         if (cursorId != null) {
             LocalDateTime cursorPlanTime = queryFactory
@@ -48,7 +48,7 @@ public class ReviewRepositorySupport {
         Long count = queryFactory
                 .select(review.count())
                 .from(review)
-                .where(review.meet.id.eq(meetId))
+                .where(review.meetId.eq(meetId))
                 .fetchOne();
 
         return count != null ? count : 0L;

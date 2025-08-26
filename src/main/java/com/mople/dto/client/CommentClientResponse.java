@@ -15,6 +15,7 @@ import java.util.List;
 @Builder
 public class CommentClientResponse {
     private final Long commentId;
+    private final Long version;
     private final String content;
     private final Long postId;
     private final Long parentId;
@@ -32,6 +33,7 @@ public class CommentClientResponse {
     public static CommentClientResponse ofComment(CommentResponse commentResponse) {
         return CommentClientResponse.builder()
                 .commentId(commentResponse.commentId())
+                .version(commentResponse.version())
                 .content(commentResponse.content())
                 .postId(commentResponse.postId())
                 .parentId(commentResponse.parentId())
@@ -47,6 +49,7 @@ public class CommentClientResponse {
     public static CommentClientResponse ofUpdate(CommentUpdateResponse updateResponse) {
         return CommentClientResponse.builder()
                 .commentId(updateResponse.commentId())
+                .version(updateResponse.version())
                 .content(updateResponse.content())
                 .postId(updateResponse.postId())
                 .parentId(updateResponse.parentId())

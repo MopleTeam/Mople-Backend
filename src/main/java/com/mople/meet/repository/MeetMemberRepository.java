@@ -9,8 +9,9 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 public interface MeetMemberRepository extends JpaRepository<MeetMember, Long> {
+
     @Transactional
     @Modifying(clearAutomatically = true)
-    @Query("delete MeetMember m where m.joinMeet.id = :meetId and m.user.id = :userId")
+    @Query("delete MeetMember m where m.meetId = :meetId and m.userId = :userId")
     void deleteMember(Long meetId, Long userId);
 }

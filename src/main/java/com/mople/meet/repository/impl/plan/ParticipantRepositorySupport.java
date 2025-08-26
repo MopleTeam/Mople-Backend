@@ -1,5 +1,6 @@
 package com.mople.meet.repository.impl.plan;
 
+import com.mople.entity.user.QUser;
 import com.mople.global.utils.cursor.MemberCursor;
 import com.mople.entity.meet.plan.PlanParticipant;
 import com.mople.entity.meet.plan.QPlanParticipant;
@@ -22,13 +23,14 @@ public class ParticipantRepositorySupport {
 
     public List<PlanParticipant> findPlanParticipantPage(Long planId, Long hostId, Long creatorId, MemberCursor cursor, int size) {
         QPlanParticipant participant = QPlanParticipant.planParticipant;
+        QUser user = QUser.user;
 
-        NumberExpression<Integer> roleOrder = MemberSortExpressions.roleOrder(participant.user, hostId, creatorId);
-        NumberExpression<Integer> nicknameTypeOrder = MemberSortExpressions.nicknameTypeOrder(participant.user);
-        StringExpression nicknameLower = MemberSortExpressions.nicknameLower(participant.user);
+        NumberExpression<Integer> roleOrder = MemberSortExpressions.roleOrder(user, hostId, creatorId);
+        NumberExpression<Integer> nicknameTypeOrder = MemberSortExpressions.nicknameTypeOrder(user);
+        StringExpression nicknameLower = MemberSortExpressions.nicknameLower(user);
 
         BooleanBuilder whereCondition = new BooleanBuilder()
-                .and(participant.plan.id.eq(planId));
+                .and(participant.planId.eq(planId));
 
         if (cursor != null) {
             whereCondition.and(
@@ -43,7 +45,9 @@ public class ParticipantRepositorySupport {
         }
 
         return queryFactory
-                .selectFrom(participant)
+                .select(participant)
+                .from(participant)
+                .join(user).on(user.id.eq(participant.userId))
                 .where(whereCondition)
                 .orderBy(
                         roleOrder.asc(),
@@ -61,7 +65,7 @@ public class ParticipantRepositorySupport {
         Long count = queryFactory
                 .select(participant.count())
                 .from(participant)
-                .where(participant.plan.id.eq(planId))
+                .where(participant.planId.eq(planId))
                 .fetchOne();
 
         return count != null ? count : 0L;
@@ -69,13 +73,14 @@ public class ParticipantRepositorySupport {
 
     public List<PlanParticipant> findReviewParticipantPage(Long reviewId, Long hostId, Long creatorId, MemberCursor cursor, int size) {
         QPlanParticipant participant = QPlanParticipant.planParticipant;
+        QUser user = QUser.user;
 
-        NumberExpression<Integer> roleOrder = MemberSortExpressions.roleOrder(participant.user, hostId, creatorId);
-        NumberExpression<Integer> nicknameTypeOrder = MemberSortExpressions.nicknameTypeOrder(participant.user);
-        StringExpression nicknameLower = MemberSortExpressions.nicknameLower(participant.user);
+        NumberExpression<Integer> roleOrder = MemberSortExpressions.roleOrder(user, hostId, creatorId);
+        NumberExpression<Integer> nicknameTypeOrder = MemberSortExpressions.nicknameTypeOrder(user);
+        StringExpression nicknameLower = MemberSortExpressions.nicknameLower(user);
 
         BooleanBuilder whereCondition = new BooleanBuilder()
-                .and(participant.review.id.eq(reviewId));
+                .and(participant.reviewId.eq(reviewId));
 
         if (cursor != null) {
             whereCondition.and(
@@ -90,7 +95,9 @@ public class ParticipantRepositorySupport {
         }
 
         return queryFactory
-                .selectFrom(participant)
+                .select(participant)
+                .from(participant)
+                .join(user).on(user.id.eq(participant.userId))
                 .where(whereCondition)
                 .orderBy(
                         roleOrder.asc(),
@@ -108,7 +115,7 @@ public class ParticipantRepositorySupport {
         Long count = queryFactory
                 .select(participant.count())
                 .from(participant)
-                .where(participant.review.id.eq(reviewId))
+                .where(participant.reviewId.eq(reviewId))
                 .fetchOne();
 
         return count != null ? count : 0L;
@@ -116,11 +123,13 @@ public class ParticipantRepositorySupport {
 
     public boolean isCursorInvalid(String cursorNickname, Long cursorId) {
         QPlanParticipant participant = QPlanParticipant.planParticipant;
+        QUser user = QUser.user;
 
         return queryFactory
                 .selectOne()
                 .from(participant)
-                .where(participant.user.nickname.eq(cursorNickname), participant.id.eq(cursorId))
+                .join(user).on(user.id.eq(participant.userId))
+                .where(user.nickname.eq(cursorNickname), participant.id.eq(cursorId))
                 .fetchFirst() == null;
     }
 }

@@ -2,7 +2,6 @@ package com.mople.meet.repository.impl.comment;
 
 import com.mople.entity.meet.comment.PlanComment;
 import com.mople.entity.meet.comment.QPlanComment;
-import com.mople.entity.user.QUser;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +17,6 @@ public class CommentRepositorySupport {
 
     public List<PlanComment> findCommentPage(Long postId, Long cursorId, int size) {
         QPlanComment comment = QPlanComment.planComment;
-        QUser user = QUser.user;
 
         BooleanBuilder whereCondition = new BooleanBuilder()
                 .and(comment.postId.eq(postId))
@@ -40,7 +38,6 @@ public class CommentRepositorySupport {
 
         return queryFactory
                 .selectFrom(comment)
-                .join(comment.writer, user).fetchJoin()
                 .where(whereCondition)
                 .orderBy(comment.writeTime.desc(), comment.id.desc())
                 .limit(size + 1)
@@ -64,7 +61,6 @@ public class CommentRepositorySupport {
 
     public List<PlanComment> findCommentReplyPage(Long postId, Long commentId, Long cursorId, int size) {
         QPlanComment comment = QPlanComment.planComment;
-        QUser user = QUser.user;
 
         BooleanBuilder whereCondition = new BooleanBuilder()
                 .and(comment.postId.eq(postId))
@@ -85,7 +81,6 @@ public class CommentRepositorySupport {
 
         return queryFactory
                 .selectFrom(comment)
-                .join(comment.writer, user).fetchJoin()
                 .where(whereCondition)
                 .orderBy(comment.writeTime.asc(), comment.id.asc())
                 .limit(size + 1)

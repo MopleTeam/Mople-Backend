@@ -1,6 +1,5 @@
 package com.mople.entity.meet.comment;
 
-import com.mople.entity.user.User;
 import com.mople.global.enums.Status;
 
 import jakarta.persistence.*;
@@ -14,10 +13,14 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PlanComment {
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "comment_id")
     private Long id;
+
+    @Version
+    private Long version;
 
     @Column(name = "content", nullable = false, length = 700)
     private String content;
@@ -38,49 +41,48 @@ public class PlanComment {
     @Column(name = "status", nullable = false, length = 10)
     private Status status;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "writer_id")
-    private User writer;
+    @Column(name = "writer_id")
+    private Long writerId;
 
     @Column(name = "like_count")
     private Integer likeCount = 0;
 
     @Builder
     private PlanComment(String content, Long postId, Long parentId, Integer replyCount,
-                       LocalDateTime writeTime, Status status, User writer) {
+                       LocalDateTime writeTime, Status status, Long writerId) {
         this.content = content;
         this.postId = postId;
         this.parentId = parentId;
         this.replyCount = replyCount;
         this.writeTime = writeTime;
         this.status = status;
-        this.writer = writer;
+        this.writerId = writerId;
     }
 
-    public static PlanComment ofParent(String content, Long postId, LocalDateTime writeTime, Status status, User writer) {
+    public static PlanComment ofParent(String content, Long postId, LocalDateTime writeTime, Status status, Long writerId) {
         return PlanComment.builder()
                 .content(content)
                 .postId(postId)
                 .replyCount(0)
                 .writeTime(writeTime)
                 .status(status)
-                .writer(writer)
+                .writerId(writerId)
                 .build();
     }
 
-    public static PlanComment ofChild(String content, Long postId, Long parentId, LocalDateTime writeTime, Status status, User writer) {
+    public static PlanComment ofChild(String content, Long postId, Long parentId, LocalDateTime writeTime, Status status, Long writerId) {
         return PlanComment.builder()
                 .content(content)
                 .postId(postId)
                 .parentId(parentId)
                 .writeTime(writeTime)
                 .status(status)
-                .writer(writer)
+                .writerId(writerId)
                 .build();
     }
 
     public boolean matchWriter(Long userId) {
-        return !this.writer.getId().equals(userId);
+        return !this.writerId.equals(userId);
     }
 
     public void updateContent(String content) {

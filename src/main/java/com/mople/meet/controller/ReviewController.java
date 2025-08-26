@@ -46,7 +46,7 @@ public class ReviewController {
 
     @Operation(
             summary = "후기 상세 조회 API",
-            description = "후기 Post Id로 상세 조회합니다."
+            description = "후기 review Id로 상세 조회합니다."
     )
     @GetMapping("/{reviewId}")
     public ResponseEntity<ReviewClientResponse> getReviewDetail(
@@ -72,9 +72,10 @@ public class ReviewController {
     )
     @DeleteMapping("/{reviewId}")
     public ResponseEntity<Void> removeReview(
-            @PathVariable Long reviewId
+            @PathVariable Long reviewId,
+            @RequestParam Long version
     ) {
-        reviewService.removeReview(reviewId);
+        reviewService.removeReview(reviewId, version);
         return ResponseEntity.ok().build();
     }
 

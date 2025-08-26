@@ -42,9 +42,10 @@ public class UserController {
     @PatchMapping("/info")
     public ResponseEntity<UserClientResponse> updateInfo(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
-            @Valid @RequestBody UserInfoRequest userInfoRequest
+            @Valid @RequestBody UserInfoRequest userInfoRequest,
+            @RequestParam Long version
     ) {
-        var updateUserInfo = userService.updateInfo(user.id(), userInfoRequest);
+        var updateUserInfo = userService.updateInfo(user.id(), userInfoRequest, version);
         return ResponseEntity.ok(updateUserInfo);
     }
 
@@ -54,9 +55,10 @@ public class UserController {
     )
     @DeleteMapping("/remove")
     public ResponseEntity<Void> removeUser(
-            @Parameter(hidden = true) @SignUser AuthUserRequest user
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @RequestParam Long version
     ) {
-        userService.removeUser(user.id());
+        userService.removeUser(user.id(), version);
         return ResponseEntity.ok().build();
     }
 

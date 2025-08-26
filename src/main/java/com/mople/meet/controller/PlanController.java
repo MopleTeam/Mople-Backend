@@ -67,9 +67,10 @@ public class PlanController {
     @PatchMapping("/update")
     public ResponseEntity<PlanClientResponse> updatePlan(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
-            @RequestBody @Valid PlanUpdateRequest planUpdateRequest
+            @RequestBody @Valid PlanUpdateRequest planUpdateRequest,
+            @RequestParam Long version
     ) {
-        return ResponseEntity.ok(planService.updatePlan(user.id(), planUpdateRequest));
+        return ResponseEntity.ok(planService.updatePlan(user.id(), planUpdateRequest, version));
     }
 
     @Operation(
@@ -77,11 +78,12 @@ public class PlanController {
             description = "일정 생성자는 일정을 삭제할 수 있습니다."
     )
     @DeleteMapping("/{planId}")
-    public ResponseEntity<PlanViewResponse> deletePlan(
+    public ResponseEntity<Void> deletePlan(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
-            @PathVariable Long planId
+            @PathVariable Long planId,
+            @RequestParam Long version
     ) {
-        planService.deletePlan(user.id(), planId);
+        planService.deletePlan(user.id(), planId, version);
         return ResponseEntity.ok().build();
     }
 

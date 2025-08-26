@@ -2,6 +2,7 @@ package com.mople.entity.meet;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MeetTime {
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "time_id")
@@ -26,6 +28,7 @@ public class MeetTime {
     @Column(name = "plan_time")
     private LocalDateTime planTime;
 
+    @Builder
     public MeetTime(Long meetId, Long planId, LocalDateTime planTime) {
         this.meetId = meetId;
         this.planId = planId;

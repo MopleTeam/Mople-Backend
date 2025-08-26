@@ -92,9 +92,10 @@ public class CommentController {
     public ResponseEntity<CommentClientResponse> updateComment(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long commentId,
-            @RequestBody CommentCreateRequest commentCreateRequest
+            @RequestBody CommentCreateRequest commentCreateRequest,
+            @RequestParam Long version
     ) {
-        return ResponseEntity.ok(commentService.updateComment(user.id(), commentId, commentCreateRequest));
+        return ResponseEntity.ok(commentService.updateComment(user.id(), commentId, commentCreateRequest, version));
     }
 
     @Operation(
@@ -104,9 +105,10 @@ public class CommentController {
     @DeleteMapping("/{commentId}")
     public ResponseEntity<Void> deleteReviewComment(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
-            @PathVariable Long commentId
+            @PathVariable Long commentId,
+            @RequestParam Long version
     ) {
-        commentService.deleteComment(user.id(), commentId);
+        commentService.deleteComment(user.id(), commentId, version);
         return ResponseEntity.ok().build();
     }
 
