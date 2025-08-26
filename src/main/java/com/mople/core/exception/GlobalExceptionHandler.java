@@ -155,6 +155,21 @@ public class GlobalExceptionHandler {
                 );
     }
 
+    @ExceptionHandler(AsyncException.class)
+    public ResponseEntity<ExceptionResponse<Object>> handleAsyncException(AsyncException e) {
+        exceptionLogger.logClientError(e.getMessage(), e.getExceptionReturnCode().returnCode());
+        loggingContextManager.clear();
+
+        return ResponseEntity
+                .status(e.getExceptionReturnCode().returnCode())
+                .body(new ExceptionResponse<>(
+                                e.getExceptionReturnCode().getCode(),
+                                e.getExceptionReturnCode().getMessage(),
+                                null
+                        )
+                );
+    }
+
 //        @ExceptionHandler(Exception.class)
 //    public ResponseEntity<ExceptionResponse<Object>> handleOtherException(Exception e) {
 //        return ResponseEntity

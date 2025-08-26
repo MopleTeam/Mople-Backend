@@ -78,6 +78,7 @@ public enum ExceptionReturnCode {
     // 요청 관련
     WRONG_PARAMETER("400", "잘못된 파라미터 입니다."),
     METHOD_NOT_ALLOWED("405", "허용되지 않은 메소드 입니다."),
+    REQUEST_CONFLICT("409", "새로고침 후 다시 시도해주세요."),
 
     // 내부 에러
     INTERNAL_SERVER_ERROR("500", "내부 서버 에러 입니다."),
