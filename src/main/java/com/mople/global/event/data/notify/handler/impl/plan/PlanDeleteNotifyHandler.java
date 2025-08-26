@@ -15,7 +15,6 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 import static com.mople.global.enums.Action.COMPLETE;
-import static com.mople.global.enums.ExceptionReturnCode.NOT_FOUND_PLAN;
 
 @Component
 @RequiredArgsConstructor
@@ -36,8 +35,6 @@ public class PlanDeleteNotifyHandler implements NotifyHandler<PlanDeleteNotifyEv
 
     @Override
     public List<Notification> getNotifications(PlanDeleteNotifyEvent event, List<User> users) {
-        deletePlan(event.getPlanId());
-
         return users.stream()
                 .map(u ->
                         Notification.builder()
@@ -50,12 +47,5 @@ public class PlanDeleteNotifyHandler implements NotifyHandler<PlanDeleteNotifyEv
                                 .build()
                 )
                 .toList();
-    }
-
-    private void deletePlan(Long id) {
-        MeetPlan plan = planRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_PLAN));
-
-        planRepository.delete(plan);
     }
 }

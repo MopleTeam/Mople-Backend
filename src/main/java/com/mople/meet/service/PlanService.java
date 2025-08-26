@@ -4,7 +4,7 @@ import com.mople.core.exception.custom.*;
 import com.mople.dto.client.PlanClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
 import com.mople.dto.event.data.domain.plan.PlanCreateEvent;
-import com.mople.dto.event.data.notify.plan.PlanDeleteNotifyEvent;
+import com.mople.dto.event.data.domain.plan.PlanDeleteEvent;
 import com.mople.dto.event.data.notify.plan.PlanUpdateNotifyEvent;
 import com.mople.dto.request.meet.plan.PlanReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
@@ -51,6 +51,7 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Objects;
 
 import static com.mople.dto.client.PlanClientResponse.*;
 import static com.mople.dto.client.UserRoleClientResponse.ofParticipants;
@@ -203,26 +204,30 @@ public class PlanService {
     }
 
     @Transactional
-    public void deletePlan(Long userId, Long planId) {
+    public void deletePlan(Long userId, Long planId, Long version) {
+        reader.findUser(userId);
         var plan = reader.findPlan(planId);
+        var meet = reader.findMeet(plan.getMeetId());
 
         if (plan.isCreator(userId)) {
             throw new BadRequestException(NOT_CREATOR);
         }
 
-        timeRepository.deleteAllInBatch(timeRepository.findByAllPlanId(planId));
+        if (!Objects.equals(version, plan.getVersion())) {
+            throw new AsyncException(REQUEST_CONFLICT);
+        }
 
         publisher.publishEvent(
-                NotifyEventPublisher.planRemove(
-                        PlanDeleteNotifyEvent.builder()
-                                .meetId(plan.getMeet().getId())
-                                .meetName(plan.getMeet().getName())
-                                .planId(plan.getId())
-                                .planName(plan.getName())
-                                .planDeletedBy(plan.getCreator().getId())
-                                .build()
-                )
+                PlanDeleteEvent.builder()
+                        .meetId(plan.getMeetId())
+                        .meetName(meet.getName())
+                        .planId(plan.getId())
+                        .planName(plan.getName())
+                        .planDeletedBy(userId)
+                        .build()
         );
+
+        meetPlanRepository.delete(plan);
     }
 
     @Transactional(readOnly = true)
