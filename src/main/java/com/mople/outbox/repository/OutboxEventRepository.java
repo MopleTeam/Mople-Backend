@@ -20,24 +20,51 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
       """, nativeQuery = true)
     List<OutboxEvent> lockNextBatch(int limit);
 
-    @Modifying
-    @Query(value = """
-        UPDATE outbox_event
-           SET available_at = :runAt
-         WHERE status = 'PENDING'
-           AND aggregate_type = 'PLAN'
-           AND event_type = 'PLAN_REMIND'
-           AND aggregate_id = :planId
-        """, nativeQuery = true)
+    @Modifying(clearAutomatically = true)
+    @Query("""
+              UPDATE OutboxEvent e
+                 SET e.availableAt = :runAt
+               WHERE e.status = 'PENDING'
+                 AND e.aggregateType = 'PLAN'
+                 AND e.eventType = 'PLAN_REMIND'
+                 AND e.aggregateId = :planId
+            """)
     int reschedulePlanRemind(Long planId, LocalDateTime runAt);
+
+    @Modifying(clearAutomatically = true)
+    @Query("""
+              DELETE FROM OutboxEvent e
+               WHERE e.status = 'PENDING'
+                 AND e.aggregateType = 'PLAN'
+                 AND e.eventType = 'PLAN_REMIND'
+                 AND e.aggregateId = :planId
+            """)
+    int deletePendingPlanRemind(Long planId);
 
     @Modifying
     @Query(value = """
-        DELETE FROM outbox_event
-         WHERE status = 'PENDING'
-           AND aggregate_type = 'PLAN'
-           AND event_type = 'PLAN_REMIND'
-           AND aggregate_id = :planId
-        """, nativeQuery = true)
-    int deletePendingPlanRemind(Long planId);
+      DELETE FROM outbox_event
+       WHERE id IN (
+         SELECT id FROM outbox_event
+          WHERE status = 'PUBLISHED'
+            AND created_at < :before
+          ORDER BY id
+          LIMIT :limit
+       )
+      """, nativeQuery = true)
+    int deleteOldPublished(LocalDateTime before, int limit);
+
+    @Modifying
+    @Query(value = """
+      DELETE FROM outbox_event
+       WHERE id IN (
+         SELECT id FROM outbox_event
+          WHERE status = 'FAILED'
+            AND created_at < :before
+          ORDER BY id
+          LIMIT :limit
+       )
+      """, nativeQuery = true)
+    int deleteOldFailed(LocalDateTime before, int limit);
+
 }
