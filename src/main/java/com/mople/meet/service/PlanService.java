@@ -35,7 +35,6 @@ import com.mople.meet.repository.plan.PlanParticipantRepository;
 import com.mople.dto.request.meet.plan.PlanCreateRequest;
 import com.mople.dto.request.meet.plan.PlanUpdateRequest;
 import com.mople.meet.repository.plan.PlanReportRepository;
-import com.mople.meet.schedule.PlanReminderScheduleJob;
 import com.mople.outbox.service.OutboxService;
 import com.mople.weather.service.WeatherService;
 
@@ -84,7 +83,6 @@ public class PlanService {
     private final EntityReader reader;
 
     private final TaskScheduler taskScheduler;
-    private final PlanReminderScheduleJob planScheduleJob;
     private final ApplicationEventPublisher publisher;
     private final OutboxService outboxService;
 
