@@ -36,6 +36,7 @@ import com.mople.dto.request.meet.plan.PlanCreateRequest;
 import com.mople.dto.request.meet.plan.PlanUpdateRequest;
 import com.mople.meet.repository.plan.PlanReportRepository;
 import com.mople.meet.schedule.PlanReminderScheduleJob;
+import com.mople.outbox.service.OutboxService;
 import com.mople.weather.service.WeatherService;
 
 import lombok.RequiredArgsConstructor;
@@ -56,6 +57,9 @@ import java.util.Objects;
 import static com.mople.dto.client.PlanClientResponse.*;
 import static com.mople.dto.client.UserRoleClientResponse.ofParticipants;
 import static com.mople.dto.response.meet.plan.PlanViewResponse.ofPlanView;
+import static com.mople.global.enums.AggregateType.PLAN;
+import static com.mople.global.enums.EventTypeNames.PLAN_CREATE;
+import static com.mople.global.enums.EventTypeNames.PLAN_DELETE;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
@@ -82,6 +86,7 @@ public class PlanService {
     private final TaskScheduler taskScheduler;
     private final PlanReminderScheduleJob planScheduleJob;
     private final ApplicationEventPublisher publisher;
+    private final OutboxService outboxService;
 
     @Transactional(readOnly = true)
     public PlanHomeViewResponse getPlanView(Long userId) {
@@ -131,18 +136,18 @@ public class PlanService {
                         .build()
         );
 
-        publisher.publishEvent(
-                PlanCreateEvent.builder()
-                        .meetId(plan.getMeetId())
-                        .meetName(meet.getName())
-                        .planId(plan.getId())
-                        .planName(plan.getName())
-                        .planTime(plan.getPlanTime())
-                        .lat(plan.getLatitude())
-                        .lot(plan.getLongitude())
-                        .planCreatorId(plan.getCreatorId())
-                        .build()
-        );
+        PlanCreateEvent event = PlanCreateEvent.builder()
+                .meetId(plan.getMeetId())
+                .meetName(meet.getName())
+                .planId(plan.getId())
+                .planName(plan.getName())
+                .planTime(plan.getPlanTime())
+                .lat(plan.getLatitude())
+                .lot(plan.getLongitude())
+                .planCreatorId(plan.getCreatorId())
+                .build();
+
+        outboxService.save(PLAN_CREATE, PLAN, plan.getId(), event);
 
         List<PlanParticipant> participants = planParticipantRepository.findParticipantsByPlanId(plan.getId());
 
@@ -217,15 +222,18 @@ public class PlanService {
             throw new AsyncException(REQUEST_CONFLICT);
         }
 
-        publisher.publishEvent(
-                PlanDeleteEvent.builder()
-                        .meetId(plan.getMeetId())
-                        .meetName(meet.getName())
-                        .planId(plan.getId())
-                        .planName(plan.getName())
-                        .planDeletedBy(userId)
-                        .build()
-        );
+        planParticipantRepository.deleteByPlanId(plan.getId());
+        timeRepository.deleteByPlanId(plan.getId());
+
+        PlanDeleteEvent event = PlanDeleteEvent.builder()
+                .meetId(plan.getMeetId())
+                .meetName(meet.getName())
+                .planId(plan.getId())
+                .planName(plan.getName())
+                .planDeletedBy(userId)
+                .build();
+
+        outboxService.save(PLAN_DELETE, PLAN, plan.getId(), event);
 
         meetPlanRepository.delete(plan);
     }

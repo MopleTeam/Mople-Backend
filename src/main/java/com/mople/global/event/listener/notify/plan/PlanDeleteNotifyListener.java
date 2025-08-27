@@ -4,10 +4,8 @@ import com.mople.dto.event.data.domain.plan.PlanDeleteEvent;
 import com.mople.dto.event.data.notify.plan.PlanDeleteNotifyEvent;
 import com.mople.notification.service.NotificationSendService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
 @RequiredArgsConstructor
@@ -15,16 +13,15 @@ public class PlanDeleteNotifyListener {
 
     private final NotificationSendService sendService;
 
-    @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @EventListener
     public void pushEventListener(PlanDeleteEvent event) {
 
         PlanDeleteNotifyEvent notifyEvent = PlanDeleteNotifyEvent.builder()
-                .meetId(event.meetId())
-                .meetName(event.meetName())
-                .planId(event.planId())
-                .planName(event.planName())
-                .planDeletedBy(event.planDeletedBy())
+                .meetId(event.getMeetId())
+                .meetName(event.getMeetName())
+                .planId(event.getPlanId())
+                .planName(event.getPlanName())
+                .planDeletedBy(event.getPlanDeletedBy())
                 .build();
 
         sendService.sendMultiNotification(notifyEvent);
