@@ -3,6 +3,7 @@ package com.mople.outbox.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mople.core.exception.custom.AsyncException;
+import com.mople.dto.event.data.domain.DomainEvent;
 import com.mople.entity.event.OutboxEvent;
 import com.mople.global.enums.AggregateType;
 import com.mople.outbox.repository.OutboxEventRepository;
@@ -25,7 +26,7 @@ public class OutboxService {
     private final ObjectMapper mapper;
 
     @Transactional
-    public String save(String eventType, AggregateType aggregateType, Long aggregateId, Object payload) {
+    public String save(String eventType, AggregateType aggregateType, Long aggregateId, DomainEvent event) {
         try {
             String eventId = UUID.randomUUID().toString();
             eventRepository.save(
@@ -36,7 +37,7 @@ public class OutboxService {
                             .aggregateId(aggregateId)
                             .eventVersion(DEFAULT_EVENT_VERSION)
                             .availableAt(LocalDateTime.now())
-                            .payload(mapper.writeValueAsString(payload))
+                            .payload(mapper.writeValueAsString(event))
                             .build()
             );
 
@@ -47,7 +48,7 @@ public class OutboxService {
     }
 
     @Transactional
-    public String saveWithRunAt(String eventType, AggregateType aggregateType, Long aggregateId, LocalDateTime runAt, Object payload) {
+    public String saveWithRunAt(String eventType, AggregateType aggregateType, Long aggregateId, LocalDateTime runAt, DomainEvent event) {
         try {
             String eventId = UUID.randomUUID().toString();
             eventRepository.save(
@@ -58,7 +59,7 @@ public class OutboxService {
                             .aggregateId(aggregateId)
                             .eventVersion(DEFAULT_EVENT_VERSION)
                             .availableAt(runAt)
-                            .payload(mapper.writeValueAsString(payload))
+                            .payload(mapper.writeValueAsString(event))
                             .build()
             );
 
