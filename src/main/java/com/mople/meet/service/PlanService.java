@@ -7,7 +7,6 @@ import com.mople.dto.event.data.domain.plan.PlanCreateEvent;
 import com.mople.dto.event.data.domain.plan.PlanDeleteEvent;
 import com.mople.dto.event.data.domain.plan.PlanRemindEvent;
 import com.mople.dto.event.data.domain.plan.PlanUpdateEvent;
-import com.mople.dto.event.data.notify.plan.PlanUpdateNotifyEvent;
 import com.mople.dto.request.meet.plan.PlanReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.weather.CoordinateRequest;
@@ -24,7 +23,6 @@ import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.plan.PlanParticipant;
 import com.mople.entity.meet.plan.PlanReport;
 import com.mople.entity.user.User;
-import com.mople.global.event.data.notify.NotifyEventPublisher;
 import com.mople.global.utils.cursor.CursorUtils;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.MeetMemberRepository;
@@ -43,8 +41,6 @@ import com.mople.weather.service.WeatherService;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -84,8 +80,6 @@ public class PlanService {
 
     private final EntityReader reader;
 
-    private final TaskScheduler taskScheduler;
-    private final ApplicationEventPublisher publisher;
     private final OutboxService outboxService;
     private final OutboxEventRepository outboxEventRepository;
 
@@ -102,8 +96,7 @@ public class PlanService {
         var user = reader.findUser(creatorId);
         var meet = reader.findMeet(request.meetId());
 
-        boolean isMeetMember = memberRepository.existsByMeetIdAndUserId(meet.getId(), user.getId());
-        if (!isMeetMember) {
+        if (!memberRepository.existsByMeetIdAndUserId(meet.getId(), user.getId())) {
             throw new AuthException(NOT_FOUND_MEMBER);
         }
 
@@ -172,7 +165,7 @@ public class PlanService {
         Meet meet = reader.findMeet(plan.getId());
 
         if (plan.isCreator(userId)) {
-            throw new BadRequestException(NOT_CREATOR);
+            throw new AuthException(NOT_CREATOR);
         }
 
         if (!Objects.equals(version, plan.getVersion())) {
@@ -247,7 +240,7 @@ public class PlanService {
         var meet = reader.findMeet(plan.getMeetId());
 
         if (plan.isCreator(userId)) {
-            throw new BadRequestException(NOT_CREATOR);
+            throw new AuthException(NOT_CREATOR);
         }
 
         if (!Objects.equals(version, plan.getVersion())) {
@@ -273,13 +266,22 @@ public class PlanService {
     @Transactional(readOnly = true)
     public PlanClientResponse getPlanDetail(Long userId, Long planId) {
         var plan = reader.findPlan(planId);
+        Meet meet = reader.findMeet(plan.getMeetId());
+        reader.findUser(userId);
 
-        if (plan.getMeet().matchMember(userId)) {
+        if (!memberRepository.existsByMeetIdAndUserId(plan.getMeetId(), userId)) {
             throw new AuthException(NOT_FOUND_MEMBER);
         }
 
+        List<PlanParticipant> participants = planParticipantRepository.findParticipantsByPlanId(plan.getId());
+
         return ofViewAndParticipant(
-                mapper.getPlanView(plan),
+                ofPlanView(
+                        plan,
+                        meet.getName(),
+                        meet.getMeetImage(),
+                        participants.size()
+                ),
                 planParticipantRepository.existsByPlanIdAndUserId(planId, userId),
                 commentRepositorySupport.countComment(plan.getId())
         );
@@ -287,7 +289,12 @@ public class PlanService {
 
     @Transactional(readOnly = true)
     public FlatCursorPageResponse<PlanClientResponse> getPlanList(Long userId, Long meetId, CursorPageRequest request) {
-        validateMemberByMeetId(userId, meetId);
+        reader.findUser(userId);
+        reader.findMeet(meetId);
+
+        if (!memberRepository.existsByMeetIdAndUserId(meetId, userId)) {
+            throw new AuthException(NOT_MEMBER);
+        }
 
         int size = request.getSafeSize();
         List<PlanListResponse> plans = getPlans(userId, meetId, request.cursor(), size);
@@ -296,15 +303,6 @@ public class PlanService {
                 planRepositorySupport.countPlans(meetId),
                 buildPlanCursorPage(size, plans)
         );
-    }
-
-    private void validateMemberByMeetId(Long userId, Long meetId) {
-        User user = reader.findUser(userId);
-        Meet meet = reader.findMeet(meetId);
-
-        if (meet.matchMember(user.getId())) {
-            throw new BadRequestException(NOT_MEMBER);
-        }
     }
 
     private List<PlanListResponse> getPlans(Long userId, Long meetId, String encodedCursor, int size) {
@@ -362,10 +360,14 @@ public class PlanService {
     @Transactional(readOnly = true)
     public FlatCursorPageResponse<UserRoleClientResponse> getParticipantList(Long userId, Long planId, CursorPageRequest request) {
         MeetPlan plan = reader.findPlan(planId);
-        validateMemberByPlanId(userId, planId);
+        Meet meet = reader.findMeet(plan.getMeetId());
 
-        Long hostId = plan.getMeet().getCreator().getId();
-        Long creatorId = plan.getCreator().getId();
+        if (!memberRepository.existsByMeetIdAndUserId(plan.getMeetId(), userId)) {
+            throw new AuthException(NOT_MEMBER);
+        }
+
+        Long hostId = meet.getCreatorId();
+        Long creatorId = plan.getCreatorId();
         int size = request.getSafeSize();
         List<PlanParticipant> participants = getPlanParticipants(planId, hostId, creatorId, request.cursor(), size);
 
@@ -396,21 +398,15 @@ public class PlanService {
         return buildCursorPage(
                 participants,
                 size,
-                c -> new String[]{
-                        c.getUser().getNickname(),
-                        c.getId().toString()
+                p -> {
+                    User user = reader.findUser(p.getUserId());
+                    return new String[]{
+                            user.getNickname(),
+                            user.getId().toString()
+                    };
                 },
                 list -> ofParticipants(list, hostId, creatorId)
         );
-    }
-
-    private void validateMemberByPlanId(Long userId, Long planId) {
-        User user = reader.findUser(userId);
-        MeetPlan plan = reader.findPlan(planId);
-
-        if (plan.getMeet().matchMember(user.getId())) {
-            throw new BadRequestException(NOT_MEMBER);
-        }
     }
 
     private void validateParticipantCursor(String cursorNickname, Long cursorId) {
@@ -421,32 +417,31 @@ public class PlanService {
 
     @Transactional
     public void joinPlanParticipant(Long userId, Long planId) {
-        var plan = reader.findPlan(planId);
+        reader.findUser(userId);
+        reader.findPlan(planId);
 
-        if (!plan.findParticipantInUser(userId)) {
+        if (planParticipantRepository.existsByPlanIdAndUserId(planId, userId)) {
             throw new BadRequestException(CURRENT_PARTICIPANT);
         }
 
-        var user = reader.findUser(userId);
-
         var planParticipant = PlanParticipant.builder()
-                .user(user)
+                .planId(planId)
+                .userId(userId)
                 .build();
-
-        plan.addParticipant(planParticipant);
 
         planParticipantRepository.save(planParticipant);
     }
 
     @Transactional
     public void deletePlanParticipant(Long userId, Long planId) {
-        var plan = reader.findPlan(planId);
+        reader.findPlan(planId);
+        reader.findUser(userId);
 
-        var participant = plan.getParticipantById(userId).orElseThrow(
-                () -> new BadRequestException(NOT_FOUND_PARTICIPANT)
-        );
+        if (!planParticipantRepository.existsByPlanIdAndUserId(planId, userId)) {
+            throw new AuthException(NOT_FOUND_PARTICIPANT);
+        }
 
-        plan.removeParticipant(userId);
+        planParticipantRepository.deleteByPlanIdAndUserId(planId, userId);
     }
 
     private WeatherInfoResponse getPlanWeather(BigDecimal lot, BigDecimal lat, LocalDateTime planTime) {
