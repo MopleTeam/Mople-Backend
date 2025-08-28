@@ -2,44 +2,47 @@ package com.mople.meet.schedule;
 
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.event.data.domain.review.ReviewCreateEvent;
-import com.mople.entity.meet.Meet;
+import com.mople.dto.event.data.domain.review.ReviewRemindEvent;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.plan.PlanParticipant;
 import com.mople.entity.meet.review.PlanReview;
 import com.mople.global.enums.ExceptionReturnCode;
-import com.mople.meet.repository.MeetRepository;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.meet.repository.plan.PlanParticipantRepository;
 import com.mople.meet.repository.review.PlanReviewRepository;
+import com.mople.outbox.repository.OutboxEventRepository;
 import com.mople.outbox.service.OutboxService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 
+import static com.mople.global.enums.AggregateType.PLAN;
 import static com.mople.global.enums.AggregateType.REVIEW;
 import static com.mople.global.enums.EventTypeNames.REVIEW_CREATE;
+import static com.mople.global.enums.EventTypeNames.REVIEW_REMIND;
 
 @Service
 @RequiredArgsConstructor
 public class PlanTransitionService {
 
-    private final MeetRepository meetRepository;
     private final MeetPlanRepository planRepository;
     private final PlanParticipantRepository participantRepository;
     private final PlanReviewRepository reviewRepository;
     private final OutboxService outboxService;
+    private final OutboxEventRepository outboxEventRepository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void transitionPlanByOne(Long planId) {
 
         MeetPlan plan = planRepository.findById(planId)
                 .orElseThrow(() -> new ResourceNotFoundException(ExceptionReturnCode.NOT_FOUND_PLAN));
-
-        Meet meet = meetRepository.findById(plan.getMeetId())
-                .orElseThrow(() -> new ResourceNotFoundException(ExceptionReturnCode.NOT_FOUND_MEET));
 
         PlanReview review = reviewRepository.save(
                 PlanReview.builder()
@@ -62,12 +65,24 @@ public class PlanTransitionService {
         List<PlanParticipant> participants = participantRepository.findParticipantsByPlanId(plan.getId());
         participants.forEach(pp -> pp.updateReview(review.getId()));
 
+        outboxEventRepository.deleteEventByAggregateType(PLAN.name(), plan.getId());
+
         planRepository.delete(plan);
 
-        ReviewCreateEvent event = ReviewCreateEvent.builder()
+        ReviewCreateEvent createEvent = ReviewCreateEvent.builder()
                 .reviewId(review.getId())
                 .build();
 
-        outboxService.save(REVIEW_CREATE, REVIEW, review.getId(), event);
+        outboxService.save(REVIEW_CREATE, REVIEW, review.getId(), createEvent);
+
+        LocalDateTime runAt = LocalDateTime
+                .of(LocalDate.now(), LocalTime.of(12, 0, 0))
+                .atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+
+        ReviewRemindEvent remindEvent = ReviewRemindEvent.builder()
+                .reviewId(review.getId())
+                .build();
+
+        outboxService.saveWithRunAt(REVIEW_REMIND, REVIEW, review.getId(), runAt, remindEvent);
     }
 }

@@ -133,11 +133,23 @@ public class PlanService {
                         .build()
         );
 
-        PlanCreateEvent event = PlanCreateEvent.builder()
+        PlanCreateEvent createEvent = PlanCreateEvent.builder()
                 .planId(plan.getId())
                 .build();
 
-        outboxService.save(PLAN_CREATE, PLAN, plan.getId(), event);
+        outboxService.save(PLAN_CREATE, PLAN, plan.getId(), createEvent);
+
+        LocalDateTime now = LocalDateTime.now();
+        if (plan.getPlanTime().isAfter(now.plusHours(1))) {
+            long hour = now.until(plan.getPlanTime(), ChronoUnit.HOURS) == 1 ? 1 : 2;
+            LocalDateTime runAt = plan.getPlanTime().minusHours(hour).atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+
+            PlanRemindEvent remindEvent = PlanRemindEvent.builder()
+                    .planId(plan.getId())
+                    .build();
+
+            outboxService.saveWithRunAt(PLAN_REMIND, PLAN, plan.getId(), runAt, remindEvent);
+        }
 
         List<PlanParticipant> participants = planParticipantRepository.findParticipantsByPlanId(plan.getId());
 
@@ -240,7 +252,7 @@ public class PlanService {
         planParticipantRepository.deleteByPlanId(plan.getId());
         timeRepository.deleteByPlanId(plan.getId());
 
-        PlanDeleteEvent event = PlanDeleteEvent.builder()
+        PlanDeleteEvent deleteEvent = PlanDeleteEvent.builder()
                 .meetId(plan.getMeetId())
                 .meetName(meet.getName())
                 .planId(plan.getId())
@@ -248,7 +260,7 @@ public class PlanService {
                 .planDeletedBy(userId)
                 .build();
 
-        outboxService.save(PLAN_DELETE, PLAN, plan.getId(), event);
+        outboxService.save(PLAN_DELETE, PLAN, plan.getId(), deleteEvent);
 
         meetPlanRepository.delete(plan);
     }
