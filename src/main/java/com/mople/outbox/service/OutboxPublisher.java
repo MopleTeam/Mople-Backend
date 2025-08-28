@@ -1,5 +1,7 @@
 package com.mople.outbox.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.mople.core.exception.custom.NonRetryableOutboxException;
 import com.mople.entity.event.OutboxEvent;
 import com.mople.outbox.repository.OutboxEventRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,8 +30,10 @@ public class OutboxPublisher {
         for (OutboxEvent event : outboxEvents) {
             try {
                 processor.processOne(event);
-            } catch (Exception ex) {
+            } catch (JsonProcessingException ex) {
                 event.occurredError(ex);
+            } catch (NonRetryableOutboxException ex) {
+                event.published();
             }
         }
     }

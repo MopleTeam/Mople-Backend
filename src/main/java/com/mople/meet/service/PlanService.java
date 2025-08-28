@@ -100,20 +100,23 @@ public class PlanService {
             throw new AuthException(NOT_FOUND_MEMBER);
         }
 
-        MeetPlan plan =
-                meetPlanRepository.save(
-                        MeetPlan.builder()
-                                .name(request.name())
-                                .planTime(request.planTime())
-                                .address(request.planAddress())
-                                .title(request.title())
-                                .longitude(request.lot())
-                                .latitude(request.lat())
-                                .weatherAddress(request.weatherAddress())
-                                .creatorId(user.getId())
-                                .meetId(meet.getId())
-                                .build()
-                );
+        MeetPlan plan = MeetPlan.builder()
+                .name(request.name())
+                .planTime(request.planTime())
+                .address(request.planAddress())
+                .title(request.title())
+                .longitude(request.lot())
+                .latitude(request.lat())
+                .weatherAddress(request.weatherAddress())
+                .creatorId(user.getId())
+                .meetId(meet.getId())
+                .build();
+
+        if (request.planTime().isBefore(LocalDateTime.now().plusDays(5))) {
+            plan.updateWeather(getPlanWeather(request.lot(), request.lat(), request.planTime()));
+        }
+
+        meetPlanRepository.save(plan);
 
         planParticipantRepository.save(
                 PlanParticipant.builder()
@@ -131,14 +134,7 @@ public class PlanService {
         );
 
         PlanCreateEvent event = PlanCreateEvent.builder()
-                .meetId(plan.getMeetId())
-                .meetName(meet.getName())
                 .planId(plan.getId())
-                .planName(plan.getName())
-                .planTime(plan.getPlanTime())
-                .lat(plan.getLatitude())
-                .lot(plan.getLongitude())
-                .planCreatorId(plan.getCreatorId())
                 .build();
 
         outboxService.save(PLAN_CREATE, PLAN, plan.getId(), event);
@@ -162,7 +158,7 @@ public class PlanService {
             Long version
     ) {
         var plan = reader.findPlan(request.planId());
-        Meet meet = reader.findMeet(plan.getId());
+        Meet meet = reader.findMeet(plan.getMeetId());
 
         if (plan.isCreator(userId)) {
             throw new AuthException(NOT_CREATOR);
@@ -189,10 +185,7 @@ public class PlanService {
         }
 
         PlanUpdateEvent updateEvent = PlanUpdateEvent.builder()
-                .meetId(meet.getId())
-                .meetName(meet.getName())
                 .planId(plan.getId())
-                .planName(plan.getName())
                 .planUpdatedBy(userId)
                 .build();
 
@@ -203,21 +196,16 @@ public class PlanService {
                 long hour = newTime.until(plan.getPlanTime(), ChronoUnit.HOURS) == 1 ? 1 : 2;
                 LocalDateTime runAt = newTime.minusHours(hour).atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
 
-                int updateCount = outboxEventRepository.reschedulePlanRemind(plan.getId(), runAt);
+                int updateCount = outboxEventRepository.updateEvent(PLAN.name(), plan.getId(), PLAN_REMIND, runAt);
                 if (updateCount == 0) {
                     PlanRemindEvent remindEvent = PlanRemindEvent.builder()
-                            .meetId(meet.getId())
-                            .meetName(meet.getName())
                             .planId(plan.getId())
-                            .planName(plan.getName())
-                            .planTime(plan.getPlanTime())
-                            .planCreatorId(plan.getCreatorId())
                             .build();
 
-                    outboxService.save(PLAN_REMIND, PLAN, plan.getId(), remindEvent);
+                    outboxService.saveWithRunAt(PLAN_REMIND, PLAN, plan.getId(), runAt, remindEvent);
                 }
             } else {
-                outboxEventRepository.deletePendingPlanRemind(plan.getId());
+                outboxEventRepository.deleteEventByEventType(PLAN.name(), plan.getId(), PLAN_REMIND);
             }
         }
 
@@ -246,6 +234,8 @@ public class PlanService {
         if (!Objects.equals(version, plan.getVersion())) {
             throw new AsyncException(REQUEST_CONFLICT);
         }
+
+        outboxEventRepository.deleteEventByAggregateType(PLAN.name(), plan.getId());
 
         planParticipantRepository.deleteByPlanId(plan.getId());
         timeRepository.deleteByPlanId(plan.getId());

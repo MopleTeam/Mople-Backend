@@ -44,12 +44,7 @@ public class ReviewCreateReminderListener {
 
     private void publishReviewRemindEvent(ReviewCreateEvent event, LocalDateTime runAt) {
         ReviewRemindEvent remindEvent = ReviewRemindEvent.builder()
-                .meetId(event.getMeetId())
-                .meetName(event.getMeetName())
                 .reviewId(event.getReviewId())
-                .reviewName(event.getReviewName())
-                .reviewCreatorId(event.getReviewCreatorId())
-                .isUpload(event.isUpload())
                 .build();
 
         outboxService.saveWithRunAt(REVIEW_REMIND, REVIEW, event.getReviewId(), runAt, remindEvent);

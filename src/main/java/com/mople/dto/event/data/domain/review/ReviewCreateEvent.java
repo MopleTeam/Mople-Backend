@@ -12,10 +12,5 @@ import static com.mople.global.enums.EventTypeNames.REVIEW_CREATE;
 @Getter
 public class ReviewCreateEvent implements DomainEvent {
 
-    private final Long meetId;
-    private final String meetName;
     private final Long reviewId;
-    private final String reviewName;
-    private final Long reviewCreatorId;
-    private final boolean isUpload;
 }

@@ -65,12 +65,7 @@ public class PlanTransitionService {
         planRepository.delete(plan);
 
         ReviewCreateEvent event = ReviewCreateEvent.builder()
-                .meetId(meet.getId())
-                .meetName(meet.getName())
                 .reviewId(review.getId())
-                .reviewName(review.getName())
-                .reviewCreatorId(review.getCreatorId())
-                .isUpload(review.getUpload())
                 .build();
 
         outboxService.save(REVIEW_CREATE, REVIEW, review.getId(), event);

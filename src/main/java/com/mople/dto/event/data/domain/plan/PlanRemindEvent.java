@@ -5,8 +5,6 @@ import com.mople.dto.event.data.domain.DomainEvent;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.LocalDateTime;
-
 import static com.mople.global.enums.EventTypeNames.PLAN_REMIND;
 
 @JsonTypeName(PLAN_REMIND)
@@ -14,12 +12,5 @@ import static com.mople.global.enums.EventTypeNames.PLAN_REMIND;
 @Getter
 public class PlanRemindEvent implements DomainEvent {
 
-    private final Long meetId;
-    private final String meetName;
     private final Long planId;
-    private final String planName;
-    private final LocalDateTime planTime;
-    private final Long planCreatorId;
-    private final Double temperature;
-    private final String iconImage;
 }
