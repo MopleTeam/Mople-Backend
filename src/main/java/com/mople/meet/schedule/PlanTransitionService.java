@@ -1,7 +1,6 @@
 package com.mople.meet.schedule;
 
 import com.mople.core.exception.custom.ResourceNotFoundException;
-import com.mople.dto.event.data.domain.review.ReviewCreateEvent;
 import com.mople.dto.event.data.domain.review.ReviewRemindEvent;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.plan.PlanParticipant;
@@ -25,7 +24,6 @@ import java.util.List;
 
 import static com.mople.global.enums.AggregateType.PLAN;
 import static com.mople.global.enums.AggregateType.REVIEW;
-import static com.mople.global.enums.EventTypeNames.REVIEW_CREATE;
 import static com.mople.global.enums.EventTypeNames.REVIEW_REMIND;
 
 @Service
@@ -68,12 +66,6 @@ public class PlanTransitionService {
         outboxEventRepository.deleteEventByAggregateType(PLAN.name(), plan.getId());
 
         planRepository.delete(plan);
-
-        ReviewCreateEvent createEvent = ReviewCreateEvent.builder()
-                .reviewId(review.getId())
-                .build();
-
-        outboxService.save(REVIEW_CREATE, REVIEW, review.getId(), createEvent);
 
         LocalDateTime runAt = LocalDateTime
                 .of(LocalDate.now(), LocalTime.of(12, 0, 0))
