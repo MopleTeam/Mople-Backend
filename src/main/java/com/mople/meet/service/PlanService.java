@@ -15,6 +15,7 @@ import com.mople.dto.response.meet.UserPageResponse;
 import com.mople.dto.response.meet.plan.*;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
+import com.mople.dto.response.user.UserInfo;
 import com.mople.global.utils.cursor.MemberCursor;
 import com.mople.dto.response.weather.WeatherInfoResponse;
 import com.mople.entity.meet.Meet;
@@ -37,6 +38,7 @@ import com.mople.dto.request.meet.plan.PlanUpdateRequest;
 import com.mople.meet.repository.plan.PlanReportRepository;
 import com.mople.outbox.repository.OutboxEventRepository;
 import com.mople.outbox.service.OutboxService;
+import com.mople.user.repository.UserRepository;
 import com.mople.weather.service.WeatherService;
 
 import lombok.RequiredArgsConstructor;
@@ -50,11 +52,13 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static com.mople.dto.client.PlanClientResponse.*;
 import static com.mople.dto.client.UserRoleClientResponse.ofParticipants;
 import static com.mople.dto.response.meet.plan.PlanViewResponse.ofPlanView;
+import static com.mople.dto.response.user.UserInfo.ofMap;
 import static com.mople.global.enums.AggregateType.PLAN;
 import static com.mople.global.enums.EventTypeNames.*;
 import static com.mople.global.enums.ExceptionReturnCode.*;
@@ -82,6 +86,7 @@ public class PlanService {
 
     private final OutboxService outboxService;
     private final OutboxEventRepository outboxEventRepository;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public PlanHomeViewResponse getPlanView(Long userId) {
@@ -96,8 +101,8 @@ public class PlanService {
         var user = reader.findUser(creatorId);
         var meet = reader.findMeet(request.meetId());
 
-        if (!memberRepository.existsByMeetIdAndUserId(meet.getId(), user.getId())) {
-            throw new AuthException(NOT_FOUND_MEMBER);
+        if (!meet.matchCreator(creatorId)) {
+            throw new AuthException(NOT_CREATOR);
         }
 
         MeetPlan plan = MeetPlan.builder()
@@ -272,7 +277,7 @@ public class PlanService {
         reader.findUser(userId);
 
         if (!memberRepository.existsByMeetIdAndUserId(plan.getMeetId(), userId)) {
-            throw new AuthException(NOT_FOUND_MEMBER);
+            throw new AuthException(NOT_MEMBER);
         }
 
         List<PlanParticipant> participants = planParticipantRepository.findParticipantsByPlanId(plan.getId());
@@ -397,6 +402,12 @@ public class PlanService {
     }
 
     private CursorPageResponse<UserRoleClientResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants, Long hostId, Long creatorId) {
+        List<Long> userIds = participants.stream()
+                .map(PlanParticipant::getUserId)
+                .toList();
+
+        Map<Long, UserInfo> userInfoById = ofMap(userRepository.findAllById(userIds));
+
         return buildCursorPage(
                 participants,
                 size,
@@ -407,7 +418,7 @@ public class PlanService {
                             p.getId().toString()
                     };
                 },
-                list -> ofParticipants(list, hostId, creatorId)
+                list -> ofParticipants(list, userInfoById, hostId, creatorId)
         );
     }
 
@@ -440,7 +451,7 @@ public class PlanService {
         reader.findUser(userId);
 
         if (!planParticipantRepository.existsByPlanIdAndUserId(planId, userId)) {
-            throw new AuthException(NOT_FOUND_PARTICIPANT);
+            throw new AuthException(NOT_PARTICIPANT);
         }
 
         planParticipantRepository.deleteByPlanIdAndUserId(planId, userId);

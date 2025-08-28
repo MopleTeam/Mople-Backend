@@ -40,7 +40,7 @@ public class CommentClientResponse {
                 .replyCount(commentResponse.replyCount())
                 .likeCount(commentResponse.likeCount())
                 .likedByMe(commentResponse.likedByMe())
-                .writer(UserInfo.from(commentResponse.writer()))
+                .writer(UserInfo.of(commentResponse.writer()))
                 .mentions(ofMentions(commentResponse.mentions()))
                 .time(commentResponse.time())
                 .build();
@@ -56,7 +56,7 @@ public class CommentClientResponse {
                 .replyCount(updateResponse.replyCount())
                 .likeCount(updateResponse.likeCount())
                 .likedByMe(updateResponse.likedByMe())
-                .writer(UserInfo.from(updateResponse.writer()))
+                .writer(UserInfo.of(updateResponse.writer()))
                 .mentions(ofMentions(updateResponse.mentions()))
                 .time(updateResponse.time())
                 .build();
@@ -64,7 +64,7 @@ public class CommentClientResponse {
 
     private static List<UserInfo> ofMentions(List<User> mentions) {
         return mentions.stream()
-                .map(UserInfo::from)
+                .map(UserInfo::of)
                 .toList();
     }
 }

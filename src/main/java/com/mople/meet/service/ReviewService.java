@@ -11,6 +11,7 @@ import com.mople.dto.response.meet.review.PlanReviewDetailResponse;
 import com.mople.dto.response.meet.review.ReviewImageListResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
+import com.mople.dto.response.user.UserInfo;
 import com.mople.global.utils.cursor.MemberCursor;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.plan.PlanParticipant;
@@ -33,6 +34,7 @@ import com.mople.meet.repository.review.ReviewReportRepository;
 
 import com.mople.outbox.repository.OutboxEventRepository;
 import com.mople.outbox.service.OutboxService;
+import com.mople.user.repository.UserRepository;
 import jakarta.validation.constraints.NotNull;
 
 import lombok.RequiredArgsConstructor;
@@ -41,11 +43,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static com.mople.dto.client.ReviewClientResponse.*;
 import static com.mople.dto.client.UserRoleClientResponse.ofParticipants;
 import static com.mople.dto.response.meet.review.ReviewImageListResponse.ofReviewImageResponses;
+import static com.mople.dto.response.user.UserInfo.ofMap;
 import static com.mople.global.enums.AggregateType.REVIEW;
 import static com.mople.global.enums.EventTypeNames.*;
 import static com.mople.global.enums.ExceptionReturnCode.*;
@@ -66,6 +70,7 @@ public class ReviewService {
     private final ReviewRepositorySupport reviewRepositorySupport;
     private final MeetMemberRepository memberRepository;
     private final ParticipantRepositorySupport participantRepositorySupport;
+    private final UserRepository userRepository;
 
     private final ImageService imageService;
     private final EntityReader reader;
@@ -234,6 +239,12 @@ public class ReviewService {
     }
 
     private CursorPageResponse<UserRoleClientResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants, Long hostId, Long creatorId) {
+        List<Long> userIds = participants.stream()
+                .map(PlanParticipant::getUserId)
+                .toList();
+
+        Map<Long, UserInfo> userInfoById = ofMap(userRepository.findAllById(userIds));
+
         return buildCursorPage(
                 participants,
                 size,
@@ -244,7 +255,7 @@ public class ReviewService {
                             p.getId().toString()
                     };
                 },
-                list -> ofParticipants(list, hostId, creatorId)
+                list -> ofParticipants(list, userInfoById, hostId, creatorId)
         );
     }
 

@@ -10,6 +10,7 @@ import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.meet.*;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
+import com.mople.dto.response.user.UserInfo;
 import com.mople.entity.user.User;
 import com.mople.global.utils.cursor.MemberCursor;
 import com.mople.entity.meet.plan.MeetPlan;
@@ -24,8 +25,8 @@ import com.mople.meet.repository.*;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.meet.repository.review.PlanReviewRepository;
 
+import com.mople.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
@@ -34,6 +35,7 @@ import java.util.*;
 
 import static com.mople.dto.client.MeetClientResponse.*;
 import static com.mople.dto.client.UserRoleClientResponse.ofMembers;
+import static com.mople.dto.response.user.UserInfo.ofMap;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
@@ -51,8 +53,7 @@ public class MeetService {
     private final MeetPlanRepository meetPlanRepository;
     private final PlanReviewRepository reviewRepository;
     private final EntityReader reader;
-
-    private final ApplicationEventPublisher publisher;
+    private final UserRepository userRepository;
 
     private final String inviteUrl;
 
@@ -65,7 +66,7 @@ public class MeetService {
             MeetPlanRepository meetPlanRepository,
             PlanReviewRepository reviewRepository,
             EntityReader reader,
-            ApplicationEventPublisher publisher,
+            UserRepository userRepository,
             @Value("${mople.url}") String  inviteUrl
     ) {
         this.meetRepository = meetRepository;
@@ -76,7 +77,7 @@ public class MeetService {
         this.meetPlanRepository = meetPlanRepository;
         this.reviewRepository = reviewRepository;
         this.reader = reader;
-        this.publisher = publisher;
+        this.userRepository = userRepository;
         this.inviteUrl = inviteUrl;
     }
 
@@ -211,6 +212,12 @@ public class MeetService {
     }
 
     private CursorPageResponse<UserRoleClientResponse> buildMemberCursorPage(int size, List<MeetMember> members, Long hostId) {
+        List<Long> userIds = members.stream()
+                .map(MeetMember::getUserId)
+                .toList();
+
+        Map<Long, UserInfo> userInfoById = ofMap(userRepository.findAllById(userIds));
+
         return buildCursorPage(
                 members,
                 size,
@@ -221,7 +228,7 @@ public class MeetService {
                             m.getId().toString()
                     };
                 },
-                list -> ofMembers(list, hostId)
+                list -> ofMembers(list, userInfoById, hostId)
         );
     }
 
