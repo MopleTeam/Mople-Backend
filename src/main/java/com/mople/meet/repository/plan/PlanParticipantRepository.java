@@ -12,7 +12,11 @@ public interface PlanParticipantRepository extends JpaRepository<PlanParticipant
 
     List<PlanParticipant> findParticipantsByPlanId(Long planId);
 
+    List<PlanParticipant> findParticipantsByReviewId(Long reviewId);
+
     void deleteByPlanId(Long planId);
 
     void deleteByPlanIdAndUserId(Long planId, Long userId);
+
+    void deleteByReviewId(Long reviewId);
 }

@@ -331,8 +331,8 @@ public class PlanService {
         return buildCursorPage(
                 planListResponses,
                 size,
-                c -> new String[]{
-                        c.planId().toString()
+                r -> new String[]{
+                        r.planId().toString()
                 },
                 PlanClientResponse::ofLists
         );
@@ -404,7 +404,7 @@ public class PlanService {
                     User user = reader.findUser(p.getUserId());
                     return new String[]{
                             user.getNickname(),
-                            user.getId().toString()
+                            p.getId().toString()
                     };
                 },
                 list -> ofParticipants(list, hostId, creatorId)

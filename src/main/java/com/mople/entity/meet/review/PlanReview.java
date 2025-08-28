@@ -83,7 +83,7 @@ public class PlanReview extends BaseTimeEntity {
         this.meetId = meetId;
     }
 
-    public void updateUpload() {
-        this.upload = true;
+    public boolean isCreator(Long userId) {
+        return !creatorId.equals(userId);
     }
 }

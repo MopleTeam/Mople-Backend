@@ -10,6 +10,6 @@ import java.util.List;
 public interface ReviewImageRepository extends JpaRepository<ReviewImage, Long> {
     List<ReviewImage> findByReviewId(Long id);
 
-    @Query("select i from ReviewImage i where i.id in :id and i.review.id = :reviewId")
+    @Query("select i from ReviewImage i where i.id in :id and i.reviewId = :reviewId")
     List<ReviewImage> getReviewImages(List<String> id, Long reviewId);
 }
