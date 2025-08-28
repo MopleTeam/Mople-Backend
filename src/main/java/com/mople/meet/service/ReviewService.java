@@ -137,7 +137,7 @@ public class ReviewService {
 
     @Transactional(readOnly = true)
     public ReviewClientResponse getReviewDetailByPost(Long postId) {
-        PlanReview review = planReviewRepository.findById(postId)
+        PlanReview review = planReviewRepository.findReviewByPostId(postId)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_REVIEW));
 
         return ofDetail(
