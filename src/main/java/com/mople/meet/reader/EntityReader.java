@@ -45,12 +45,6 @@ public class EntityReader {
         );
     }
 
-    public Meet findMeetAndReview(Long meetId) {
-        return meetRepository.findMeetAndReviews(meetId).orElseThrow(
-                () -> new ResourceNotFoundException(NOT_FOUND_MEET)
-        );
-    }
-
     public MeetPlan findPlan(Long planId) {
         return planRepository.findById(planId).orElseThrow(
                 () -> new ResourceNotFoundException(NOT_FOUND_PLAN)
