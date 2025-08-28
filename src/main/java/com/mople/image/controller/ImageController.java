@@ -1,10 +1,13 @@
 package com.mople.image.controller;
 
+import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.request.meet.review.ReviewImageRequest;
+import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.image.service.ImageService;
 import com.mople.meet.service.ReviewService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import lombok.RequiredArgsConstructor;
@@ -42,11 +45,13 @@ public class ImageController {
     )
     @PostMapping("/review/{folder}")
     public ResponseEntity<List<String>> reviewImageUpload(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable String folder,
             ReviewImageRequest reviewImageRequest
     ) {
         return ResponseEntity.ok(
                 reviewService.storeReviewImages(
+                        user.id(),
                         imageService.uploadImages(folder, reviewImageRequest),
                         reviewImageRequest.reviewId()
                 )

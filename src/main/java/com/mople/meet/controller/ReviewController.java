@@ -72,10 +72,11 @@ public class ReviewController {
     )
     @DeleteMapping("/{reviewId}")
     public ResponseEntity<Void> removeReview(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long reviewId,
             @RequestParam Long version
     ) {
-        reviewService.removeReview(reviewId, version);
+        reviewService.removeReview(user.id(), reviewId, version);
         return ResponseEntity.ok().build();
     }
 

@@ -3,7 +3,7 @@ package com.mople.meet.service;
 import com.mople.core.exception.custom.*;
 import com.mople.dto.client.ReviewClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
-import com.mople.dto.event.data.notify.review.ReviewUpdateNotifyEvent;
+import com.mople.dto.event.data.domain.review.ReviewUpdateEvent;
 import com.mople.dto.request.meet.review.ReviewImageDeleteRequest;
 import com.mople.dto.request.meet.review.ReviewReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
@@ -18,13 +18,10 @@ import com.mople.entity.meet.review.PlanReview;
 import com.mople.entity.meet.review.ReviewImage;
 import com.mople.entity.meet.review.ReviewReport;
 import com.mople.entity.user.User;
-import com.mople.global.enums.ExceptionReturnCode;
-import com.mople.global.event.data.notify.NotifyEventPublisher;
 import com.mople.global.utils.cursor.CursorUtils;
 import com.mople.image.service.ImageService;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.MeetMemberRepository;
-import com.mople.meet.repository.MeetRepository;
 import com.mople.meet.repository.impl.comment.CommentRepositorySupport;
 import com.mople.meet.repository.impl.plan.ParticipantRepositorySupport;
 import com.mople.meet.repository.impl.review.ReviewRepositorySupport;
@@ -34,11 +31,12 @@ import com.mople.meet.repository.review.ReviewImageRepository;
 import com.mople.dto.response.meet.review.PlanReviewInfoResponse;
 import com.mople.meet.repository.review.ReviewReportRepository;
 
+import com.mople.outbox.repository.OutboxEventRepository;
+import com.mople.outbox.service.OutboxService;
 import jakarta.validation.constraints.NotNull;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,7 +46,8 @@ import java.util.Objects;
 import static com.mople.dto.client.ReviewClientResponse.*;
 import static com.mople.dto.client.UserRoleClientResponse.ofParticipants;
 import static com.mople.dto.response.meet.review.ReviewImageListResponse.ofReviewImageResponses;
-import static com.mople.global.enums.AggregateType.PLAN;
+import static com.mople.global.enums.AggregateType.REVIEW;
+import static com.mople.global.enums.EventTypeNames.*;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
@@ -70,8 +69,8 @@ public class ReviewService {
 
     private final ImageService imageService;
     private final EntityReader reader;
-    private final ApplicationEventPublisher publisher;
-    private final MeetRepository meetRepository;
+    private final OutboxService outboxService;
+    private final OutboxEventRepository outboxEventRepository;
 
     @Transactional(readOnly = true)
     public FlatCursorPageResponse<ReviewClientResponse> getAllMeetReviews(Long userId, Long meetId, CursorPageRequest request) {
@@ -177,7 +176,21 @@ public class ReviewService {
     }
 
     @Transactional
-    public void removeReview(Long reviewId) {
+    public void removeReview(Long userId, Long reviewId, Long version) {
+        reader.findUser(userId);
+        PlanReview review = reader.findReview(reviewId);
+
+        if (review.isCreator(userId)) {
+            throw new AuthException(NOT_CREATOR);
+        }
+
+        if (!Objects.equals(version, review.getVersion())) {
+            throw new AsyncException(REQUEST_CONFLICT);
+        }
+
+        outboxEventRepository.deleteEventByAggregateType(REVIEW.name(), review.getId());
+        participantRepository.deleteByReviewId(review.getId());
+
         planReviewRepository.deleteById(reviewId);
     }
 
@@ -271,40 +284,33 @@ public class ReviewService {
     }
 
     @Transactional
-    public List<String> storeReviewImages(List<String> images, Long reviewId) {
-        PlanReview review =
-                planReviewRepository.findReview(reviewId)
-                        .orElseThrow(() -> new BadRequestException(ExceptionReturnCode.NOT_FOUND_REVIEW));
+    public List<String> storeReviewImages(Long userId, List<String> images, Long reviewId) {
+        reader.findUser(userId);
+        PlanReview review = reader.findReview(reviewId);
 
-        if (!review.getUpload()) {
-            review.updateUpload();
-
-            publisher.publishEvent(
-                    NotifyEventPublisher.reviewUpdate(
-                            ReviewUpdateNotifyEvent.builder()
-                                    .meetId(review.getMeet().getId())
-                                    .meetName(review.getMeet().getName())
-                                    .reviewId(review.getId())
-                                    .reviewName(review.getName())
-                                    .reviewUpdatedBy(review.getCreatorId())
-                                    .build()
-                    )
-            );
+        if (review.isCreator(userId)) {
+            throw new AuthException(NOT_CREATOR);
         }
 
         reviewImageRepository.saveAll(
-                images.stream().map(
-                        imageName -> {
-                            ReviewImage image = ReviewImage
-                                    .builder()
-                                    .reviewImage(imageName)
-                                    .build();
-                            review.updateImage(image);
-
-                            return image;
-                        }
-                ).toList()
+                images.stream()
+                        .map(imageName -> ReviewImage.builder()
+                                .reviewId(reviewId)
+                                .reviewImage(imageName)
+                                .build()
+                        )
+                        .toList()
         );
+
+        ReviewUpdateEvent updateEvent = ReviewUpdateEvent.builder()
+                .reviewId(review.getId())
+                .isFirstUpload(review.getUpload())
+                .reviewUpdatedBy(userId)
+                .build();
+
+        outboxService.save(REVIEW_UPDATE, REVIEW, review.getId(), updateEvent);
+
+        planReviewRepository.uploadedAtFirst(review.getId());
 
         return images;
     }
