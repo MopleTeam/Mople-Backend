@@ -10,46 +10,55 @@ import java.util.List;
 
 public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> {
 
-    @Modifying(clearAutomatically = true)
-    @Query("""
-              UPDATE OutboxEvent e
-                 SET e.availableAt = :runAt
-               WHERE e.status = 'PENDING'
-                 AND e.aggregateType = :aggregateType
-                 AND e.eventType = :eventType
-                 AND e.aggregateId = :aggregateId
-            """)
-    int updateEvent(String aggregateType, Long aggregateId, String eventType, LocalDateTime runAt);
-
-    @Modifying(clearAutomatically = true)
-    @Query("""
-              DELETE FROM OutboxEvent e
-               WHERE e.status = 'PENDING'
-                 AND e.aggregateType = :aggregateType
-                 AND e.aggregateId = :aggregateId
-            """)
-    int deleteEventByAggregateType(String aggregateType, Long aggregateId);
-
-
-    @Modifying(clearAutomatically = true)
-    @Query("""
-              DELETE FROM OutboxEvent e
-               WHERE e.status = 'PENDING'
-                 AND e.aggregateType = :aggregateType
-                 AND e.eventType = :eventType
-                 AND e.aggregateId = :aggregateId
-            """)
-    int deleteEventByEventType(String aggregateType, Long aggregateId, String eventType);
-
     @Query(value = """
-              SELECT * FROM outbox_event
-               WHERE status = 'PENDING'
-                 AND available_at <= now()
-            ORDER BY id
-          FOR UPDATE SKIP LOCKED
-                     LIMIT :limit;
+              WITH picked AS (
+                  SELECT id
+                    FROM outbox_event
+                   WHERE status = 'PENDING'
+                     AND available_at <= now()
+                   ORDER BY available_at, id
+                   FOR UPDATE SKIP LOCKED
+                   LIMIT :limit
+              )
+              UPDATE outbox_event o
+                 SET available_at = now() + make_interval(secs => :leaseSec)
+                FROM picked
+               WHERE o.id = picked.id
+            RETURNING o.*;
             """, nativeQuery = true)
-    List<OutboxEvent> lockNextBatch(int limit);
+    List<OutboxEvent> lockNextBatch(int limit, int leaseSec);
+
+    @Modifying(clearAutomatically = true)
+    @Query(value = """
+            UPDATE outbox_event
+               SET status = 'PUBLISHED',
+                   published_at = now()
+             WHERE event_id = :eventId
+            """, nativeQuery = true)
+    int eventPublished(String eventId);
+
+    @Modifying(clearAutomatically = true)
+    @Query(value = """
+               UPDATE outbox_event
+                  SET attempts = attempts + 1,
+                      last_error = :errorMessage,
+                      status = CASE WHEN attempts + 1 >= :maxAttempts
+                               THEN 'FAILED' ELSE 'PENDING' END,
+                      available_at = CASE WHEN attempts + 1 >= :maxAttempts
+                                     THEN available_at ELSE now() + make_interval(secs => :retrySec) END
+                WHERE event_id = :eventId
+            """, nativeQuery = true)
+    int eventRetry(String eventId, String errorMessage, int retrySec, int maxAttempts);
+
+    @Modifying(clearAutomatically = true)
+    @Query(value = """
+            UPDATE outbox_event
+               SET status = 'FAILED',
+                   attempts = attempts + 1,
+                   last_error = :errorMessage
+             WHERE event_id = :eventId
+            """, nativeQuery = true)
+    int eventFailed(String eventId, String errorMessage);
 
     @Modifying(clearAutomatically = true)
     @Query(value = """
@@ -57,7 +66,7 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
              WHERE id IN (
                SELECT id FROM outbox_event
                 WHERE status = 'PUBLISHED'
-                  AND created_at < :before
+                  AND published_at < :before
                 ORDER BY id
                 LIMIT :limit
              )
@@ -76,5 +85,4 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
              )
             """, nativeQuery = true)
     int deleteOldFailed(LocalDateTime before, int limit);
-
 }

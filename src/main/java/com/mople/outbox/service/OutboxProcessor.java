@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mople.dto.event.data.domain.DomainEvent;
 import com.mople.entity.event.OutboxEvent;
 import com.mople.entity.event.ProcessedEvent;
+import com.mople.outbox.repository.OutboxEventRepository;
 import com.mople.outbox.repository.ProcessedEventRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -18,12 +19,13 @@ public class OutboxProcessor {
 
     private final ApplicationEventPublisher publisher;
     private final ProcessedEventRepository processedEventRepository;
+    private final OutboxEventRepository outboxEventRepository;
     private final ObjectMapper mapper;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void processOne(OutboxEvent event) throws JsonProcessingException {
         if (processedEventRepository.existsById(event.getEventId())) {
-            event.published();
+            outboxEventRepository.eventPublished(event.getEventId());
             return;
         }
 
@@ -31,6 +33,7 @@ public class OutboxProcessor {
         publisher.publishEvent(domainEvent);
 
         processedEventRepository.save(new ProcessedEvent(event.getEventId()));
-        event.published();
+
+        outboxEventRepository.eventPublished(event.getEventId());
     }
 }

@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -22,19 +21,32 @@ public class OutboxPublisher {
     @Value("${outbox.batch-size}")
     private int batchSize;
 
+    @Value("${outbox.lease-sec}")
+    private int leaseSec;
+
+    @Value("${outbox.retry-sec}")
+    private int retrySec;
+
+    @Value("${outbox.max-attempts}")
+    private int maxAttempts;
+
     @Scheduled(fixedDelayString = "${outbox.fixed-delay-ms}")
-    @Transactional
     public void publishBatch() {
-        List<OutboxEvent> outboxEvents = outboxEventRepository.lockNextBatch(batchSize);
+        List<OutboxEvent> outboxEvents = outboxEventRepository.lockNextBatch(batchSize, leaseSec);
 
         for (OutboxEvent event : outboxEvents) {
             try {
                 processor.processOne(event);
-            } catch (JsonProcessingException ex) {
-                event.occurredError(ex);
-            } catch (NonRetryableOutboxException ex) {
-                event.published();
+            } catch (JsonProcessingException | NonRetryableOutboxException ex) {
+                outboxEventRepository.eventFailed(event.getEventId(), shorten(ex.getMessage()));
+            } catch (Exception ex) {
+                outboxEventRepository.eventRetry(event.getEventId(), shorten(ex.getMessage()), retrySec, maxAttempts);
             }
         }
+    }
+
+    private String shorten(String s) {
+        if (s == null) return null;
+        return s.length() > 800 ? s.substring(0, 800) : s;
     }
 }

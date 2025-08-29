@@ -2,11 +2,13 @@ package com.mople.entity.event;
 
 import com.mople.global.enums.AggregateType;
 import com.mople.global.enums.OutboxStatus;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Type;
 
 import java.time.LocalDateTime;
 
@@ -37,8 +39,8 @@ public class OutboxEvent {
     @Column(name = "event_version", nullable = false)
     private Integer eventVersion;
 
-    @Lob
-    @Column(name = "payload", columnDefinition = "jsonb", nullable = false)
+    @Type(JsonType.class)
+    @Column(columnDefinition = "json")
     private String payload;
 
     @Enumerated(EnumType.STRING)
@@ -54,7 +56,7 @@ public class OutboxEvent {
     @Column(name = "available_at", nullable = false)
     private LocalDateTime availableAt;
 
-    @Column(name = "available_at", nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(name = "published_at")
@@ -77,25 +79,5 @@ public class OutboxEvent {
         this.eventVersion = eventVersion;
         this.availableAt = availableAt;
         this.payload = payload;
-    }
-
-    public void published() {
-        this.status = OutboxStatus.PUBLISHED;
-        this.publishedAt = LocalDateTime.now();
-    }
-
-    public void occurredError(Exception ex) {
-        int nextAttempts = attempts + 1;
-        long backoff = (long) Math.min(300, Math.pow(2, nextAttempts));
-
-        this.attempts = nextAttempts;
-        this.lastError = shorten(ex.getMessage());
-        this.availableAt = LocalDateTime.now().plusSeconds(backoff);
-        this.status = nextAttempts >= 10 ? OutboxStatus.FAILED : status;
-    }
-
-    private String shorten(String s) {
-        if (s == null) return null;
-        return s.length() > 800 ? s.substring(0, 800) : s;
     }
 }
