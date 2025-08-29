@@ -139,7 +139,12 @@ public class PlanService {
         );
 
         PlanCreateEvent createEvent = PlanCreateEvent.builder()
+                .meetId(meet.getId())
+                .meetName(meet.getName())
                 .planId(plan.getId())
+                .planName(plan.getName())
+                .planTime(plan.getPlanTime())
+                .planCreatorId(plan.getCreatorId())
                 .build();
 
         outboxService.save(PLAN_CREATE, PLAN, plan.getId(), createEvent);
@@ -202,6 +207,8 @@ public class PlanService {
         }
 
         PlanUpdateEvent updateEvent = PlanUpdateEvent.builder()
+                .meetId(meet.getId())
+                .meetName(meet.getName())
                 .planId(plan.getId())
                 .planUpdatedBy(userId)
                 .build();

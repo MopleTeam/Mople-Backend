@@ -12,6 +12,7 @@ import com.mople.notification.service.NotificationSendService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -22,6 +23,7 @@ public class ReviewRemindNotifyListener {
     private final NotificationSendService sendService;
 
     @EventListener
+    @Transactional(readOnly = true)
     public void pushEventListener(ReviewRemindEvent event) {
         PlanReview review = reviewRepository.findById(event.getReviewId())
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_REVIEW));

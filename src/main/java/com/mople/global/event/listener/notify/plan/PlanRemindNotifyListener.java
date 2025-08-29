@@ -30,7 +30,7 @@ public class PlanRemindNotifyListener {
     private final WeatherService weatherService;
 
     @EventListener
-    @Transactional
+    @Transactional(readOnly = true)
     public void pushEventListener(PlanRemindEvent event) {
         MeetPlan plan = meetPlanRepository.findById(event.getPlanId())
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_PLAN));

@@ -23,6 +23,7 @@ import com.mople.global.utils.cursor.CursorUtils;
 import com.mople.image.service.ImageService;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.MeetMemberRepository;
+import com.mople.meet.repository.MeetRepository;
 import com.mople.meet.repository.impl.comment.CommentRepositorySupport;
 import com.mople.meet.repository.impl.plan.ParticipantRepositorySupport;
 import com.mople.meet.repository.impl.review.ReviewRepositorySupport;
@@ -76,6 +77,7 @@ public class ReviewService {
     private final EntityReader reader;
     private final OutboxService outboxService;
     private final OutboxEventRepository outboxEventRepository;
+    private final MeetRepository meetRepository;
 
     @Transactional(readOnly = true)
     public FlatCursorPageResponse<ReviewClientResponse> getAllMeetReviews(Long userId, Long meetId, CursorPageRequest request) {
@@ -297,7 +299,10 @@ public class ReviewService {
     @Transactional
     public List<String> storeReviewImages(Long userId, List<String> images, Long reviewId) {
         reader.findUser(userId);
+
         PlanReview review = reader.findReview(reviewId);
+        Meet meet = meetRepository.findById(review.getMeetId())
+                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_MEET));
 
         if (review.isCreator(userId)) {
             throw new AuthException(NOT_CREATOR);
@@ -314,9 +319,12 @@ public class ReviewService {
         );
 
         ReviewUpdateEvent updateEvent = ReviewUpdateEvent.builder()
+                .meetId(meet.getId())
+                .meetName(meet.getName())
                 .reviewId(review.getId())
-                .isFirstUpload(review.getUpload())
+                .reviewName(review.getName())
                 .reviewUpdatedBy(userId)
+                .isFirstUpload(review.getUpload())
                 .build();
 
         outboxService.save(REVIEW_UPDATE, REVIEW, review.getId(), updateEvent);

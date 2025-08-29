@@ -12,6 +12,9 @@ import static com.mople.global.enums.EventTypeNames.PLAN_UPDATE;
 @Getter
 public class PlanUpdateEvent implements DomainEvent {
 
+    private final Long meetId;
+    private final String meetName;
     private final Long planId;
+    private final String planName;
     private final Long planUpdatedBy;
 }
