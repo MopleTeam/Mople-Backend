@@ -1,4 +1,4 @@
-package com.mople.global.event.listener.notify.plan;
+package com.mople.global.event.data.handler.domain.impl.plan.notify;
 
 import com.mople.core.exception.custom.NonRetryableOutboxException;
 import com.mople.dto.event.data.domain.plan.PlanRemindEvent;
@@ -9,30 +9,33 @@ import com.mople.dto.response.weather.WeatherInfoScheduleResponse;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.global.enums.ExceptionReturnCode;
+import com.mople.global.event.data.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.MeetRepository;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.notification.service.NotificationSendService;
 import com.mople.weather.service.WeatherService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
 @Component
 @RequiredArgsConstructor
-public class PlanRemindNotifyListener {
+public class PlanRemindNotifyHandler implements DomainEventHandler<PlanRemindEvent> {
 
     private final MeetRepository meetRepository;
-    private final MeetPlanRepository meetPlanRepository;
-    private final NotificationSendService sendService;
+    private final MeetPlanRepository planRepository;
     private final WeatherService weatherService;
+    private final NotificationSendService sendService;
 
-    @EventListener
-    @Transactional(readOnly = true)
-    public void pushEventListener(PlanRemindEvent event) {
-        MeetPlan plan = meetPlanRepository.findById(event.getPlanId())
+    @Override
+    public Class<PlanRemindEvent> supports() {
+        return PlanRemindEvent.class;
+    }
+
+    @Override
+    public void handle(PlanRemindEvent event) {
+        MeetPlan plan = planRepository.findById(event.getPlanId())
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_PLAN));
 
         Meet meet = meetRepository.findById(plan.getMeetId())
@@ -45,7 +48,7 @@ public class PlanRemindNotifyListener {
         PlanRemindNotifyEvent notifyEvent = PlanRemindNotifyEvent.builder()
                 .meetId(meet.getId())
                 .meetName(meet.getName())
-                .planId(plan.getId())
+                .planId(event.getPlanId())
                 .planName(plan.getName())
                 .planTime(plan.getPlanTime())
                 .planCreatorId(plan.getCreatorId())

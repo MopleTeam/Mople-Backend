@@ -1,4 +1,4 @@
-package com.mople.global.event.listener.notify.review;
+package com.mople.global.event.data.handler.domain.impl.review.notify;
 
 import com.mople.core.exception.custom.NonRetryableOutboxException;
 import com.mople.dto.event.data.domain.review.ReviewRemindEvent;
@@ -6,39 +6,42 @@ import com.mople.dto.event.data.notify.review.ReviewRemindNotifyEvent;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.review.PlanReview;
 import com.mople.global.enums.ExceptionReturnCode;
+import com.mople.global.event.data.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.MeetRepository;
 import com.mople.meet.repository.review.PlanReviewRepository;
 import com.mople.notification.service.NotificationSendService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
-public class ReviewRemindNotifyListener {
+public class ReviewRemindNotifyHandler implements DomainEventHandler<ReviewRemindEvent> {
 
     private final MeetRepository meetRepository;
     private final PlanReviewRepository reviewRepository;
     private final NotificationSendService sendService;
 
-    @EventListener
-    @Transactional(readOnly = true)
-    public void pushEventListener(ReviewRemindEvent event) {
+    @Override
+    public Class<ReviewRemindEvent> supports() {
+        return ReviewRemindEvent.class;
+    }
+
+    @Override
+    public void handle(ReviewRemindEvent event) {
         PlanReview review = reviewRepository.findById(event.getReviewId())
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_REVIEW));
-
-        Meet meet = meetRepository.findById(review.getMeetId())
-                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
 
         if (review.getUpload()) {
             return;
         }
 
+        Meet meet = meetRepository.findById(review.getMeetId())
+                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
+
         ReviewRemindNotifyEvent notifyEvent = ReviewRemindNotifyEvent.builder()
                 .meetId(meet.getId())
                 .meetName(meet.getName())
-                .reviewId(review.getId())
+                .reviewId(event.getReviewId())
                 .reviewName(review.getName())
                 .reviewCreatorId(review.getCreatorId())
                 .build();

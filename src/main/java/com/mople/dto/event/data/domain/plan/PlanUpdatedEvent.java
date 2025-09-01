@@ -5,16 +5,17 @@ import com.mople.dto.event.data.domain.DomainEvent;
 import lombok.Builder;
 import lombok.Getter;
 
-import static com.mople.global.enums.EventTypeNames.PLAN_UPDATE;
+import java.time.LocalDateTime;
+
+import static com.mople.global.enums.event.EventTypeNames.PLAN_UPDATE;
 
 @JsonTypeName(PLAN_UPDATE)
 @Builder
 @Getter
-public class PlanUpdateEvent implements DomainEvent {
+public class PlanUpdatedEvent implements DomainEvent {
 
-    private final Long meetId;
-    private final String meetName;
     private final Long planId;
-    private final String planName;
     private final Long planUpdatedBy;
+    private final LocalDateTime newTime;
+    private final LocalDateTime preTime;
 }
