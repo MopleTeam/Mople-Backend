@@ -1,4 +1,6 @@
-package com.mople.global.enums;
+package com.mople.global.enums.event;
+
+import com.mople.global.enums.PushTopic;
 
 public enum NotifyType {
     PLAN_CREATE, PLAN_DELETE, PLAN_UPDATE, PLAN_REMIND,

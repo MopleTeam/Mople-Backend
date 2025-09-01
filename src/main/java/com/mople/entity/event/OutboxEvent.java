@@ -1,7 +1,7 @@
 package com.mople.entity.event;
 
-import com.mople.global.enums.AggregateType;
-import com.mople.global.enums.OutboxStatus;
+import com.mople.global.enums.event.AggregateType;
+import com.mople.global.enums.event.OutboxStatus;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -36,9 +36,6 @@ public class OutboxEvent {
     @Column(name = "aggregate_id", nullable = false)
     private Long aggregateId;
 
-    @Column(name = "event_version", nullable = false)
-    private Integer eventVersion;
-
     @Type(JsonType.class)
     @Column(columnDefinition = "json")
     private String payload;
@@ -68,7 +65,6 @@ public class OutboxEvent {
             String eventType,
             AggregateType aggregateType,
             Long aggregateId,
-            int eventVersion,
             LocalDateTime availableAt,
             String payload
     ) {
@@ -76,7 +72,6 @@ public class OutboxEvent {
         this.eventType = eventType;
         this.aggregateType = aggregateType;
         this.aggregateId = aggregateId;
-        this.eventVersion = eventVersion;
         this.availableAt = availableAt;
         this.payload = payload;
     }

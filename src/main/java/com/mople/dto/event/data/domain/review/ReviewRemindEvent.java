@@ -5,7 +5,7 @@ import com.mople.dto.event.data.domain.DomainEvent;
 import lombok.Builder;
 import lombok.Getter;
 
-import static com.mople.global.enums.EventTypeNames.REVIEW_REMIND;
+import static com.mople.global.enums.event.EventTypeNames.REVIEW_REMIND;
 
 @JsonTypeName(REVIEW_REMIND)
 @Builder

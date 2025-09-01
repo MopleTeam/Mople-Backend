@@ -1,4 +1,4 @@
-package com.mople.global.event.data.notify.handler;
+package com.mople.global.event.data.handler.notify;
 
 import com.mople.dto.event.data.notify.NotifyEvent;
 import com.mople.dto.response.notification.NotifySendRequest;
@@ -7,7 +7,7 @@ import com.mople.entity.user.User;
 
 import java.util.List;
 
-public interface NotifyHandler<T extends NotifyEvent> {
+public interface NotifyEventHandler<T extends NotifyEvent> {
 
     Class<T> getHandledType();
 

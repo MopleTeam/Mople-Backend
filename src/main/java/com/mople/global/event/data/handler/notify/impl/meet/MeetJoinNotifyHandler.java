@@ -1,10 +1,10 @@
-package com.mople.global.event.data.notify.handler.impl.meet;
+package com.mople.global.event.data.handler.notify.impl.meet;
 
 import com.mople.dto.event.data.notify.meet.MeetJoinNotifyEvent;
 import com.mople.dto.response.notification.NotifySendRequest;
 import com.mople.entity.notification.Notification;
 import com.mople.entity.user.User;
-import com.mople.global.event.data.notify.handler.NotifyHandler;
+import com.mople.global.event.data.handler.notify.NotifyEventHandler;
 import com.mople.notification.utils.NotifySendRequestFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -15,7 +15,7 @@ import static com.mople.global.enums.Action.COMPLETE;
 
 @Component
 @RequiredArgsConstructor
-public class MeetJoinNotifyHandler implements NotifyHandler<MeetJoinNotifyEvent> {
+public class MeetJoinNotifyHandler implements NotifyEventHandler<MeetJoinNotifyEvent> {
 
     private final NotifySendRequestFactory requestFactory;
 

@@ -9,8 +9,8 @@ import com.mople.entity.notification.FirebaseToken;
 import com.mople.entity.notification.Notification;
 import com.mople.entity.user.User;
 import com.mople.global.enums.Action;
-import com.mople.global.event.data.notify.handler.NotifyHandler;
-import com.mople.global.event.data.notify.handler.NotifyHandlerRegistry;
+import com.mople.global.event.data.handler.notify.NotifyEventHandler;
+import com.mople.global.event.data.handler.notify.NotifyHandlerRegistry;
 import com.mople.notification.repository.NotificationRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -32,7 +32,7 @@ public class NotificationSendService {
 
     @Transactional
     public void sendMultiNotification(NotifyEvent event) {
-        NotifyHandler<NotifyEvent> handler = findHandler(event);
+        NotifyEventHandler<NotifyEvent> handler = findHandler(event);
         NotifySendRequest sendRequest = handler.getSendRequest(event);
 
         if (!sendRequest.tokens().isEmpty()) {
@@ -58,15 +58,15 @@ public class NotificationSendService {
     }
 
     @SuppressWarnings("unchecked")
-    private NotifyHandler<NotifyEvent> findHandler(NotifyEvent event) {
-        NotifyHandler<? extends NotifyEvent> rawHandler = handlerRegistry.getHandler(event.notifyType());
+    private NotifyEventHandler<NotifyEvent> findHandler(NotifyEvent event) {
+        NotifyEventHandler<? extends NotifyEvent> rawHandler = handlerRegistry.getHandler(event.notifyType());
         Class<? extends NotifyEvent> handledType = handlerRegistry.getHandledType(event.notifyType());
 
         if (!handledType.isInstance(event)) {
             throw new BadRequestException(NOT_FOUND_NOTIFY_TYPE);
         }
 
-        return (NotifyHandler<NotifyEvent>) rawHandler;
+        return (NotifyEventHandler<NotifyEvent>) rawHandler;
     }
 
     private Message buildMessage(NotifyEvent event, FirebaseToken token, NotifySendRequest sendRequest, Long badgeCount) {

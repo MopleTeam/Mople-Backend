@@ -2,7 +2,7 @@ package com.mople.dto.event.data.notify.review;
 
 import com.mople.dto.event.data.notify.NotifyEvent;
 import com.mople.dto.response.notification.NotificationPayload;
-import com.mople.global.enums.NotifyType;
+import com.mople.global.enums.event.NotifyType;
 import lombok.Builder;
 import lombok.Getter;
 

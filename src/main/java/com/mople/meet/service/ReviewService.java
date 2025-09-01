@@ -3,7 +3,7 @@ package com.mople.meet.service;
 import com.mople.core.exception.custom.*;
 import com.mople.dto.client.ReviewClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
-import com.mople.dto.event.data.domain.review.ReviewUpdateEvent;
+import com.mople.dto.event.data.domain.review.ReviewUpdatedEvent;
 import com.mople.dto.request.meet.review.ReviewImageDeleteRequest;
 import com.mople.dto.request.meet.review.ReviewReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
@@ -51,8 +51,8 @@ import static com.mople.dto.client.ReviewClientResponse.*;
 import static com.mople.dto.client.UserRoleClientResponse.ofParticipants;
 import static com.mople.dto.response.meet.review.ReviewImageListResponse.ofReviewImageResponses;
 import static com.mople.dto.response.user.UserInfo.ofMap;
-import static com.mople.global.enums.AggregateType.REVIEW;
-import static com.mople.global.enums.EventTypeNames.*;
+import static com.mople.global.enums.event.AggregateType.REVIEW;
+import static com.mople.global.enums.event.EventTypeNames.*;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
@@ -318,7 +318,7 @@ public class ReviewService {
                         .toList()
         );
 
-        ReviewUpdateEvent updateEvent = ReviewUpdateEvent.builder()
+        ReviewUpdatedEvent updateEvent = ReviewUpdatedEvent.builder()
                 .meetId(meet.getId())
                 .meetName(meet.getName())
                 .reviewId(review.getId())

@@ -1,4 +1,4 @@
-package com.mople.global.event.data.notify.handler.impl.comment;
+package com.mople.global.event.data.handler.notify.impl.comment;
 
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.event.data.notify.comment.CommentMentionNotifyEvent;
@@ -7,7 +7,7 @@ import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.review.PlanReview;
 import com.mople.entity.notification.Notification;
 import com.mople.entity.user.User;
-import com.mople.global.event.data.notify.handler.NotifyHandler;
+import com.mople.global.event.data.handler.notify.NotifyEventHandler;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.meet.repository.review.PlanReviewRepository;
 import com.mople.notification.utils.NotifySendRequestFactory;
@@ -22,7 +22,7 @@ import static com.mople.global.enums.ExceptionReturnCode.NOT_FOUND_REVIEW;
 
 @Component
 @RequiredArgsConstructor
-public class CommentMentionNotifyHandler implements NotifyHandler<CommentMentionNotifyEvent> {
+public class CommentMentionNotifyHandler implements NotifyEventHandler<CommentMentionNotifyEvent> {
 
     private final NotifySendRequestFactory requestFactory;
     private final MeetPlanRepository planRepository;

@@ -1,11 +1,11 @@
-package com.mople.global.event.data.notify.handler.impl.plan;
+package com.mople.global.event.data.handler.notify.impl.plan;
 
 import com.mople.dto.event.data.notify.plan.PlanRemindNotifyEvent;
 import com.mople.dto.response.notification.NotifySendRequest;
 import com.mople.entity.notification.Notification;
 import com.mople.entity.user.User;
 import com.mople.global.enums.Action;
-import com.mople.global.event.data.notify.handler.NotifyHandler;
+import com.mople.global.event.data.handler.notify.NotifyEventHandler;
 import com.mople.notification.repository.NotificationRepository;
 import com.mople.notification.utils.NotifySendRequestFactory;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +15,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class PlanRemindNotifyHandler implements NotifyHandler<PlanRemindNotifyEvent> {
+public class PlanRemindNotifyHandler implements NotifyEventHandler<PlanRemindNotifyEvent> {
 
     private final NotifySendRequestFactory requestFactory;
     private final NotificationRepository notificationRepository;

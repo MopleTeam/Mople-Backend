@@ -20,8 +20,6 @@ import static com.mople.global.enums.ExceptionReturnCode.INTERNAL_SERVER_ERROR;
 @RequiredArgsConstructor
 public class OutboxService {
 
-    private static final int DEFAULT_EVENT_VERSION = 1;
-
     private final OutboxEventRepository eventRepository;
     private final ObjectMapper mapper;
 
@@ -35,7 +33,6 @@ public class OutboxService {
                             .eventType(eventType)
                             .aggregateType(aggregateType)
                             .aggregateId(aggregateId)
-                            .eventVersion(DEFAULT_EVENT_VERSION)
                             .availableAt(LocalDateTime.now())
                             .payload(mapper.writeValueAsString(event))
                             .build()
@@ -57,7 +54,6 @@ public class OutboxService {
                             .eventType(eventType)
                             .aggregateType(aggregateType)
                             .aggregateId(aggregateId)
-                            .eventVersion(DEFAULT_EVENT_VERSION)
                             .availableAt(runAt)
                             .payload(mapper.writeValueAsString(event))
                             .build()

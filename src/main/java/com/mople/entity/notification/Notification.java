@@ -3,7 +3,7 @@ package com.mople.entity.notification;
 import com.mople.dto.event.data.notify.NotifyEvent;
 import com.mople.dto.response.notification.NotificationPayload;
 import com.mople.global.enums.Action;
-import com.mople.global.enums.NotifyType;
+import com.mople.global.enums.event.NotifyType;
 
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 

@@ -5,7 +5,7 @@ import com.mople.dto.event.data.domain.DomainEvent;
 import lombok.Builder;
 import lombok.Getter;
 
-import static com.mople.global.enums.EventTypeNames.PLAN_REMIND;
+import static com.mople.global.enums.event.EventTypeNames.PLAN_REMIND;
 
 @JsonTypeName(PLAN_REMIND)
 @Builder
