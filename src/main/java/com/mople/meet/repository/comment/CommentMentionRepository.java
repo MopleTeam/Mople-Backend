@@ -16,4 +16,6 @@ public interface CommentMentionRepository extends JpaRepository<CommentMention, 
 
     @Query("select cm.userId from CommentMention cm where cm.commentId = :commentId")
     List<Long> findUserIdByCommentId(Long commentId);
+
+    void deleteAllByCommentIdIn(List<Long> commentIds);
 }

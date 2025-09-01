@@ -2,19 +2,19 @@ package com.mople.dto.event.data.domain.plan;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.mople.dto.event.data.domain.DomainEvent;
+import com.mople.global.enums.event.DeletionCause;
 import lombok.Builder;
 import lombok.Getter;
 
-import static com.mople.global.enums.EventTypeNames.PLAN_DELETE;
+import static com.mople.global.enums.event.EventTypeNames.PLAN_SOFT_DELETED;
 
-@JsonTypeName(PLAN_DELETE)
+@JsonTypeName(PLAN_SOFT_DELETED)
 @Builder
 @Getter
-public class PlanDeleteEvent implements DomainEvent {
+public class PlanSoftDeletedEvent implements DomainEvent {
 
     private final Long meetId;
-    private final String meetName;
     private final Long planId;
-    private final String planName;
     private final Long planDeletedBy;
+    private final DeletionCause cause;
 }
