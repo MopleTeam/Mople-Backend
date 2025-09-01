@@ -1,6 +1,7 @@
 package com.mople.outbox.repository;
 
 import com.mople.entity.event.OutboxEvent;
+import com.mople.global.enums.event.AggregateType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -27,6 +28,17 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
             RETURNING o.*;
             """, nativeQuery = true)
     List<OutboxEvent> lockNextBatch(int limit, int leaseSec);
+
+    @Modifying(clearAutomatically = true)
+    @Query(value = """
+            UPDATE outbox_event
+               SET status = 'CANCELED'
+             WHERE type = :eventType
+               AND aggregate_type = :aggregateType                           
+               AND aggregate_id = :aggregateId
+               AND status = 'PENDING';
+            """, nativeQuery = true)
+    int eventCanceled(String eventType, AggregateType aggregateType, Long aggregateId);
 
     @Modifying(clearAutomatically = true)
     @Query(value = """

@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mople.dto.event.data.domain.DomainEvent;
 import com.mople.entity.event.OutboxEvent;
 import com.mople.entity.event.ProcessedEvent;
+import com.mople.global.event.data.handler.domain.DomainEventDispatcher;
 import com.mople.outbox.repository.OutboxEventRepository;
 import com.mople.outbox.repository.ProcessedEventRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OutboxProcessor {
 
-    private final ApplicationEventPublisher publisher;
+    private final DomainEventDispatcher dispatcher;
     private final ProcessedEventRepository processedEventRepository;
     private final OutboxEventRepository outboxEventRepository;
     private final ObjectMapper mapper;
@@ -30,10 +30,9 @@ public class OutboxProcessor {
         }
 
         DomainEvent domainEvent = mapper.readValue(event.getPayload(), DomainEvent.class);
-        publisher.publishEvent(domainEvent);
+        dispatcher.dispatch(domainEvent);
 
         processedEventRepository.save(new ProcessedEvent(event.getEventId()));
-
         outboxEventRepository.eventPublished(event.getEventId());
     }
 }

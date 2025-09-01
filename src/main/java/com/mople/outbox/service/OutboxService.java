@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mople.core.exception.custom.AsyncException;
 import com.mople.dto.event.data.domain.DomainEvent;
 import com.mople.entity.event.OutboxEvent;
-import com.mople.global.enums.AggregateType;
+import com.mople.global.enums.event.AggregateType;
 import com.mople.outbox.repository.OutboxEventRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,6 +22,11 @@ public class OutboxService {
 
     private final OutboxEventRepository eventRepository;
     private final ObjectMapper mapper;
+
+    @Transactional
+    public int cancel(String eventType, AggregateType aggregateType, Long aggregateId) {
+        return eventRepository.eventCanceled(eventType, aggregateType, aggregateId);
+    }
 
     @Transactional
     public String save(String eventType, AggregateType aggregateType, Long aggregateId, DomainEvent event) {
