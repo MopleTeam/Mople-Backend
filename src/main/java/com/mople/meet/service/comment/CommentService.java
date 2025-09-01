@@ -9,14 +9,17 @@ import com.mople.dto.response.meet.comment.CommentResponse;
 import com.mople.dto.response.meet.comment.CommentUpdateResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
+import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.MeetMember;
 import com.mople.entity.meet.comment.CommentReport;
+import com.mople.entity.meet.comment.CommentStats;
 import com.mople.entity.meet.comment.PlanComment;
 import com.mople.entity.user.User;
 import com.mople.global.enums.Status;
 import com.mople.global.utils.cursor.CursorUtils;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.comment.CommentReportRepository;
+import com.mople.meet.repository.comment.CommentStatsRepository;
 import com.mople.meet.repository.comment.PlanCommentRepository;
 import com.mople.dto.request.meet.comment.CommentReportRequest;
 
@@ -30,6 +33,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 import static com.mople.dto.client.CommentClientResponse.*;
+import static com.mople.global.enums.ExceptionReturnCode.NOT_FOUND_COMMENT_STATS;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
 @Service
@@ -41,6 +45,7 @@ public class CommentService {
     private final PlanCommentRepository commentRepository;
     private final CommentRepositorySupport commentRepositorySupport;
     private final CommentReportRepository commentReportRepository;
+    private final CommentStatsRepository statsRepository;
 
     private final EntityReader reader;
 
@@ -125,33 +130,45 @@ public class CommentService {
         List<Long> likedCommentIds = likeService.findLikedCommentIds(userId, commentIds);
 
         return comments.stream()
-                .map(comment -> new CommentResponse(
-                        comment,
-                        mentionService.findMentionedUsers(comment.getId()),
-                        likedCommentIds.contains(comment.getId())
-                ))
+                .map(comment -> {
+                    CommentStats stats = statsRepository.findById(comment.getId())
+                            .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_COMMENT_STATS));
+
+                    User writer = reader.findUser(comment.getWriterId());
+
+                    return new CommentResponse(
+                            comment,
+                            stats,
+                            writer,
+                            mentionService.findMentionedUsers(comment.getId()),
+                            likedCommentIds.contains(comment.getId())
+                    );
+                })
                 .toList();
     }
 
     @Transactional
     public CommentClientResponse createComment(Long userId, Long postId, CommentCreateRequest request) {
-        User writer = reader.findUser(userId);
+        reader.findUser(userId);
 
         commentValidator.validatePostId(postId);
         commentValidator.validateMember(userId, postId);
+
+        Meet meet = getMeet(postId);
 
         PlanComment comment = PlanComment.ofParent(
                 request.contents(),
                 postId,
                 LocalDateTime.now(),
                 Status.ACTIVE,
-                writer
+                userId
         );
         commentRepository.save(comment);
+        statsRepository.save(CommentStats.ofParent(comment.getId()));
+
         mentionService.createMentions(request.mentions(), comment.getId());
 
-        String meetName = getMeetName(comment.getPostId());
-        commentEventPublisher.publishMentionEvent(null, request.mentions(), comment, meetName);
+        commentEventPublisher.publishMentionEvent(null, request.mentions(), comment, meet.getName());
 
         boolean likedByMe = likeService.likedByMe(userId, comment.getId());
 
@@ -161,18 +178,24 @@ public class CommentService {
     private CommentClientResponse getCommentClientResponse(PlanComment comment, boolean likedByMe) {
         List<User> mentionedUsers = mentionService.findMentionedUsers(comment.getId());
 
-        return ofComment(new CommentResponse(comment, mentionedUsers, likedByMe));
+        CommentStats stats = statsRepository.findById(comment.getId())
+                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_COMMENT_STATS));
+
+        User writer = reader.findUser(comment.getWriterId());
+
+        return ofComment(new CommentResponse(comment, stats, writer, mentionedUsers, likedByMe));
     }
 
     @Transactional
     public CommentClientResponse createCommentReply(Long userId, Long postId, Long parentCommentId, CommentCreateRequest request) {
-        User writer = reader.findUser(userId);
+        reader.findUser(userId);
 
         commentValidator.validatePostId(postId);
         commentValidator.validateMember(userId, postId);
         commentValidator.validateParentComment(parentCommentId, postId);
 
         PlanComment parentComment = reader.findComment(parentCommentId);
+        Meet meet = getMeet(postId);
 
         PlanComment comment = PlanComment.ofChild(
                 request.contents(),
@@ -180,16 +203,17 @@ public class CommentService {
                 parentCommentId,
                 LocalDateTime.now(),
                 Status.ACTIVE,
-                writer
+                userId
         );
         commentRepository.save(comment);
+        statsRepository.save(CommentStats.ofChild(comment.getId()));
+
         mentionService.createMentions(request.mentions(), comment.getId());
 
-        commentRepository.increaseReplyCount(parentComment.getId());
+        statsRepository.increaseReplyCount(parentComment.getId());
 
-        String meetName = getMeetName(comment.getPostId());
-        commentEventPublisher.publishMentionEvent(null, request.mentions(), comment, meetName);
-        commentEventPublisher.publishReplyEvent(request.mentions(), comment, parentComment, meetName);
+        commentEventPublisher.publishMentionEvent(null, request.mentions(), comment, meet.getName());
+        commentEventPublisher.publishReplyEvent(request.mentions(), comment, parentComment, meet.getName());
 
         boolean likedByMe = likeService.likedByMe(userId, comment.getId());
 
@@ -208,25 +232,31 @@ public class CommentService {
         comment.updateContent(request.contents());
         mentionService.updateMentions(request.mentions(), comment.getId());
 
-        String meetName = getMeetName(comment.getPostId());
-        commentEventPublisher.publishMentionEvent(originMentions, request.mentions(), comment, meetName);
+        Meet meet = getMeet(comment.getPostId());
+        commentEventPublisher.publishMentionEvent(originMentions, request.mentions(), comment, meet.getName());
 
         return getCommentUpdateClientResponse(userId, comment);
     }
 
     private CommentClientResponse getCommentUpdateClientResponse(Long userId, PlanComment comment) {
-        boolean likedByMe = likeService.likedByMe(userId, comment.getId());
+        User user = reader.findUser(userId);
+        CommentStats stats = statsRepository.findById(comment.getId())
+                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_COMMENT_STATS));
         List<User> mentionedUsers = mentionService.findMentionedUsers(comment.getId());
+        boolean likedByMe = likeService.likedByMe(userId, comment.getId());
 
-        return ofUpdate(new CommentUpdateResponse(comment, mentionedUsers, likedByMe));
+        return ofUpdate(new CommentUpdateResponse(comment, user, stats, mentionedUsers, likedByMe));
     }
 
-    private String getMeetName(Long postId) {
+    private Meet getMeet(Long postId) {
+        Long meetId;
         try {
-            return reader.findPlan(postId).getMeet().getName();
+            meetId = reader.findPlan(postId).getMeetId();
         } catch (ResourceNotFoundException e) {
-            return reader.findReviewByPostId(postId).getMeet().getName();
+            meetId = reader.findReviewByPostId(postId).getMeetId();
         }
+
+        return reader.findMeet(meetId);
     }
 
     @Transactional
@@ -238,10 +268,12 @@ public class CommentService {
 
         if (comment.isChildComment()) {
             PlanComment parentComment = reader.findComment(comment.getParentId());
+            CommentStats stats = statsRepository.findById(parentComment.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_COMMENT_STATS));
 
-            if (parentComment.canDecreaseReplyCount()){
+            if (stats.canDecreaseReplyCount()){
                 deleteSingleComment(comment.getId());
-                commentRepository.decreaseReplyCount(parentComment.getId());
+                statsRepository.decreaseReplyCount(parentComment.getId());
                 return;
             }
         }
@@ -289,8 +321,10 @@ public class CommentService {
         reader.findUser(userId);
         commentValidator.validatePostId(postId);
 
-        Long meetId = getMeetId(postId);
-        Long hostId = reader.findMeet(meetId).getCreator().getId();
+        Meet meet = getMeet(postId);
+
+        Long meetId = meet.getId();
+        Long hostId = meet.getCreatorId();
         Long creatorId = getHostId(postId);
 
         int size = request.getSafeSize();
@@ -299,17 +333,9 @@ public class CommentService {
         return autoCompleteService.buildAutoCompleteCursorPage(size, meetMembers, hostId, creatorId);
     }
 
-    private Long getMeetId(Long postId) {
-        try {
-            return reader.findPlan(postId).getMeet().getId();
-        } catch (ResourceNotFoundException e) {
-            return reader.findReviewByPostId(postId).getMeet().getId();
-        }
-    }
-
     private Long getHostId(Long postId) {
         try {
-            return reader.findPlan(postId).getCreator().getId();
+            return reader.findPlan(postId).getCreatorId();
         } catch (ResourceNotFoundException e) {
             return reader.findReviewByPostId(postId).getCreatorId();
         }

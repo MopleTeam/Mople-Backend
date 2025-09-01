@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "meet")
 @Getter
@@ -28,6 +30,15 @@ public class Meet extends BaseTimeEntity {
 
     @Column(name = "creator_id", nullable = false)
     private Long creatorId;
+
+    @Column(name = "deleted", nullable = false)
+    private Boolean deleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "deleted_by")
+    private Long deletedBy;
 
     @Builder
     public Meet(String name, String meetImage, Long creatorId) {

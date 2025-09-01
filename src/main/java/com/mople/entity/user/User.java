@@ -48,6 +48,15 @@ public class User {
     @Column(name = "last_launch_at")
     private LocalDateTime lastLaunchAt;
 
+    @Column(name = "deleted", nullable = false)
+    private Boolean deleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "deleted_by")
+    private Long deletedBy;
+
     @Builder
     public User(
             String email,

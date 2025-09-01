@@ -65,6 +65,15 @@ public class PlanReview extends BaseTimeEntity {
     @Column(name = "meet_id", nullable = false)
     private Long meetId;
 
+    @Column(name = "deleted", nullable = false)
+    private Boolean deleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "deleted_by")
+    private Long deletedBy;
+
     @Builder
     public PlanReview(Long planId, String name, BigDecimal latitude, BigDecimal longitude, LocalDateTime planTime, String address, String title, String weatherIcon, String weatherAddress, Double temperature, Double pop, Long creatorId, Long meetId) {
         this.planId = planId;

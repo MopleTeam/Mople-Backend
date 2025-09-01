@@ -31,4 +31,21 @@ public interface PlanReviewRepository extends JpaRepository<PlanReview, Long> {
            and r.upload = false
     """)
     int uploadedAtFirst(Long reviewId);
+
+    @Query("select r.id from PlanReview r where r.meetId = :meetId and r.creatorId = :creatorId")
+    List<Long> findIdsByMeetIdAndCreatorId(Long meetId, Long creatorId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("update PlanReview r set r.deleted = true, r.deletedAt = now(), r.deletedBy = :userId where r.id = :reviewId")
+    int softDelete(Long reviewId, Long userId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("update PlanReview r set r.deleted = true, r.deletedAt = now(), r.deletedBy = :userId where r.id in :reviewIds")
+    int softDeleteAll(List<Long> reviewIds, Long userId);
+
+    @Query("select r.id from PlanReview r where r.meetId = :meetId")
+    List<Long> findIdsByMeetId(Long meetId);
+
+    @Query("select r.planId from PlanReview r where r.id = :reviewId")
+    Long findPlanIdById(Long reviewId);
 }

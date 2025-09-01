@@ -59,8 +59,8 @@ import static com.mople.dto.client.PlanClientResponse.*;
 import static com.mople.dto.client.UserRoleClientResponse.ofParticipants;
 import static com.mople.dto.response.meet.plan.PlanViewResponse.ofPlanView;
 import static com.mople.dto.response.user.UserInfo.ofMap;
-import static com.mople.global.enums.AggregateType.PLAN;
-import static com.mople.global.enums.EventTypeNames.*;
+import static com.mople.global.enums.event.AggregateType.PLAN;
+import static com.mople.global.enums.event.EventTypeNames.*;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
@@ -118,7 +118,8 @@ public class PlanService {
                 .build();
 
         if (request.planTime().isBefore(LocalDateTime.now().plusDays(5))) {
-            plan.updateWeather(getPlanWeather(request.lot(), request.lat(), request.planTime()));
+            WeatherInfoResponse weather = getPlanWeather(request.lot(), request.lat(), request.planTime());
+            meetPlanRepository.updateWeather(plan.getId(), weather.temperature(), weather.pop(), weather.weatherIcon());
         }
 
         meetPlanRepository.save(plan);
@@ -199,11 +200,12 @@ public class PlanService {
         meetTime.updateTime(newTime);
 
         if (plan.updatePlan(request) || newTime.isBefore(LocalDateTime.now().plusDays(5))) {
-            plan.updateWeather(getPlanWeather(request.lot(), request.lat(), request.planTime()));
+            WeatherInfoResponse weather = getPlanWeather(request.lot(), request.lat(), request.planTime());
+            meetPlanRepository.updateWeather(plan.getId(), weather.temperature(), weather.pop(), weather.weatherIcon());
         }
 
         if (newTime.isAfter(LocalDateTime.now().plusDays(5))) {
-            plan.deleteWeatherInfo();
+            meetPlanRepository.deleteWeather(plan.getId());
         }
 
         PlanUpdateEvent updateEvent = PlanUpdateEvent.builder()

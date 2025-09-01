@@ -29,10 +29,7 @@ public class PlanComment {
     private Long postId;
 
     @Column(name = "parent_id", updatable = false)
-    private Long parentId;
-
-    @Column(name = "reply_count")
-    private Integer replyCount = null;
+    private Long parentId = null;
 
     @Column(name = "write_at", nullable = false)
     private LocalDateTime writeTime;
@@ -44,16 +41,21 @@ public class PlanComment {
     @Column(name = "writer_id")
     private Long writerId;
 
-    @Column(name = "like_count")
-    private Integer likeCount = 0;
+    @Column(name = "deleted", nullable = false)
+    private Boolean deleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "deleted_by")
+    private Long deletedBy;
 
     @Builder
-    private PlanComment(String content, Long postId, Long parentId, Integer replyCount,
+    private PlanComment(String content, Long postId, Long parentId,
                        LocalDateTime writeTime, Status status, Long writerId) {
         this.content = content;
         this.postId = postId;
         this.parentId = parentId;
-        this.replyCount = replyCount;
         this.writeTime = writeTime;
         this.status = status;
         this.writerId = writerId;
@@ -63,7 +65,6 @@ public class PlanComment {
         return PlanComment.builder()
                 .content(content)
                 .postId(postId)
-                .replyCount(0)
                 .writeTime(writeTime)
                 .status(status)
                 .writerId(writerId)
@@ -87,14 +88,6 @@ public class PlanComment {
 
     public void updateContent(String content) {
         this.content = content;
-    }
-
-    public boolean canDecreaseReplyCount() {
-        return this.replyCount > 0;
-    }
-
-    public boolean canDecreaseLikeCount() {
-        return this.likeCount > 0;
     }
 
     public boolean isChildComment() {

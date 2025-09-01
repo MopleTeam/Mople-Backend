@@ -1,6 +1,5 @@
 package com.mople.entity.meet.plan;
 
-import com.mople.dto.response.weather.WeatherInfoResponse;
 import com.mople.entity.common.BaseTimeEntity;
 import com.mople.global.enums.Status;
 import com.mople.dto.request.meet.plan.PlanUpdateRequest;
@@ -11,6 +10,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "meet_plan")
 @Getter
@@ -68,6 +68,15 @@ public class MeetPlan extends BaseTimeEntity {
     @Column(name = "meet_id", nullable = false)
     private Long meetId;
 
+    @Column(name = "deleted", nullable = false)
+    private Boolean deleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "deleted_by")
+    private Long deletedBy;
+
     @Builder
     public MeetPlan(String name, LocalDateTime planTime, String address, String title, BigDecimal latitude, BigDecimal longitude, String weatherAddress, Long creatorId, Long meetId) {
         this.name = name;
@@ -80,22 +89,6 @@ public class MeetPlan extends BaseTimeEntity {
         this.creatorId = creatorId;
         this.meetId = meetId;
         this.status = Status.ACTIVE;
-    }
-
-    public void updateWeather(WeatherInfoResponse response) {
-        if (response != null) {
-            this.weatherIcon = response.weatherIcon();
-            this.temperature = response.temperature();
-            this.pop = response.pop();
-            this.weatherUpdatedAt = LocalDateTime.now();
-        }
-    }
-
-    public void deleteWeatherInfo() {
-        this.weatherIcon = null;
-        this.temperature = null;
-        this.pop = null;
-        this.weatherUpdatedAt = LocalDateTime.now();
     }
 
     public boolean isCreator(Long userId) {

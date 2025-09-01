@@ -32,8 +32,12 @@ public class WeatherScheduler {
             ).thenAccept(weatherInfo -> {
                 if (isNull(weatherInfo)) return;
 
-                meetingPlan.updateWeather(weatherInfo);
-                planRepository.save(meetingPlan);
+                planRepository.updateWeather(
+                        meetingPlan.getId(),
+                        weatherInfo.temperature(),
+                        weatherInfo.pop(),
+                        weatherInfo.weatherIcon()
+                );
             });
         });
     }

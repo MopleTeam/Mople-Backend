@@ -1,5 +1,6 @@
 package com.mople.dto.response.meet.comment;
 
+import com.mople.entity.meet.comment.CommentStats;
 import com.mople.entity.meet.comment.PlanComment;
 import com.mople.entity.user.User;
 
@@ -19,15 +20,15 @@ public record CommentResponse(
         List<User> mentions,
         LocalDateTime time
 ) {
-    public CommentResponse(PlanComment comment, User writer, List<User> mentions, boolean likedByMe) {
+    public CommentResponse(PlanComment comment, CommentStats stats, User writer, List<User> mentions, boolean likedByMe) {
         this(
                 comment.getId(),
                 comment.getVersion(),
                 comment.getContent(),
                 comment.getPostId(),
                 comment.getParentId(),
-                comment.getReplyCount(),
-                comment.getLikeCount(),
+                stats.getReplyCount(),
+                stats.getLikeCount(),
                 likedByMe,
                 writer,
                 mentions,
