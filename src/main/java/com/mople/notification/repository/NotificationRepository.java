@@ -5,6 +5,7 @@ import com.mople.entity.notification.Notification;
 import com.mople.global.enums.Action;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -66,9 +67,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Query(value = "select n from Notification n where n.userId = :userId and n.action = :action")
     List<Notification> getUserNotificationList(Long userId, Action action);
 
-    @Query("select n from Notification n where n.userId = :userId")
-    List<Notification> findAllNotificationByUser(Long userId);
-
     @Query(value =
         "select count(*) " +
         "  from notification n " +
@@ -88,4 +86,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             nativeQuery = true
     )
     Optional<Integer> isCursorInvalid(Long cursorId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("delete from Notification n where n.userId = :userId")
+    void deleteByUserId(Long userId);
 }

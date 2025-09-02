@@ -27,6 +27,6 @@ public final class EventTypeNames {
 
     // USER
     public static final String USER_SING_UP = "USER_SING_UP";
-    public static final String USER_SOFT_DELETED = "USER_SOFT_DELETED";
+    public static final String USER_DELETED = "USER_DELETED";
 
 }

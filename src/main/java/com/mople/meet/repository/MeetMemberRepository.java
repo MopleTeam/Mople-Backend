@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
+
 public interface MeetMemberRepository extends JpaRepository<MeetMember, Long> {
 
     @Transactional
@@ -16,4 +18,7 @@ public interface MeetMemberRepository extends JpaRepository<MeetMember, Long> {
     void deleteMember(Long meetId, Long userId);
 
     boolean existsByMeetIdAndUserId(Long meetId, Long userId);
+
+    @Query("select m.meetId from MeetMember m where m.userId = :userId")
+    List<Long> findMeetIdsByUserId(Long userId);
 }
