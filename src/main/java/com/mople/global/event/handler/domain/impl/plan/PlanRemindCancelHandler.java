@@ -16,7 +16,7 @@ public class PlanRemindCancelHandler implements DomainEventHandler<PlanSoftDelet
     private final OutboxService outboxService;
 
     @Override
-    public Class<PlanSoftDeletedEvent> supports() {
+    public Class<PlanSoftDeletedEvent> getHandledType() {
         return PlanSoftDeletedEvent.class;
     }
 

@@ -7,9 +7,9 @@ import lombok.Getter;
 
 import java.time.LocalDateTime;
 
-import static com.mople.global.enums.event.EventTypeNames.PLAN_CREATE;
+import static com.mople.global.enums.event.EventTypeNames.PLAN_CREATED;
 
-@JsonTypeName(PLAN_CREATE)
+@JsonTypeName(PLAN_CREATED)
 @Builder
 @Getter
 public class PlanCreatedEvent implements DomainEvent {

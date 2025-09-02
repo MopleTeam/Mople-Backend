@@ -25,7 +25,7 @@ public class CommentsCleanupHandler implements DomainEventHandler<CommentsSoftDe
     private final CommentStatsRepository statsRepository;
 
     @Override
-    public Class<CommentsSoftDeletedEvent> supports() {
+    public Class<CommentsSoftDeletedEvent> getHandledType() {
         return CommentsSoftDeletedEvent.class;
     }
 

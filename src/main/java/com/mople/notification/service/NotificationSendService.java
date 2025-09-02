@@ -2,7 +2,6 @@ package com.mople.notification.service;
 
 import com.google.firebase.messaging.*;
 
-import com.mople.core.exception.custom.BadRequestException;
 import com.mople.dto.event.data.notify.NotifyEvent;
 import com.mople.dto.response.notification.NotifySendRequest;
 import com.mople.entity.notification.FirebaseToken;
@@ -17,56 +16,56 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
-
-import static com.mople.global.enums.ExceptionReturnCode.NOT_FOUND_NOTIFY_TYPE;
 
 @Service
 @RequiredArgsConstructor
 public class NotificationSendService {
 
     private final FirebaseMessaging sender;
-    private final NotifyHandlerRegistry handlerRegistry;
+    private final NotifyHandlerRegistry registry;
     private final NotificationRepository notificationRepository;
 
     @Transactional
     public void sendMultiNotification(NotifyEvent event) {
-        NotifyEventHandler<NotifyEvent> handler = findHandler(event);
+        @SuppressWarnings("unchecked")
+        NotifyEventHandler<NotifyEvent> handler = (NotifyEventHandler<NotifyEvent>) registry.getHandler(event);
         NotifySendRequest sendRequest = handler.getSendRequest(event);
 
-        if (!sendRequest.tokens().isEmpty()) {
-            sender.sendEachAsync(
-                    sendRequest
-                            .tokens()
-                            .stream()
-                            .map(token -> {
-                                User user = sendRequest.findUserByToken(token);
-                                Long badgeCount = notificationRepository.countBadgeCount(
-                                        user.getId(),
-                                        Action.COMPLETE.name()
-                                );
-
-                                return buildMessage(event, token, sendRequest, badgeCount);
-                            })
-                            .toList()
-            );
+        if (sendRequest.tokens().isEmpty()) {
+            return;
         }
 
         List<Notification> notifications = handler.getNotifications(event, sendRequest.users());
         notificationRepository.saveAll(notifications);
-    }
 
-    @SuppressWarnings("unchecked")
-    private NotifyEventHandler<NotifyEvent> findHandler(NotifyEvent event) {
-        NotifyEventHandler<? extends NotifyEvent> rawHandler = handlerRegistry.getHandler(event.notifyType());
-        Class<? extends NotifyEvent> handledType = handlerRegistry.getHandledType(event.notifyType());
+        List<Message> messages = sendRequest
+                .tokens()
+                .stream()
+                .map(token -> {
+                    User user = sendRequest.findUserByToken(token);
+                    Long badgeCount = notificationRepository.countBadgeCount(
+                            user.getId(),
+                            Action.COMPLETE.name()
+                    );
 
-        if (!handledType.isInstance(event)) {
-            throw new BadRequestException(NOT_FOUND_NOTIFY_TYPE);
+                    return buildMessage(event, token, sendRequest, badgeCount);
+                })
+                .toList();
+
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    sender.sendEachAsync(messages);
+                }
+            });
+        } else {
+            sender.sendEachAsync(messages);
         }
-
-        return (NotifyEventHandler<NotifyEvent>) rawHandler;
     }
 
     private Message buildMessage(NotifyEvent event, FirebaseToken token, NotifySendRequest sendRequest, Long badgeCount) {

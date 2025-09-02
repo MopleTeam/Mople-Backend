@@ -7,9 +7,9 @@ import lombok.Getter;
 
 import java.util.List;
 
-import static com.mople.global.enums.event.EventTypeNames.COMMENT_UPDATE;
+import static com.mople.global.enums.event.EventTypeNames.COMMENT_UPDATED;
 
-@JsonTypeName(COMMENT_UPDATE)
+@JsonTypeName(COMMENT_UPDATED)
 @Builder
 @Getter
 public class CommentUpdatedEvent implements DomainEvent {

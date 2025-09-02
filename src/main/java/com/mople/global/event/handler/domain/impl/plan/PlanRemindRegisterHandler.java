@@ -21,7 +21,7 @@ public class PlanRemindRegisterHandler implements DomainEventHandler<PlanCreated
     private final OutboxService outboxService;
 
     @Override
-    public Class<PlanCreatedEvent> supports() {
+    public Class<PlanCreatedEvent> getHandledType() {
         return PlanCreatedEvent.class;
     }
 

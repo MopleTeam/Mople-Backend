@@ -5,9 +5,9 @@ import com.mople.dto.event.data.domain.DomainEvent;
 import lombok.Builder;
 import lombok.Getter;
 
-import static com.mople.global.enums.event.EventTypeNames.MEET_JOIN;
+import static com.mople.global.enums.event.EventTypeNames.MEET_JOINED;
 
-@JsonTypeName(MEET_JOIN)
+@JsonTypeName(MEET_JOINED)
 @Builder
 @Getter
 public class MeetJoinedEvent implements DomainEvent {

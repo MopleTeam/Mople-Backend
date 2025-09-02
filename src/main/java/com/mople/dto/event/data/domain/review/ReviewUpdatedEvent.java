@@ -5,9 +5,9 @@ import com.mople.dto.event.data.domain.DomainEvent;
 import lombok.Builder;
 import lombok.Getter;
 
-import static com.mople.global.enums.event.EventTypeNames.REVIEW_UPDATE;
+import static com.mople.global.enums.event.EventTypeNames.REVIEW_UPDATED;
 
-@JsonTypeName(REVIEW_UPDATE)
+@JsonTypeName(REVIEW_UPDATED)
 @Builder
 @Getter
 public class ReviewUpdatedEvent implements DomainEvent {

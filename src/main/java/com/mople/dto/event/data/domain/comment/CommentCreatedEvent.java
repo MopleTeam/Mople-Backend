@@ -7,9 +7,9 @@ import lombok.Getter;
 
 import java.util.List;
 
-import static com.mople.global.enums.event.EventTypeNames.COMMENT_CREATE;
+import static com.mople.global.enums.event.EventTypeNames.COMMENT_CREATED;
 
-@JsonTypeName(COMMENT_CREATE)
+@JsonTypeName(COMMENT_CREATED)
 @Builder
 @Getter
 public class CommentCreatedEvent implements DomainEvent {

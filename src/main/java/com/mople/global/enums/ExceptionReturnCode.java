@@ -84,7 +84,8 @@ public enum ExceptionReturnCode {
 
     // 내부 에러
     INTERNAL_SERVER_ERROR("500", "내부 서버 에러 입니다."),
-    EXTERNAL_SERVER_ERROR("500", "외부 서버 에러 입니다.");
+    EXTERNAL_SERVER_ERROR("500", "외부 서버 에러 입니다."),
+    ILLEGAL_HANDLER_TYPE("500", "핸들러를 처리할 수 없습니다.");
 
     private final String code;
     private final String message;

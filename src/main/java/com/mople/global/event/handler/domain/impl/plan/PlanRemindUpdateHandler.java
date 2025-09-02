@@ -22,7 +22,7 @@ public class PlanRemindUpdateHandler implements DomainEventHandler<PlanUpdatedEv
     private final OutboxService outboxService;
 
     @Override
-    public Class<PlanUpdatedEvent> supports() {
+    public Class<PlanUpdatedEvent> getHandledType() {
         return PlanUpdatedEvent.class;
     }
 

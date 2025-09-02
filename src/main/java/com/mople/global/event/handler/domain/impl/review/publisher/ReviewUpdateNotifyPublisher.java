@@ -1,4 +1,4 @@
-package com.mople.global.event.handler.domain.impl.review.notify;
+package com.mople.global.event.handler.domain.impl.review.publisher;
 
 import com.mople.core.exception.custom.NonRetryableOutboxException;
 import com.mople.dto.event.data.domain.review.ReviewUpdatedEvent;
@@ -15,14 +15,14 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class ReviewUpdateNotifyHandler implements DomainEventHandler<ReviewUpdatedEvent> {
+public class ReviewUpdateNotifyPublisher implements DomainEventHandler<ReviewUpdatedEvent> {
 
     private final MeetRepository meetRepository;
     private final PlanReviewRepository reviewRepository;
     private final NotificationSendService sendService;
 
     @Override
-    public Class<ReviewUpdatedEvent> supports() {
+    public Class<ReviewUpdatedEvent> getHandledType() {
         return ReviewUpdatedEvent.class;
     }
 

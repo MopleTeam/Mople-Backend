@@ -16,7 +16,7 @@ public class ReviewRemindCancelHandler implements DomainEventHandler<ReviewSoftD
     private final OutboxService outboxService;
 
     @Override
-    public Class<ReviewSoftDeletedEvent> supports() {
+    public Class<ReviewSoftDeletedEvent> getHandledType() {
         return ReviewSoftDeletedEvent.class;
     }
 

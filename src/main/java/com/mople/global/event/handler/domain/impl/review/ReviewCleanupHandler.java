@@ -27,7 +27,7 @@ public class ReviewCleanupHandler implements DomainEventHandler<ReviewSoftDelete
     private final OutboxService outboxService;
 
     @Override
-    public Class<ReviewSoftDeletedEvent> supports() {
+    public Class<ReviewSoftDeletedEvent> getHandledType() {
         return ReviewSoftDeletedEvent.class;
     }
 

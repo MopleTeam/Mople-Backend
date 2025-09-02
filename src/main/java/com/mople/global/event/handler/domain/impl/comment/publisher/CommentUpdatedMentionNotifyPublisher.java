@@ -1,7 +1,7 @@
-package com.mople.global.event.handler.domain.impl.comment.notify;
+package com.mople.global.event.handler.domain.impl.comment.publisher;
 
 import com.mople.core.exception.custom.NonRetryableOutboxException;
-import com.mople.dto.event.data.domain.comment.CommentCreatedEvent;
+import com.mople.dto.event.data.domain.comment.CommentUpdatedEvent;
 import com.mople.dto.event.data.notify.comment.CommentMentionNotifyEvent;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.comment.PlanComment;
@@ -15,25 +15,23 @@ import com.mople.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 @Component
 @RequiredArgsConstructor
-public class CommentMentionNotifyHandler implements DomainEventHandler<CommentCreatedEvent> {
+public class CommentUpdatedMentionNotifyPublisher implements DomainEventHandler<CommentUpdatedEvent> {
 
     private final MeetRepository meetRepository;
-    private final PlanCommentRepository commentRepository;
     private final UserRepository userRepository;
+    private final PlanCommentRepository commentRepository;
     private final NotificationSendService sendService;
 
     @Override
-    public Class<CommentCreatedEvent> supports() {
-        return CommentCreatedEvent.class;
+    public Class<CommentUpdatedEvent> getHandledType() {
+        return CommentUpdatedEvent.class;
     }
 
     @Override
-    public void handle(CommentCreatedEvent event) {
-        if (event.getMentions() == null || !event.getMentions().isEmpty()) {
+    public void handle(CommentUpdatedEvent event) {
+        if (event.getNewMentions() == null || !event.getNewMentions().isEmpty()) {
             return;
         }
 
@@ -53,7 +51,7 @@ public class CommentMentionNotifyHandler implements DomainEventHandler<CommentCr
                 .commentContent(comment.getContent())
                 .senderId(event.getSenderId())
                 .senderNickname(user.getNickname())
-                .originMentions(List.of())
+                .originMentions(event.getOriginMentions())
                 .build();
 
         sendService.sendMultiNotification(notifyEvent);

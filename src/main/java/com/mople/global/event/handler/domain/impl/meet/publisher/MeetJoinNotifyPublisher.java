@@ -1,4 +1,4 @@
-package com.mople.global.event.handler.domain.impl.meet.notify;
+package com.mople.global.event.handler.domain.impl.meet.publisher;
 
 import com.mople.core.exception.custom.NonRetryableOutboxException;
 import com.mople.dto.event.data.domain.meet.MeetJoinedEvent;
@@ -15,14 +15,14 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class MeetJoinNotifyHandler implements DomainEventHandler<MeetJoinedEvent> {
+public class MeetJoinNotifyPublisher implements DomainEventHandler<MeetJoinedEvent> {
 
     private final MeetRepository meetRepository;
     private final UserRepository userRepository;
     private final NotificationSendService sendService;
 
     @Override
-    public Class<MeetJoinedEvent> supports() {
+    public Class<MeetJoinedEvent> getHandledType() {
         return MeetJoinedEvent.class;
     }
 

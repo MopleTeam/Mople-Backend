@@ -5,9 +5,9 @@ import com.mople.dto.event.data.domain.DomainEvent;
 import lombok.Builder;
 import lombok.Getter;
 
-import static com.mople.global.enums.event.EventTypeNames.MEET_LEAVE;
+import static com.mople.global.enums.event.EventTypeNames.MEET_LEFT;
 
-@JsonTypeName(MEET_LEAVE)
+@JsonTypeName(MEET_LEFT)
 @Builder
 @Getter
 public class MeetLeftEvent implements DomainEvent {

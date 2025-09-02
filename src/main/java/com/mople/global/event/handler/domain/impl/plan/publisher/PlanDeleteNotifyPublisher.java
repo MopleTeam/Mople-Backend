@@ -1,11 +1,12 @@
-package com.mople.global.event.handler.domain.impl.plan.notify;
+package com.mople.global.event.handler.domain.impl.plan.publisher;
 
 import com.mople.core.exception.custom.NonRetryableOutboxException;
-import com.mople.dto.event.data.domain.plan.PlanUpdatedEvent;
-import com.mople.dto.event.data.notify.plan.PlanUpdateNotifyEvent;
+import com.mople.dto.event.data.domain.plan.PlanSoftDeletedEvent;
+import com.mople.dto.event.data.notify.plan.PlanDeleteNotifyEvent;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.global.enums.ExceptionReturnCode;
+import com.mople.global.enums.event.DeletionCause;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.MeetRepository;
 import com.mople.meet.repository.plan.MeetPlanRepository;
@@ -15,31 +16,35 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class PlanUpdateNotifyHandler implements DomainEventHandler<PlanUpdatedEvent> {
+public class PlanDeleteNotifyPublisher implements DomainEventHandler<PlanSoftDeletedEvent> {
 
     private final MeetRepository meetRepository;
     private final MeetPlanRepository planRepository;
     private final NotificationSendService sendService;
 
     @Override
-    public Class<PlanUpdatedEvent> supports() {
-        return PlanUpdatedEvent.class;
+    public Class<PlanSoftDeletedEvent> getHandledType() {
+        return PlanSoftDeletedEvent.class;
     }
 
     @Override
-    public void handle(PlanUpdatedEvent event) {
+    public void handle(PlanSoftDeletedEvent event) {
+        if (event.getCause() != DeletionCause.DIRECT_PLAN_DELETE) {
+            return;
+        }
+
+        Meet meet = meetRepository.findById(event.getMeetId())
+                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
+
         MeetPlan plan = planRepository.findById(event.getPlanId())
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_PLAN));
 
-        Meet meet = meetRepository.findById(plan.getMeetId())
-                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
-
-        PlanUpdateNotifyEvent notifyEvent = PlanUpdateNotifyEvent.builder()
-                .meetId(meet.getId())
+        PlanDeleteNotifyEvent notifyEvent = PlanDeleteNotifyEvent.builder()
+                .meetId(event.getMeetId())
                 .meetName(meet.getName())
                 .planId(event.getPlanId())
                 .planName(plan.getName())
-                .planUpdatedBy(event.getPlanUpdatedBy())
+                .planDeletedBy(event.getPlanDeletedBy())
                 .build();
 
         sendService.sendMultiNotification(notifyEvent);

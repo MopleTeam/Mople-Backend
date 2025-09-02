@@ -5,9 +5,9 @@ import com.mople.dto.event.data.domain.DomainEvent;
 import lombok.Builder;
 import lombok.Getter;
 
-import static com.mople.global.enums.event.EventTypeNames.MEET_DELETE;
+import static com.mople.global.enums.event.EventTypeNames.MEET_SOFT_DELETED;
 
-@JsonTypeName(MEET_DELETE)
+@JsonTypeName(MEET_SOFT_DELETED)
 @Builder
 @Getter
 public class MeetSoftDeletedEvent implements DomainEvent {

@@ -22,7 +22,7 @@ public class ReviewRemindRegisterHandler implements DomainEventHandler<ReviewCre
     private final OutboxService outboxService;
 
     @Override
-    public Class<ReviewCreatedEvent> supports() {
+    public Class<ReviewCreatedEvent> getHandledType() {
         return ReviewCreatedEvent.class;
     }
 

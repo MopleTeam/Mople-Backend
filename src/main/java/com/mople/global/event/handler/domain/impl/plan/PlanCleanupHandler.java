@@ -21,7 +21,7 @@ public class PlanCleanupHandler implements DomainEventHandler<PlanSoftDeletedEve
     private final OutboxService outboxService;
 
     @Override
-    public Class<PlanSoftDeletedEvent> supports() {
+    public Class<PlanSoftDeletedEvent> getHandledType() {
         return PlanSoftDeletedEvent.class;
     }
 

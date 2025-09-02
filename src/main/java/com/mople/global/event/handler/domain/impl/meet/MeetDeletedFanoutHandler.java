@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-import static com.mople.global.enums.event.AggregateType.MEET;
+import static com.mople.global.enums.event.AggregateType.*;
 import static com.mople.global.enums.event.EventTypeNames.*;
 import static com.mople.global.utils.batch.Batching.chunk;
 
@@ -28,7 +28,7 @@ public class MeetDeletedFanoutHandler implements DomainEventHandler<MeetSoftDele
     private final OutboxService outboxService;
 
     @Override
-    public Class<MeetSoftDeletedEvent> supports() {
+    public Class<MeetSoftDeletedEvent> getHandledType() {
         return MeetSoftDeletedEvent.class;
     }
 
@@ -48,7 +48,7 @@ public class MeetDeletedFanoutHandler implements DomainEventHandler<MeetSoftDele
                         .cause(DeletionCause.CASCADE_FROM_MEET_DELETE)
                         .build();
 
-                outboxService.save(PLAN_SOFT_DELETED, MEET, event.getMeetId(), deleteEvent);
+                outboxService.save(PLAN_SOFT_DELETED, PLAN, id, deleteEvent);
             });
         });
 
@@ -63,7 +63,7 @@ public class MeetDeletedFanoutHandler implements DomainEventHandler<MeetSoftDele
                         .reviewDeletedBy(event.getMeetDeletedBy())
                         .build();
 
-                outboxService.save(REVIEW_SOFT_DELETED, MEET, event.getMeetId(), deleteEvent);
+                outboxService.save(REVIEW_SOFT_DELETED, REVIEW, id, deleteEvent);
             });
         });
     }
