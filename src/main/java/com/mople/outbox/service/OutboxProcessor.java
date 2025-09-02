@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mople.dto.event.data.domain.DomainEvent;
 import com.mople.entity.event.OutboxEvent;
 import com.mople.entity.event.ProcessedEvent;
-import com.mople.global.event.data.handler.domain.DomainEventDispatcher;
+import com.mople.global.event.handler.domain.DomainEventDispatcher;
 import com.mople.outbox.repository.OutboxEventRepository;
 import com.mople.outbox.repository.ProcessedEventRepository;
 import lombok.RequiredArgsConstructor;

@@ -9,8 +9,8 @@ import com.mople.entity.notification.FirebaseToken;
 import com.mople.entity.notification.Notification;
 import com.mople.entity.user.User;
 import com.mople.global.enums.Action;
-import com.mople.global.event.data.handler.notify.NotifyEventHandler;
-import com.mople.global.event.data.handler.notify.NotifyHandlerRegistry;
+import com.mople.global.event.handler.notify.NotifyEventHandler;
+import com.mople.global.event.handler.notify.NotifyHandlerRegistry;
 import com.mople.notification.repository.NotificationRepository;
 
 import lombok.RequiredArgsConstructor;
