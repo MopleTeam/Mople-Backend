@@ -5,11 +5,8 @@ import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.comment.CommentLikeRepository;
 import com.mople.meet.repository.comment.CommentMentionRepository;
 import com.mople.meet.repository.comment.CommentStatsRepository;
-import com.mople.meet.repository.comment.PlanCommentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 import static com.mople.global.utils.batch.Batching.chunk;
 
@@ -17,9 +14,6 @@ import static com.mople.global.utils.batch.Batching.chunk;
 @RequiredArgsConstructor
 public class CommentsCleanupHandler implements DomainEventHandler<CommentsSoftDeletedEvent> {
 
-    private static final int CHUCK = 800;
-
-    private final PlanCommentRepository commentRepository;
     private final CommentLikeRepository likeRepository;
     private final CommentMentionRepository mentionRepository;
     private final CommentStatsRepository statsRepository;
@@ -31,12 +25,7 @@ public class CommentsCleanupHandler implements DomainEventHandler<CommentsSoftDe
 
     @Override
     public void handle(CommentsSoftDeletedEvent event) {
-        List<Long> commentIds = commentRepository.findIdsByPostId(event.getPostId());
-        if (commentIds.isEmpty()) {
-            return;
-        }
-
-        chunk(commentIds, CHUCK, ids -> {
+        chunk(event.getCommentIds(), ids -> {
             likeRepository.deleteAllByCommentIdIn(ids);
             mentionRepository.deleteAllByCommentIdIn(ids);
             statsRepository.deleteAllByCommentIdIn(ids);

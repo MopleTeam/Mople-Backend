@@ -41,9 +41,6 @@ public class PlanComment {
     @Column(name = "writer_id")
     private Long writerId;
 
-    @Column(name = "deleted", nullable = false)
-    private Boolean deleted = false;
-
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
@@ -52,32 +49,30 @@ public class PlanComment {
 
     @Builder
     private PlanComment(String content, Long postId, Long parentId,
-                       LocalDateTime writeTime, Status status, Long writerId) {
+                       LocalDateTime writeTime, Long writerId) {
         this.content = content;
         this.postId = postId;
         this.parentId = parentId;
         this.writeTime = writeTime;
-        this.status = status;
+        this.status = Status.ACTIVE;
         this.writerId = writerId;
     }
 
-    public static PlanComment ofParent(String content, Long postId, LocalDateTime writeTime, Status status, Long writerId) {
+    public static PlanComment ofParent(String content, Long postId, LocalDateTime writeTime, Long writerId) {
         return PlanComment.builder()
                 .content(content)
                 .postId(postId)
                 .writeTime(writeTime)
-                .status(status)
                 .writerId(writerId)
                 .build();
     }
 
-    public static PlanComment ofChild(String content, Long postId, Long parentId, LocalDateTime writeTime, Status status, Long writerId) {
+    public static PlanComment ofChild(String content, Long postId, Long parentId, LocalDateTime writeTime, Long writerId) {
         return PlanComment.builder()
                 .content(content)
                 .postId(postId)
                 .parentId(parentId)
                 .writeTime(writeTime)
-                .status(status)
                 .writerId(writerId)
                 .build();
     }

@@ -2,6 +2,7 @@ package com.mople.entity.meet;
 
 import com.mople.entity.common.BaseTimeEntity;
 
+import com.mople.global.enums.Status;
 import jakarta.persistence.*;
 
 import lombok.*;
@@ -31,8 +32,9 @@ public class Meet extends BaseTimeEntity {
     @Column(name = "creator_id", nullable = false)
     private Long creatorId;
 
-    @Column(name = "deleted", nullable = false)
-    private Boolean deleted = false;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 15)
+    private Status status;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
@@ -45,6 +47,7 @@ public class Meet extends BaseTimeEntity {
         this.name = name;
         this.meetImage = meetImage;
         this.creatorId = creatorId;
+        this.status = Status.ACTIVE;
     }
 
     public void updateMeetInfo(String name, String imageName){

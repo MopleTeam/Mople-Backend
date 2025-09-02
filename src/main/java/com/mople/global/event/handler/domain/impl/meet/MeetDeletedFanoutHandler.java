@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+import static com.mople.global.enums.Status.DELETED;
 import static com.mople.global.enums.event.AggregateType.*;
 import static com.mople.global.enums.event.EventTypeNames.*;
 import static com.mople.global.utils.batch.Batching.chunk;
@@ -20,8 +21,6 @@ import static com.mople.global.utils.batch.Batching.chunk;
 @Component
 @RequiredArgsConstructor
 public class MeetDeletedFanoutHandler implements DomainEventHandler<MeetSoftDeletedEvent> {
-
-    private static final int CHUNK = 800;
 
     private final MeetPlanRepository planRepository;
     private final PlanReviewRepository reviewRepository;
@@ -37,12 +36,11 @@ public class MeetDeletedFanoutHandler implements DomainEventHandler<MeetSoftDele
         List<Long> planIds = planRepository.findIdsByMeetId(event.getMeetId());
         List<Long> reviewIds = reviewRepository.findIdsByMeetId(event.getMeetId());
 
-        chunk(planIds, CHUNK, ids -> {
-            planRepository.softDeleteAll(ids, event.getMeetDeletedBy());
+        chunk(planIds, ids -> {
+            planRepository.softDeleteAll(DELETED, ids, event.getMeetDeletedBy());
 
             ids.forEach(id -> {
                 PlanSoftDeletedEvent deleteEvent = PlanSoftDeletedEvent.builder()
-                        .meetId(event.getMeetId())
                         .planId(id)
                         .planDeletedBy(event.getMeetDeletedBy())
                         .cause(DeletionCause.CASCADE_FROM_MEET_DELETE)
@@ -52,12 +50,11 @@ public class MeetDeletedFanoutHandler implements DomainEventHandler<MeetSoftDele
             });
         });
 
-        chunk(reviewIds, CHUNK, ids -> {
-            reviewRepository.softDeleteAll(ids, event.getMeetDeletedBy());
+        chunk(reviewIds, ids -> {
+            reviewRepository.softDeleteAll(DELETED, ids, event.getMeetDeletedBy());
 
             ids.forEach(id -> {
                 ReviewSoftDeletedEvent deleteEvent = ReviewSoftDeletedEvent.builder()
-                        .meetId(event.getMeetId())
                         .planId(reviewRepository.findPlanIdById(id))
                         .reviewId(id)
                         .reviewDeletedBy(event.getMeetDeletedBy())

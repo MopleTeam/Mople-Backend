@@ -7,15 +7,12 @@ import lombok.Getter;
 
 import java.util.List;
 
-import static com.mople.global.enums.event.EventTypeNames.COMMENTS_SOFT_DELETED;
+import static com.mople.global.enums.event.EventTypeNames.COMMENTS_PURGE;
 
-@JsonTypeName(COMMENTS_SOFT_DELETED)
+@JsonTypeName(COMMENTS_PURGE)
 @Builder
 @Getter
-public class CommentsSoftDeletedEvent implements DomainEvent {
+public class CommentPurgeEvent implements DomainEvent {
 
-    private final Long planId;
-    private final Long reviewId;
     private final List<Long> commentIds;
-    private final Long commentsDeletedBy;
 }

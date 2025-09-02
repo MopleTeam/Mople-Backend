@@ -5,14 +5,12 @@ import com.mople.dto.event.data.domain.DomainEvent;
 import lombok.Builder;
 import lombok.Getter;
 
-import static com.mople.global.enums.event.EventTypeNames.REVIEW_SOFT_DELETED;
+import static com.mople.global.enums.event.EventTypeNames.REVIEW_PURGE;
 
-@JsonTypeName(REVIEW_SOFT_DELETED)
+@JsonTypeName(REVIEW_PURGE)
 @Builder
 @Getter
-public class ReviewSoftDeletedEvent implements DomainEvent {
+public class ReviewPurgeEvent implements DomainEvent {
 
-    private final Long planId;
     private final Long reviewId;
-    private final Long reviewDeletedBy;
 }

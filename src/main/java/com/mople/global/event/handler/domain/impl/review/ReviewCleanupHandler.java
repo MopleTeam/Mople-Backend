@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+import static com.mople.global.enums.Status.DELETED;
 import static com.mople.global.enums.event.AggregateType.REVIEW;
 import static com.mople.global.enums.event.EventTypeNames.COMMENTS_SOFT_DELETED;
 
@@ -40,10 +41,12 @@ public class ReviewCleanupHandler implements DomainEventHandler<ReviewSoftDelete
 
         reviewImages.forEach(imageService::deleteImage);
 
-        commentRepository.softDeleteAll(commentRepository.findIdsByPostId(event.getPlanId()), event.getReviewDeletedBy());
+        List<Long> commentIds = commentRepository.findIdsByPostId(event.getPlanId());
+        commentRepository.softDeleteAll(DELETED, commentIds, event.getReviewDeletedBy());
 
         CommentsSoftDeletedEvent deleteEvent = CommentsSoftDeletedEvent.builder()
-                .postId(event.getPlanId())
+                .reviewId(event.getReviewId())
+                .commentIds(commentIds)
                 .commentsDeletedBy(event.getReviewDeletedBy())
                 .build();
 

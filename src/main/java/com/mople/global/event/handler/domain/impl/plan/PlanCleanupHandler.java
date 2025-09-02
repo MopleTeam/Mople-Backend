@@ -9,6 +9,9 @@ import com.mople.outbox.service.OutboxService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
+import static com.mople.global.enums.Status.DELETED;
 import static com.mople.global.enums.event.AggregateType.PLAN;
 import static com.mople.global.enums.event.EventTypeNames.COMMENTS_SOFT_DELETED;
 
@@ -28,10 +31,13 @@ public class PlanCleanupHandler implements DomainEventHandler<PlanSoftDeletedEve
     @Override
     public void handle(PlanSoftDeletedEvent event) {
         participantRepository.deleteByPlanId(event.getPlanId());
-        commentRepository.softDeleteAll(commentRepository.findIdsByPostId(event.getPlanId()), event.getPlanDeletedBy());
+
+        List<Long> commentIds = commentRepository.findIdsByPostId(event.getPlanId());
+        commentRepository.softDeleteAll(DELETED, commentIds, event.getPlanDeletedBy());
 
         CommentsSoftDeletedEvent deleteEvent = CommentsSoftDeletedEvent.builder()
-                .postId(event.getPlanId())
+                .planId(event.getPlanId())
+                .commentIds(commentIds)
                 .commentsDeletedBy(event.getPlanDeletedBy())
                 .build();
 

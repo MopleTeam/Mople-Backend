@@ -13,7 +13,6 @@ import static com.mople.global.enums.event.EventTypeNames.PLAN_SOFT_DELETED;
 @Getter
 public class PlanSoftDeletedEvent implements DomainEvent {
 
-    private final Long meetId;
     private final Long planId;
     private final Long planDeletedBy;
     private final DeletionCause cause;

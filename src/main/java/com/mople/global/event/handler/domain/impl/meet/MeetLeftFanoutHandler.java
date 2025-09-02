@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+import static com.mople.global.enums.Status.DELETED;
 import static com.mople.global.enums.event.AggregateType.*;
 import static com.mople.global.enums.event.EventTypeNames.*;
 import static com.mople.global.utils.batch.Batching.chunk;
@@ -20,8 +21,6 @@ import static com.mople.global.utils.batch.Batching.chunk;
 @Component
 @RequiredArgsConstructor
 public class MeetLeftFanoutHandler implements DomainEventHandler<MeetLeftEvent> {
-
-    private static final int CHUNK = 800;
 
     private final MeetPlanRepository planRepository;
     private final PlanReviewRepository reviewRepository;
@@ -37,12 +36,11 @@ public class MeetLeftFanoutHandler implements DomainEventHandler<MeetLeftEvent> 
         List<Long> ownedPlanIds = planRepository.findIdsByMeetIdAndCreatorId(event.getMeetId(), event.getLeaveMemberId());
         List<Long> ownedReviewIds = reviewRepository.findIdsByMeetIdAndCreatorId(event.getMeetId(), event.getLeaveMemberId());
 
-        chunk(ownedPlanIds, CHUNK, ids -> {
-            planRepository.softDeleteAll(ids, event.getLeaveMemberId());
+        chunk(ownedPlanIds, ids -> {
+            planRepository.softDeleteAll(DELETED, ids, event.getLeaveMemberId());
 
             ids.forEach(id -> {
                 PlanSoftDeletedEvent deleteEvent = PlanSoftDeletedEvent.builder()
-                        .meetId(event.getMeetId())
                         .planId(id)
                         .planDeletedBy(event.getLeaveMemberId())
                         .cause(DeletionCause.CASCADE_FROM_MEET_LEAVE)
@@ -52,12 +50,11 @@ public class MeetLeftFanoutHandler implements DomainEventHandler<MeetLeftEvent> 
             });
         });
 
-        chunk(ownedReviewIds, CHUNK, ids -> {
-            reviewRepository.softDeleteAll(ids, event.getLeaveMemberId());
+        chunk(ownedReviewIds, ids -> {
+            reviewRepository.softDeleteAll(DELETED, ids, event.getLeaveMemberId());
 
             ids.forEach(id -> {
                 ReviewSoftDeletedEvent deleteEvent = ReviewSoftDeletedEvent.builder()
-                        .meetId(event.getMeetId())
                         .planId(reviewRepository.findPlanIdById(id))
                         .reviewId(id)
                         .reviewDeletedBy(event.getLeaveMemberId())

@@ -68,9 +68,6 @@ public class MeetPlan extends BaseTimeEntity {
     @Column(name = "meet_id", nullable = false)
     private Long meetId;
 
-    @Column(name = "deleted", nullable = false)
-    private Boolean deleted = false;
-
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 

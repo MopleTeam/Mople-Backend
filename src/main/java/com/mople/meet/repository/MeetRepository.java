@@ -2,6 +2,7 @@ package com.mople.meet.repository;
 
 import com.mople.entity.meet.Meet;
 
+import com.mople.global.enums.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -11,9 +12,16 @@ import java.util.List;
 public interface MeetRepository extends JpaRepository<Meet, Long> {
 
     @Modifying(clearAutomatically = true)
-    @Query("update Meet m set m.deleted = true, m.deletedAt = now(), m.deletedBy = :userId where m.id = :meetId")
-    int softDelete(Long meetId, Long userId);
+    @Query("update Meet m set m.status = :status, m.deletedAt = now(), m.deletedBy = :userId where m.id = :meetId and m.status <> :status")
+    int softDelete(Status status, Long meetId, Long userId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("update Meet m set m.status = :status, m.deletedAt = now(), m.deletedBy = :userId where m.id in :meetIds and m.status <> :status")
+    int softDeleteAll(Status status, List<Long> meetIds, Long userId);
 
     @Query("select m.id from Meet m where m.creatorId = :creatorId")
     List<Long> findIdsByCreatorId(Long creatorId);
+
+    @Query("select m.status from Meet m where m.id = :meetId")
+    Status findStatusById(Long meetId);
 }

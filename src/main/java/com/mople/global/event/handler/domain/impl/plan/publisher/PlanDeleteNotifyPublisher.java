@@ -33,14 +33,14 @@ public class PlanDeleteNotifyPublisher implements DomainEventHandler<PlanSoftDel
             return;
         }
 
-        Meet meet = meetRepository.findById(event.getMeetId())
-                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
-
         MeetPlan plan = planRepository.findById(event.getPlanId())
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_PLAN));
 
+        Meet meet = meetRepository.findById(plan.getMeetId())
+                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
+
         PlanDeleteNotifyEvent notifyEvent = PlanDeleteNotifyEvent.builder()
-                .meetId(event.getMeetId())
+                .meetId(meet.getId())
                 .meetName(meet.getName())
                 .planId(event.getPlanId())
                 .planName(plan.getName())

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+import static com.mople.global.enums.Status.DELETED;
 import static com.mople.global.enums.event.AggregateType.MEET;
 import static com.mople.global.enums.event.EventTypeNames.*;
 import static com.mople.global.utils.batch.Batching.chunk;
@@ -19,8 +20,6 @@ import static com.mople.global.utils.batch.Batching.chunk;
 @Component
 @RequiredArgsConstructor
 public class UserDeletedMeetFanoutHandler implements DomainEventHandler<UserDeletedEvent> {
-
-    private static final int CHUNK = 800;
 
     private final MeetRepository meetRepository;
     private final MeetMemberRepository memberRepository;
@@ -40,23 +39,22 @@ public class UserDeletedMeetFanoutHandler implements DomainEventHandler<UserDele
                 .filter(id -> !ownedMeetIds.contains(id))
                 .toList();
 
-        chunk(ownedMeetIds, CHUNK, ids ->
-            ids.forEach(id -> {
-                meetRepository.softDelete(id, event.getUserId());
 
+        chunk(ownedMeetIds, ids -> {
+            meetRepository.softDeleteAll(DELETED, ids, event.getUserId());
+
+            ids.forEach(id -> {
                 MeetSoftDeletedEvent deleteEvent = MeetSoftDeletedEvent.builder()
                         .meetId(id)
                         .meetDeletedBy(event.getUserId())
                         .build();
 
                 outboxService.save(MEET_SOFT_DELETED, MEET, id, deleteEvent);
-            })
-        );
+            });
+        });
 
-        chunk(memberMeetIds, CHUNK, ids ->
+        chunk(memberMeetIds, ids ->
             ids.forEach(id -> {
-                meetRepository.softDelete(id, event.getUserId());
-
                 MeetLeftEvent deleteEvent = MeetLeftEvent.builder()
                         .meetId(id)
                         .leaveMemberId(event.getUserId())

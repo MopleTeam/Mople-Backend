@@ -2,6 +2,7 @@ package com.mople.entity.meet.review;
 
 import com.mople.entity.common.BaseTimeEntity;
 
+import com.mople.global.enums.Status;
 import jakarta.persistence.*;
 
 import lombok.*;
@@ -59,14 +60,15 @@ public class PlanReview extends BaseTimeEntity {
     @Column(name = "creator_id", nullable = false)
     private Long creatorId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 10)
+    private Status status;
+
     @Column(name = "upload", nullable = false)
     private Boolean upload;
 
     @Column(name = "meet_id", nullable = false)
     private Long meetId;
-
-    @Column(name = "deleted", nullable = false)
-    private Boolean deleted = false;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
@@ -88,6 +90,7 @@ public class PlanReview extends BaseTimeEntity {
         this.temperature = temperature;
         this.pop = pop;
         this.creatorId = creatorId;
+        this.status = Status.ACTIVE;
         this.upload = false;
         this.meetId = meetId;
     }
