@@ -1,7 +1,7 @@
 package com.mople.meet.schedule;
 
 import com.mople.core.exception.custom.ResourceNotFoundException;
-import com.mople.dto.event.data.domain.review.ReviewRemindEvent;
+import com.mople.dto.event.data.domain.review.ReviewCreatedEvent;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.plan.PlanParticipant;
 import com.mople.entity.meet.review.PlanReview;
@@ -9,22 +9,16 @@ import com.mople.global.enums.ExceptionReturnCode;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.meet.repository.plan.PlanParticipantRepository;
 import com.mople.meet.repository.review.PlanReviewRepository;
-import com.mople.outbox.repository.OutboxEventRepository;
 import com.mople.outbox.service.OutboxService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
 import java.util.List;
 
-import static com.mople.global.enums.AggregateType.PLAN;
-import static com.mople.global.enums.AggregateType.REVIEW;
-import static com.mople.global.enums.EventTypeNames.REVIEW_REMIND;
+import static com.mople.global.enums.event.AggregateType.REVIEW;
+import static com.mople.global.enums.event.EventTypeNames.REVIEW_CREATED;
 
 @Service
 @RequiredArgsConstructor
@@ -34,7 +28,6 @@ public class PlanTransitionService {
     private final PlanParticipantRepository participantRepository;
     private final PlanReviewRepository reviewRepository;
     private final OutboxService outboxService;
-    private final OutboxEventRepository outboxEventRepository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void transitionPlanByOne(Long planId) {
@@ -63,18 +56,12 @@ public class PlanTransitionService {
         List<PlanParticipant> participants = participantRepository.findParticipantsByPlanId(plan.getId());
         participants.forEach(pp -> pp.updateReview(review.getId()));
 
-        outboxEventRepository.deleteEventByAggregateType(PLAN.name(), plan.getId());
-
         planRepository.delete(plan);
 
-        LocalDateTime runAt = LocalDateTime
-                .of(LocalDate.now(), LocalTime.of(12, 0, 0))
-                .atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
-
-        ReviewRemindEvent remindEvent = ReviewRemindEvent.builder()
+        ReviewCreatedEvent createdEvent = ReviewCreatedEvent.builder()
                 .reviewId(review.getId())
                 .build();
 
-        outboxService.saveWithRunAt(REVIEW_REMIND, REVIEW, review.getId(), runAt, remindEvent);
+        outboxService.save(REVIEW_CREATED, REVIEW, review.getId(), createdEvent);
     }
 }

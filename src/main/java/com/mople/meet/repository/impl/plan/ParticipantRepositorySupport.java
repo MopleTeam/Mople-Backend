@@ -59,18 +59,6 @@ public class ParticipantRepositorySupport {
                 .fetch();
     }
 
-    public Long countPlanParticipants(Long planId) {
-        QPlanParticipant participant = QPlanParticipant.planParticipant;
-
-        Long count = queryFactory
-                .select(participant.count())
-                .from(participant)
-                .where(participant.planId.eq(planId))
-                .fetchOne();
-
-        return count != null ? count : 0L;
-    }
-
     public List<PlanParticipant> findReviewParticipantPage(Long reviewId, Long hostId, Long creatorId, MemberCursor cursor, int size) {
         QPlanParticipant participant = QPlanParticipant.planParticipant;
         QUser user = QUser.user;

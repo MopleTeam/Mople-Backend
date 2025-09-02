@@ -3,10 +3,9 @@ package com.mople.meet.service;
 import com.mople.core.exception.custom.*;
 import com.mople.dto.client.PlanClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
-import com.mople.dto.event.data.domain.plan.PlanCreateEvent;
-import com.mople.dto.event.data.domain.plan.PlanDeleteEvent;
-import com.mople.dto.event.data.domain.plan.PlanRemindEvent;
-import com.mople.dto.event.data.domain.plan.PlanUpdateEvent;
+import com.mople.dto.event.data.domain.plan.PlanCreatedEvent;
+import com.mople.dto.event.data.domain.plan.PlanSoftDeletedEvent;
+import com.mople.dto.event.data.domain.plan.PlanUpdatedEvent;
 import com.mople.dto.request.meet.plan.PlanReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.weather.CoordinateRequest;
@@ -16,6 +15,8 @@ import com.mople.dto.response.meet.plan.*;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.dto.response.user.UserInfo;
+import com.mople.global.enums.Status;
+import com.mople.global.enums.event.DeletionCause;
 import com.mople.global.utils.cursor.MemberCursor;
 import com.mople.dto.response.weather.WeatherInfoResponse;
 import com.mople.entity.meet.Meet;
@@ -28,6 +29,7 @@ import com.mople.global.utils.cursor.CursorUtils;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.MeetMemberRepository;
 import com.mople.meet.repository.MeetTimeRepository;
+import com.mople.meet.repository.impl.MeetRepositorySupport;
 import com.mople.meet.repository.impl.comment.CommentRepositorySupport;
 import com.mople.meet.repository.impl.plan.ParticipantRepositorySupport;
 import com.mople.meet.repository.plan.MeetPlanRepository;
@@ -36,7 +38,6 @@ import com.mople.meet.repository.plan.PlanParticipantRepository;
 import com.mople.dto.request.meet.plan.PlanCreateRequest;
 import com.mople.dto.request.meet.plan.PlanUpdateRequest;
 import com.mople.meet.repository.plan.PlanReportRepository;
-import com.mople.outbox.repository.OutboxEventRepository;
 import com.mople.outbox.service.OutboxService;
 import com.mople.user.repository.UserRepository;
 import com.mople.weather.service.WeatherService;
@@ -49,8 +50,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -81,16 +80,21 @@ public class PlanService {
     private final PlanRepositorySupport planRepositorySupport;
     private final MeetTimeRepository timeRepository;
     private final CommentRepositorySupport commentRepositorySupport;
+    private final MeetRepositorySupport meetRepositorySupport;
 
     private final EntityReader reader;
 
     private final OutboxService outboxService;
-    private final OutboxEventRepository outboxEventRepository;
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public PlanHomeViewResponse getPlanView(Long userId) {
-        return new PlanHomeViewResponse(ofViews(planRepositorySupport.findHomeViewPlan(userId, PLAN_HOME_VIEW_SIZE)), reader.findMeetListUseMember(userId));
+        List<PlanViewResponse> homeViewPlan = planRepositorySupport.findHomeViewPlan(userId, PLAN_HOME_VIEW_SIZE);
+
+        return new PlanHomeViewResponse(
+                ofViews(homeViewPlan),
+                meetRepositorySupport.findMeetUseMember(userId)
+        );
     }
 
     @Transactional
@@ -139,37 +143,22 @@ public class PlanService {
                         .build()
         );
 
-        PlanCreateEvent createEvent = PlanCreateEvent.builder()
-                .meetId(meet.getId())
-                .meetName(meet.getName())
+        PlanCreatedEvent createEvent = PlanCreatedEvent.builder()
                 .planId(plan.getId())
-                .planName(plan.getName())
                 .planTime(plan.getPlanTime())
                 .planCreatorId(plan.getCreatorId())
                 .build();
 
-        outboxService.save(PLAN_CREATE, PLAN, plan.getId(), createEvent);
+        outboxService.save(PLAN_CREATED, PLAN, plan.getId(), createEvent);
 
-        LocalDateTime now = LocalDateTime.now();
-        if (plan.getPlanTime().isAfter(now.plusHours(1))) {
-            long hour = now.until(plan.getPlanTime(), ChronoUnit.HOURS) == 1 ? 1 : 2;
-            LocalDateTime runAt = plan.getPlanTime().minusHours(hour).atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
-
-            PlanRemindEvent remindEvent = PlanRemindEvent.builder()
-                    .planId(plan.getId())
-                    .build();
-
-            outboxService.saveWithRunAt(PLAN_REMIND, PLAN, plan.getId(), runAt, remindEvent);
-        }
-
-        List<PlanParticipant> participants = planParticipantRepository.findParticipantsByPlanId(plan.getId());
+        Integer participantCount = planParticipantRepository.countByPlanId(plan.getId());
 
         return ofView(
                 ofPlanView(
                         plan,
                         meet.getName(),
                         meet.getMeetImage(),
-                        participants.size()
+                        participantCount
                 ),
                 commentRepositorySupport.countComment(plan.getId()));
     }
@@ -180,7 +169,7 @@ public class PlanService {
             PlanUpdateRequest request,
             Long version
     ) {
-        var plan = reader.findPlan(request.planId());
+        MeetPlan plan = reader.findPlan(request.planId());
         Meet meet = reader.findMeet(plan.getMeetId());
 
         if (plan.isCreator(userId)) {
@@ -191,11 +180,11 @@ public class PlanService {
             throw new AsyncException(REQUEST_CONFLICT);
         }
 
-        LocalDateTime newTime = request.planTime();
-        boolean timeChanged = !plan.equalTime(newTime);
-
         MeetTime meetTime = timeRepository.findByPlanId(plan.getId())
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_TIME));
+
+        LocalDateTime newTime = request.planTime();
+        LocalDateTime preTime = plan.getPlanTime();
 
         meetTime.updateTime(newTime);
 
@@ -208,41 +197,23 @@ public class PlanService {
             meetPlanRepository.deleteWeather(plan.getId());
         }
 
-        PlanUpdateEvent updateEvent = PlanUpdateEvent.builder()
-                .meetId(meet.getId())
-                .meetName(meet.getName())
+        PlanUpdatedEvent updateEvent = PlanUpdatedEvent.builder()
                 .planId(plan.getId())
                 .planUpdatedBy(userId)
+                .newTime(newTime)
+                .preTime(preTime)
                 .build();
 
-        outboxService.save(PLAN_UPDATE, PLAN, plan.getId(), updateEvent);
+        outboxService.save(PLAN_UPDATED, PLAN, plan.getId(), updateEvent);
 
-        if (timeChanged) {
-            if (newTime.isAfter(LocalDateTime.now().plusHours(1))) {
-                long hour = newTime.until(plan.getPlanTime(), ChronoUnit.HOURS) == 1 ? 1 : 2;
-                LocalDateTime runAt = newTime.minusHours(hour).atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
-
-                int updateCount = outboxEventRepository.updateEvent(PLAN.name(), plan.getId(), PLAN_REMIND, runAt);
-                if (updateCount == 0) {
-                    PlanRemindEvent remindEvent = PlanRemindEvent.builder()
-                            .planId(plan.getId())
-                            .build();
-
-                    outboxService.saveWithRunAt(PLAN_REMIND, PLAN, plan.getId(), runAt, remindEvent);
-                }
-            } else {
-                outboxEventRepository.deleteEventByEventType(PLAN.name(), plan.getId(), PLAN_REMIND);
-            }
-        }
-
-        List<PlanParticipant> participants = planParticipantRepository.findParticipantsByPlanId(plan.getId());
+        Integer participantCount = planParticipantRepository.countByPlanId(plan.getId());
 
         return ofView(
                 ofPlanView(
                         plan,
                         meet.getName(),
                         meet.getMeetImage(),
-                        participants.size()
+                        participantCount
                 ),
                 commentRepositorySupport.countComment(plan.getId()));
     }
@@ -251,7 +222,6 @@ public class PlanService {
     public void deletePlan(Long userId, Long planId, Long version) {
         reader.findUser(userId);
         var plan = reader.findPlan(planId);
-        var meet = reader.findMeet(plan.getMeetId());
 
         if (plan.isCreator(userId)) {
             throw new AuthException(NOT_CREATOR);
@@ -261,22 +231,15 @@ public class PlanService {
             throw new AsyncException(REQUEST_CONFLICT);
         }
 
-        outboxEventRepository.deleteEventByAggregateType(PLAN.name(), plan.getId());
+        meetPlanRepository.softDelete(Status.DELETED, planId, userId);
 
-        planParticipantRepository.deleteByPlanId(plan.getId());
-        timeRepository.deleteByPlanId(plan.getId());
-
-        PlanDeleteEvent deleteEvent = PlanDeleteEvent.builder()
-                .meetId(plan.getMeetId())
-                .meetName(meet.getName())
+        PlanSoftDeletedEvent deleteEvent = PlanSoftDeletedEvent.builder()
                 .planId(plan.getId())
-                .planName(plan.getName())
                 .planDeletedBy(userId)
+                .cause(DeletionCause.DIRECT_PLAN_DELETE)
                 .build();
 
-        outboxService.save(PLAN_DELETE, PLAN, plan.getId(), deleteEvent);
-
-        meetPlanRepository.delete(plan);
+        outboxService.save(PLAN_SOFT_DELETED, PLAN, plan.getId(), deleteEvent);
     }
 
     @Transactional(readOnly = true)
@@ -289,14 +252,14 @@ public class PlanService {
             throw new AuthException(NOT_MEMBER);
         }
 
-        List<PlanParticipant> participants = planParticipantRepository.findParticipantsByPlanId(plan.getId());
+        Integer participantCount = planParticipantRepository.countByPlanId(plan.getId());
 
         return ofViewAndParticipant(
                 ofPlanView(
                         plan,
                         meet.getName(),
                         meet.getMeetImage(),
-                        participants.size()
+                        participantCount
                 ),
                 planParticipantRepository.existsByPlanIdAndUserId(planId, userId),
                 commentRepositorySupport.countComment(plan.getId())
@@ -316,7 +279,7 @@ public class PlanService {
         List<PlanListResponse> plans = getPlans(userId, meetId, request.cursor(), size);
 
         return FlatCursorPageResponse.of(
-                planRepositorySupport.countPlans(meetId),
+                meetPlanRepository.countByMeetId(meetId),
                 buildPlanCursorPage(size, plans)
         );
     }
@@ -388,7 +351,7 @@ public class PlanService {
         List<PlanParticipant> participants = getPlanParticipants(planId, hostId, creatorId, request.cursor(), size);
 
         return FlatCursorPageResponse.of(
-                participantRepositorySupport.countPlanParticipants(planId),
+                planParticipantRepository.countByPlanId(plan.getId()),
                 buildParticipantCursorPage(size, participants, hostId, creatorId)
         );
     }
@@ -415,7 +378,7 @@ public class PlanService {
                 .map(PlanParticipant::getUserId)
                 .toList();
 
-        Map<Long, UserInfo> userInfoById = ofMap(userRepository.findAllById(userIds));
+        Map<Long, UserInfo> userInfoById = ofMap(userRepository.findByIdInAndStatus(userIds, Status.ACTIVE));
 
         return buildCursorPage(
                 participants,

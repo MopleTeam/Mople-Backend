@@ -7,6 +7,7 @@ import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.plan.QMeetPlan;
 import com.mople.entity.meet.review.PlanReview;
 import com.mople.entity.meet.review.QPlanReview;
+import com.mople.global.enums.Status;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -134,7 +135,10 @@ public class MeetRepositorySupport {
                 )
                 .from(meet)
                 .join(meetMember).on(meetMember.meetId.eq(meet.id))
-                .where(meetMember.userId.eq(userId))
+                .where(
+                        meet.status.eq(Status.ACTIVE),
+                        meetMember.userId.eq(userId)
+                )
                 .distinct()
                 .fetch();
     }

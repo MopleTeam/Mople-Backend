@@ -105,8 +105,4 @@ public class MeetPlan extends BaseTimeEntity {
 
         return !flag;
     }
-
-    public boolean equalTime(LocalDateTime time) {
-        return planTime.equals(time);
-    }
 }

@@ -26,7 +26,7 @@ public record PlanViewResponse(
         Double temperature,
         Double pop
 ) {
-    public static PlanViewResponse ofPlanView(MeetPlan plan, String meetName, String meetImage, int planMemberCount) {
+    public static PlanViewResponse ofPlanView(MeetPlan plan, String meetName, String meetImage, Integer planMemberCount) {
         return PlanViewResponse.builder()
                 .planId(plan.getId())
                 .version(plan.getVersion())

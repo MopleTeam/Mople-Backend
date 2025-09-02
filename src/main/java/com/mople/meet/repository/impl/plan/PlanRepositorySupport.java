@@ -11,6 +11,7 @@ import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.plan.QMeetPlan;
 import com.mople.entity.meet.plan.QPlanParticipant;
 import com.mople.entity.meet.review.QPlanReview;
+import com.mople.global.enums.Status;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Ops;
 import com.querydsl.core.types.Projections;
@@ -67,12 +68,19 @@ public class PlanRepositorySupport {
                         )
                 )
                 .from(plan)
-                .join(participant).on(participant.planId.eq(plan.id)
-                                .and(participant.userId.eq(userId)))
+                .join(participant).on(
+                        participant.planId.eq(plan.id)
+                                .and(participant.userId.eq(userId))
+                )
                 .join(meet).on(meet.id.eq(plan.meetId))
-                .where(plan.planTime.after(
-                        Expressions.dateTimeOperation(
-                                LocalDateTime.class, Ops.DateTimeOps.CURRENT_TIMESTAMP))
+                .where(
+                        plan.status.eq(Status.ACTIVE),
+                        meet.status.eq(Status.ACTIVE),
+                        plan.planTime.after(
+                                Expressions.dateTimeOperation(
+                                        LocalDateTime.class, Ops.DateTimeOps.CURRENT_TIMESTAMP
+                                )
+                        )
                 )
                 .orderBy(plan.planTime.asc())
                 .limit(size)
@@ -86,6 +94,8 @@ public class PlanRepositorySupport {
         QPlanParticipant ppAll = new QPlanParticipant("ppAll");
 
         BooleanBuilder whereCondition = new BooleanBuilder()
+                .and(plan.status.eq(Status.ACTIVE))
+                .and(meet.status.eq(Status.ACTIVE))
                 .and(plan.meetId.eq(meetId))
                 .and(plan.planTime.after(
                         Expressions.dateTimeOperation(
@@ -107,8 +117,10 @@ public class PlanRepositorySupport {
         BooleanExpression joinedByUser = JPAExpressions
                 .selectOne()
                 .from(participant)
-                .where(participant.planId.eq(plan.id)
-                        .and(participant.userId.eq(userId)))
+                .where(
+                        participant.planId.eq(plan.id)
+                                .and(participant.userId.eq(userId))
+                )
                 .exists();
 
         return queryFactory
@@ -144,30 +156,16 @@ public class PlanRepositorySupport {
                 .fetch();
     }
 
-    public Long countPlans(Long meetId) {
-        QMeetPlan plan = QMeetPlan.meetPlan;
-
-        Long count = queryFactory
-                .select(plan.count())
-                .from(plan)
-                .where(
-                        plan.meetId.eq(meetId),
-                        plan.planTime.after(
-                                Expressions.dateTimeOperation(
-                                        LocalDateTime.class, Ops.DateTimeOps.CURRENT_DATE)
-                        ))
-                .fetchOne();
-
-        return count != null ? count : 0L;
-    }
-
     public boolean isCursorInvalid(Long cursorId) {
         QMeetPlan plan = QMeetPlan.meetPlan;
 
         return queryFactory
                 .selectOne()
                 .from(plan)
-                .where(plan.id.eq(cursorId))
+                .where(
+                        plan.status.eq(Status.ACTIVE),
+                        plan.id.eq(cursorId)
+                )
                 .fetchFirst() == null;
     }
 
@@ -204,9 +202,19 @@ public class PlanRepositorySupport {
                 )
                 .from(meet)
                 .join(meet).on(meet.id.eq(plan.meetId))
-                .join(meetMember).on(meetMember.meetId.eq(meet.id).and(meetMember.userId.eq(userId)))
-                .join(participant).on(participant.planId.eq(plan.id).and(participant.userId.eq(userId)))
-                .where(getBetweenDate(plan.planTime, start, end))
+                .join(meetMember).on(
+                        meetMember.meetId.eq(meet.id)
+                                .and(meetMember.userId.eq(userId))
+                )
+                .join(participant).on(
+                        participant.planId.eq(plan.id)
+                                .and(participant.userId.eq(userId))
+                )
+                .where(
+                        plan.status.eq(Status.ACTIVE),
+                        meet.status.eq(Status.ACTIVE),
+                        getBetweenDate(plan.planTime, start, end)
+                )
                 .fetch();
 
         List<ReviewPageResponse> reviews = queryFactory
@@ -229,10 +237,21 @@ public class PlanRepositorySupport {
                                 review.pop
                         )
                 )
+                .from(meet)
                 .join(meet).on(meet.id.eq(review.meetId))
-                .join(meetMember).on(meetMember.meetId.eq(meet.id).and(meetMember.userId.eq(userId)))
-                .join(participant).on(participant.reviewId.eq(review.id).and(participant.userId.eq(userId)))
-                .where(getBetweenDate(review.planTime, start, end))
+                .join(meetMember).on(
+                        meetMember.meetId.eq(meet.id)
+                                .and(meetMember.userId.eq(userId))
+                )
+                .join(participant).on(
+                        participant.reviewId.eq(review.id)
+                                .and(participant.userId.eq(userId))
+                )
+                .where(
+                        review.status.eq(Status.ACTIVE),
+                        meet.status.eq(Status.ACTIVE),
+                        getBetweenDate(review.planTime, start, end)
+                )
                 .fetch();
 
         return new UserPageResponse(reviews, plans);
@@ -261,7 +280,10 @@ public class PlanRepositorySupport {
         List<LocalDateTime> planDate = queryFactory
                 .select(plan.planTime)
                 .from(plan)
-                .where(isMemberForPlan.and(isParticipantForPlan))
+                .where(
+                        plan.status.eq(Status.ACTIVE),
+                        isMemberForPlan.and(isParticipantForPlan)
+                )
                 .distinct()
                 .fetch();
 
@@ -282,7 +304,10 @@ public class PlanRepositorySupport {
         List<LocalDateTime> reviewDate = queryFactory
                 .select(review.planTime)
                 .from(review)
-                .where(isMemberForReview.and(isParticipantForReview))
+                .where(
+                        review.status.eq(Status.ACTIVE),
+                        isMemberForReview.and(isParticipantForReview)
+                )
                 .distinct()
                 .fetch();
 
@@ -296,9 +321,13 @@ public class PlanRepositorySupport {
     public List<MeetPlan> findUpdateWeatherPlan() {
         QMeetPlan plan = QMeetPlan.meetPlan;
         var now = LocalDateTime.now();
+
         return queryFactory
                 .selectFrom(plan)
-                .where(plan.planTime.before(now.plusDays(5)))
+                .where(
+                        plan.status.eq(Status.ACTIVE),
+                        plan.planTime.before(now.plusDays(5))
+                )
                 .orderBy(
                         new CaseBuilder()
                                 .when(plan.weatherUpdatedAt.isNull())

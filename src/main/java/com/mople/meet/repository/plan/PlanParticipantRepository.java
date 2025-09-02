@@ -10,9 +10,11 @@ public interface PlanParticipantRepository extends JpaRepository<PlanParticipant
 
     boolean existsByPlanIdAndUserId(Long planId, Long userId);
 
-    List<PlanParticipant> findParticipantsByPlanId(Long planId);
+    Integer countByPlanId(Long planId);
 
     List<PlanParticipant> findParticipantsByReviewId(Long reviewId);
+
+    List<PlanParticipant> findParticipantsByPlanId(Long planId);
 
     void deleteByPlanId(Long planId);
 

@@ -56,4 +56,6 @@ public interface MeetPlanRepository extends JpaRepository<MeetPlan, Long>{
 
     @Query("select p.status from MeetPlan p where p.id = :planId")
     Status findStatusById(Long planId);
+
+    Integer countByMeetId(Long meetId);
 }
