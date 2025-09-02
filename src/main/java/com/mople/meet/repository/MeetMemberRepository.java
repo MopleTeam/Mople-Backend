@@ -21,4 +21,6 @@ public interface MeetMemberRepository extends JpaRepository<MeetMember, Long> {
 
     @Query("select m.meetId from MeetMember m where m.userId = :userId")
     List<Long> findMeetIdsByUserId(Long userId);
+
+    void deleteByMeetId(Long meetId);
 }

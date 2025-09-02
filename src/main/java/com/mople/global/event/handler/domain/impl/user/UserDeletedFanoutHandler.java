@@ -19,7 +19,7 @@ import static com.mople.global.utils.batch.Batching.chunk;
 
 @Component
 @RequiredArgsConstructor
-public class UserDeletedMeetFanoutHandler implements DomainEventHandler<UserDeletedEvent> {
+public class UserDeletedFanoutHandler implements DomainEventHandler<UserDeletedEvent> {
 
     private final MeetRepository meetRepository;
     private final MeetMemberRepository memberRepository;

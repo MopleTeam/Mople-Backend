@@ -1,31 +1,22 @@
 package com.mople.global.event.handler.domain.impl.review;
 
-import com.mople.dto.event.data.domain.comment.CommentsSoftDeletedEvent;
 import com.mople.dto.event.data.domain.review.ReviewSoftDeletedEvent;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.image.service.ImageService;
-import com.mople.meet.repository.comment.PlanCommentRepository;
 import com.mople.meet.repository.plan.PlanParticipantRepository;
 import com.mople.meet.repository.review.ReviewImageRepository;
-import com.mople.outbox.service.OutboxService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-import static com.mople.global.enums.Status.DELETED;
-import static com.mople.global.enums.event.AggregateType.REVIEW;
-import static com.mople.global.enums.event.EventTypeNames.COMMENTS_SOFT_DELETED;
-
 @Component
 @RequiredArgsConstructor
 public class ReviewCleanupHandler implements DomainEventHandler<ReviewSoftDeletedEvent> {
 
-    private final PlanCommentRepository commentRepository;
     private final PlanParticipantRepository participantRepository;
     private final ReviewImageRepository reviewImageRepository;
     private final ImageService imageService;
-    private final OutboxService outboxService;
 
     @Override
     public Class<ReviewSoftDeletedEvent> getHandledType() {
@@ -40,16 +31,5 @@ public class ReviewCleanupHandler implements DomainEventHandler<ReviewSoftDelete
         reviewImageRepository.deleteByReviewId(event.getReviewId());
 
         reviewImages.forEach(imageService::deleteImage);
-
-        List<Long> commentIds = commentRepository.findIdsByPostId(event.getPlanId());
-        commentRepository.softDeleteAll(DELETED, commentIds, event.getReviewDeletedBy());
-
-        CommentsSoftDeletedEvent deleteEvent = CommentsSoftDeletedEvent.builder()
-                .reviewId(event.getReviewId())
-                .commentIds(commentIds)
-                .commentsDeletedBy(event.getReviewDeletedBy())
-                .build();
-
-        outboxService.save(COMMENTS_SOFT_DELETED, REVIEW, event.getReviewId(), deleteEvent);
     }
 }
