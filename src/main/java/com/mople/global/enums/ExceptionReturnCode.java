@@ -18,6 +18,7 @@ public enum ExceptionReturnCode {
     TOKEN_NOT_VALID("400", "ID TOKEN 인증에 실패하였습니다."),
     DUPLICATE_NICKNAME("403", "중복된 닉네임입니다."),
     NOT_USER("404", "유저 정보가 없습니다."),
+    DELETED_USER("400", "탈퇴한 유저입니다."),
 
     // 정책 관련
     EMPTY_OS("400", "운영체제가 존재하지 않습니다."),
@@ -36,6 +37,7 @@ public enum ExceptionReturnCode {
     NOT_FOUND_MEMBER("404", "멤버를 찾을 수 없습니다."),
     NOT_FOUND_INVITE("404", "모임 초대정보를 찾을 수 없습니다."),
     NOT_MEMBER("401", "접근 권한이 없습니다."),
+    DELETED_MEET("400", "삭제된 모임입니다."),
 
     // TIME
     NOT_FOUND_TIME("404", "일정의 시간을 찾을 수 없습니다."),
@@ -48,16 +50,19 @@ public enum ExceptionReturnCode {
     CURRENT_PARTICIPANT("400", "이미 존재하는 멤버입니다."),
     NOT_FOUND_PARTICIPANT("404", "멤버를 찾을 수 없습니다."),
     NOT_PARTICIPANT("401", "일정에 참가한 유저만 접근할 수 있습니다."),
+    DELETED_PLAN("400", "삭제된 일정입니다."),
 
     // review
     CURRENT_REVIEW("400", "이미 후기가 존재합니다."),
     NOT_FOUND_REVIEW("404", "후기를 찾을 수 없습니다."),
     NOT_FOUND_REVIEW_IMAGE("404", "이미지를 찾을 수 없습니다."),
+    DELETED_REVIEW("400", "삭제된 후기입니다."),
 
     // comment
     NOT_FOUND_COMMENT("404", "댓글을 찾을 수 없습니다."),
     NOT_PARENT_COMMENT("400", "부모 댓글이 아닙니다."),
     NOT_FOUND_COMMENT_STATS("404", "댓글 정보를 찾을 수 없습니다."),
+    DELETED_COMMENT("400", "삭제된 댓글입니다."),
 
     // cursor
     INVALID_CURSOR("400", "잘못된 커서입니다."),
