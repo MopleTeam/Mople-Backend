@@ -9,6 +9,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface MeetInviteRepository extends JpaRepository<MeetInvite, UUID> {
+
     @Query("SELECT i FROM MeetInvite i where i.inviteCode = :code")
     Optional<MeetInvite> findByInviteCodeMeet(String code);
+
+    void deleteByMeetId(Long meetId);
 }

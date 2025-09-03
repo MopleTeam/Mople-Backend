@@ -1,16 +1,29 @@
 package com.mople.global.event.handler.domain.impl.meet;
 
+import com.mople.core.exception.custom.NonRetryableOutboxException;
+import com.mople.dto.event.data.domain.image.ImageDeletedEvent;
 import com.mople.dto.event.data.domain.meet.MeetSoftDeletedEvent;
+import com.mople.entity.meet.Meet;
+import com.mople.global.enums.ExceptionReturnCode;
 import com.mople.global.event.handler.domain.DomainEventHandler;
+import com.mople.meet.repository.MeetInviteRepository;
 import com.mople.meet.repository.MeetMemberRepository;
+import com.mople.meet.repository.MeetRepository;
+import com.mople.outbox.service.OutboxService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import static com.mople.global.enums.event.AggregateType.MEET;
+import static com.mople.global.enums.event.EventTypeNames.IMAGE_DELETED;
 
 @Component
 @RequiredArgsConstructor
 public class MeetCleanupHandler implements DomainEventHandler<MeetSoftDeletedEvent> {
 
+    private final MeetRepository meetRepository;
     private final MeetMemberRepository memberRepository;
+    private final MeetInviteRepository inviteRepository;
+    private final OutboxService outboxService;
 
     @Override
     public Class<MeetSoftDeletedEvent> getHandledType() {
@@ -20,5 +33,18 @@ public class MeetCleanupHandler implements DomainEventHandler<MeetSoftDeletedEve
     @Override
     public void handle(MeetSoftDeletedEvent event) {
         memberRepository.deleteByMeetId(event.getMeetId());
+        inviteRepository.deleteByMeetId(event.getMeetId());
+
+        Meet meet = meetRepository.findById(event.getMeetId())
+                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
+
+        ImageDeletedEvent deletedEvent = ImageDeletedEvent.builder()
+                .aggregateType(MEET)
+                .aggregateId(event.getMeetId())
+                .imageUrl(meet.getMeetImage())
+                .imageDeletedBy(event.getMeetDeletedBy())
+                .build();
+
+        outboxService.save(IMAGE_DELETED, MEET, event.getMeetId(), deletedEvent);
     }
 }

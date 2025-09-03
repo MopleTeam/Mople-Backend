@@ -50,7 +50,7 @@ public class Meet extends BaseTimeEntity {
         this.status = Status.ACTIVE;
     }
 
-    public void updateMeetInfo(String name, String imageName){
+    public void updateMeetInfo(String name, String imageName) {
         this.name = name;
         this.meetImage = imageName;
     }
@@ -58,5 +58,4 @@ public class Meet extends BaseTimeEntity {
     public boolean matchCreator(Long userId){
         return creatorId.equals(userId);
     }
-
 }

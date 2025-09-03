@@ -7,6 +7,6 @@ public record MeetListResponse(
         Long version,
         String meetName,
         String meetImage,
-        int memberCount,
+        Integer memberCount,
         LocalDateTime lastPlanDays
 ) {}

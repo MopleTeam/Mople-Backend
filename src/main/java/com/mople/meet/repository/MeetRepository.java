@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface MeetRepository extends JpaRepository<Meet, Long> {
 
@@ -24,4 +25,6 @@ public interface MeetRepository extends JpaRepository<Meet, Long> {
 
     @Query("select m.status from Meet m where m.id = :meetId")
     Status findStatusById(Long meetId);
+
+    Optional<Meet> findByIdAndStatus(Long id, Status status);
 }

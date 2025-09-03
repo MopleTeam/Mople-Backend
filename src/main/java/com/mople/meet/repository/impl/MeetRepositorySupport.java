@@ -31,6 +31,7 @@ public class MeetRepositorySupport {
         QMeetMember meetMember = QMeetMember.meetMember;
 
         BooleanBuilder whereCondition = new BooleanBuilder()
+                .and(meet.status.eq(Status.ACTIVE))
                 .and(meetMember.userId.eq(userId));
 
         if (cursorId != null) {
@@ -53,7 +54,10 @@ public class MeetRepositorySupport {
         List<Long> meetIdList = meets.stream().map(Meet::getId).toList();
 
         List<MeetPlan> plans = queryFactory.selectFrom(plan)
-                .where(plan.meetId.in(meetIdList))
+                .where(
+                        plan.status.eq(Status.ACTIVE),
+                        plan.meetId.in(meetIdList)
+                )
                 .orderBy(plan.planTime.desc())
                 .fetch();
 
@@ -67,7 +71,10 @@ public class MeetRepositorySupport {
                         );
 
         List<PlanReview> reviews = queryFactory.selectFrom(review)
-                .where(review.meetId.in(meetIdList))
+                .where(
+                        review.status.eq(Status.ACTIVE),
+                        review.meetId.in(meetIdList)
+                )
                 .orderBy(review.planTime.asc())
                 .fetch();
 
@@ -143,7 +150,7 @@ public class MeetRepositorySupport {
                 .fetch();
     }
 
-    private int countMeetMember(Long meetId) {
+    public Integer countMeetMember(Long meetId) {
         QMeetMember member = QMeetMember.meetMember;
 
         Long count = queryFactory
@@ -161,7 +168,10 @@ public class MeetRepositorySupport {
         return queryFactory
                 .selectOne()
                 .from(meet)
-                .where(meet.id.eq(cursorId))
+                .where(
+                        meet.status.eq(Status.ACTIVE),
+                        meet.id.eq(cursorId)
+                )
                 .fetchFirst() == null;
     }
 }

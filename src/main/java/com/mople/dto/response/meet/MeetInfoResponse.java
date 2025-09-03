@@ -12,9 +12,9 @@ public record MeetInfoResponse(
         String meetImage,
         Long creatorId,
         Long meetStartDate,
-        int memberCount
+        Integer memberCount
 ) {
-    public MeetInfoResponse(Meet meet, int memberCount) {
+    public MeetInfoResponse(Meet meet, Integer memberCount) {
         this(
                 meet.getId(),
                 meet.getVersion(),

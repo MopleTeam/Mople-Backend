@@ -112,9 +112,10 @@ public class MeetController {
     )
     @PostMapping("/invite/{meetId}")
     public ResponseEntity<String> createInvite(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long meetId
     ) {
-        return ResponseEntity.ok(meetService.createInvite(meetId));
+        return ResponseEntity.ok(meetService.createInvite(user.id(), meetId));
     }
 
     @Operation(
