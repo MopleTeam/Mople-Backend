@@ -14,9 +14,6 @@ public interface PlanReviewRepository extends JpaRepository<PlanReview, Long> {
     @Query("select r from PlanReview r where r.creatorId = :userId")
     List<PlanReview> findReviewByUserId(Long userId);
 
-    @Query("select r from PlanReview r where r.id = :reviewId")
-    Optional<PlanReview> findReview(Long reviewId);
-
     @Query("select r from PlanReview r where r.planId = :postId")
     Optional<PlanReview> findReviewByPostId(Long postId);
 
@@ -52,4 +49,6 @@ public interface PlanReviewRepository extends JpaRepository<PlanReview, Long> {
 
     @Query("select r.status from PlanReview r where r.id = :reviewId")
     Status findStatusById(Long reviewId);
+
+    Integer countByMeetId(Long meetId);
 }

@@ -1,10 +1,6 @@
 package com.mople.global.event.handler.domain.impl.review;
 
-import com.mople.core.exception.custom.NonRetryableOutboxException;
 import com.mople.dto.event.data.domain.review.ReviewPurgeEvent;
-import com.mople.entity.meet.plan.MeetPlan;
-import com.mople.entity.meet.review.PlanReview;
-import com.mople.global.enums.ExceptionReturnCode;
 import com.mople.global.enums.Status;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.review.PlanReviewRepository;

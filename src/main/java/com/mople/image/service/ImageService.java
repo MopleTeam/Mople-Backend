@@ -132,33 +132,7 @@ public class ImageService {
         return images.stream().map(CompletableFuture::join).toList();
     }
 
-    public void deleteImage(String url) {
-        String objectName = extractObjectName(url);
-
-        if (objectName != null && deleteValid(url)) {
-            storage.deleteObject(bucketName, objectName);
-        }
-    }
-
     private String createName(String folder, String type) {
         return String.format("%s/%s.%s", folder, UUID.randomUUID(), type);
-    }
-
-    private boolean deleteValid(String url) {
-        return url.contains("objectstorage") &&
-                url.contains(namespace) &&
-                url.contains(bucketName) &&
-                url.matches("^.*\\.(jpg|jpeg|png)$");
-    }
-
-    private String extractObjectName(String url) {
-        // URL : .../o/folder/image.png
-        int index = url.indexOf("/o/");
-
-        if (index != -1) {
-            return url.substring(index + 3);
-        }
-
-        return null;
     }
 }

@@ -28,6 +28,9 @@ public final class EventTypeNames {
     public static final String COMMENT_UPDATED = "COMMENT_UPDATED";
     public static final String COMMENTS_PURGE = "COMMENTS_PURGE";
 
+    // IMAGE
+    public static final String IMAGE_DELETED = "IMAGE_DELETED";
+
     // USER
     public static final String USER_DELETED = "USER_DELETED";
 

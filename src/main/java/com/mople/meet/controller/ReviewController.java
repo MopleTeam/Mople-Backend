@@ -41,7 +41,7 @@ public class ReviewController {
             @PathVariable Long meetId,
             @ParameterObject @Valid CursorPageRequest request
     ) {
-        return ResponseEntity.ok(reviewService.getAllMeetReviews(user.id(), meetId, request));
+        return ResponseEntity.ok(reviewService.getReviewList(user.id(), meetId, request));
     }
 
     @Operation(
@@ -90,7 +90,7 @@ public class ReviewController {
             @PathVariable Long reviewId,
             @ParameterObject @Valid CursorPageRequest request
     ) {
-        return ResponseEntity.ok(reviewService.getReviewParticipants(user.id(), reviewId, request));
+        return ResponseEntity.ok(reviewService.getParticipantList(user.id(), reviewId, request));
     }
 
     @Operation(
@@ -110,10 +110,11 @@ public class ReviewController {
     )
     @DeleteMapping("/images/{reviewId}")
     public ResponseEntity<List<ReviewImageListResponse>> deleteReviewImages(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long reviewId,
             @RequestBody ReviewImageDeleteRequest reviewImageDeleteRequest
     ) {
-        return ResponseEntity.ok(reviewService.removeReviewImages(reviewId, reviewImageDeleteRequest));
+        return ResponseEntity.ok(reviewService.removeReviewImages(user.id(), reviewId, reviewImageDeleteRequest));
     }
 
     @Operation(

@@ -97,18 +97,6 @@ public class ParticipantRepositorySupport {
                 .fetch();
     }
 
-    public Long countReviewParticipants(Long reviewId) {
-        QPlanParticipant participant = QPlanParticipant.planParticipant;
-
-        Long count = queryFactory
-                .select(participant.count())
-                .from(participant)
-                .where(participant.reviewId.eq(reviewId))
-                .fetchOne();
-
-        return count != null ? count : 0L;
-    }
-
     public boolean isCursorInvalid(String cursorNickname, Long cursorId) {
         QPlanParticipant participant = QPlanParticipant.planParticipant;
         QUser user = QUser.user;

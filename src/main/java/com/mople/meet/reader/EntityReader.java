@@ -37,7 +37,7 @@ public class EntityReader {
             return user;
         }
 
-        throw new BadRequestException(DELETED_USER);
+        throw new BadRequestException(INVALID_USER);
     }
 
     public Meet findMeet(Long meetId) {
@@ -48,7 +48,7 @@ public class EntityReader {
             return meet;
         }
 
-        throw new BadRequestException(DELETED_MEET);
+        throw new BadRequestException(INVALID_MEET);
     }
 
     public MeetPlan findPlan(Long planId) {
@@ -59,7 +59,7 @@ public class EntityReader {
             return plan;
         }
 
-        throw new BadRequestException(DELETED_PLAN);
+        throw new BadRequestException(INVALID_PLAN);
     }
 
     public PlanReview findReview(Long reviewId) {
@@ -70,7 +70,7 @@ public class EntityReader {
             return review;
         }
 
-        throw new BadRequestException(DELETED_REVIEW);
+        throw new BadRequestException(INVALID_REVIEW);
     }
 
     public PlanReview findReviewByPostId(Long postId) {
@@ -81,7 +81,7 @@ public class EntityReader {
             return review;
         }
 
-        throw new BadRequestException(DELETED_REVIEW);
+        throw new BadRequestException(INVALID_REVIEW);
     }
 
     public PlanComment findComment(Long commentId) {
@@ -92,6 +92,6 @@ public class EntityReader {
             return comment;
         }
 
-        throw new BadRequestException(DELETED_COMMENT);
+        throw new BadRequestException(INVALID_COMMENT);
     }
 }

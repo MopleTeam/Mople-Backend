@@ -2,6 +2,7 @@ package com.mople.meet.repository.impl.comment;
 
 import com.mople.entity.meet.comment.PlanComment;
 import com.mople.entity.meet.comment.QPlanComment;
+import com.mople.global.enums.Status;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -93,7 +94,10 @@ public class CommentRepositorySupport {
         Long result = queryFactory
                 .select(comment.count())
                 .from(comment)
-                .where(comment.postId.eq(postId))
+                .where(
+                        comment.status.eq(Status.ACTIVE),
+                        comment.postId.eq(postId)
+                )
                 .fetchOne();
 
         return result == null ? 0 : result.intValue();
