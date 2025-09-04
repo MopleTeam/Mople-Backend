@@ -13,8 +13,8 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    @Query(value = "select count(u.id) = 1 from User u where u.nickname = :nickname and u.status = :status")
-    Boolean existsByNickname(@Param("nickname") String nickname, Status status);
+    @Query(value = "select count(u.id) = 1 from User u where u.nickname = :nickname")
+    Boolean existsByNickname(@Param("nickname") String nickname);
 
     List<User> findByIdInAndStatus(List<Long> ids, Status status);
 

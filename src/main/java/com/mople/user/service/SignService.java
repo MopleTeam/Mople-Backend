@@ -47,7 +47,6 @@ public class SignService {
                 .socialProvider(sign.socialProvider())
                 .lastLaunchAt(LocalDateTime.now())
                 .role(Role.USER)
-                .status(Status.ACTIVE)
                 .build();
 
         User createUser = userRepository.save(user);
@@ -61,7 +60,7 @@ public class SignService {
             throw new AuthException(ExceptionReturnCode.TOKEN_NOT_VALID);
         }
 
-        final User user = userRepository.loginCheck(sign.email())
+        final User user = userRepository.loginCheck(sign.email(), Status.ACTIVE)
                 .orElseThrow(() -> new AuthException(ExceptionReturnCode.NOT_USER));
 
         if (!user.getSocialProvider().equals(sign.socialProvider())) {
