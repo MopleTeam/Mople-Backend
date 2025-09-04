@@ -6,6 +6,7 @@ import com.mople.global.enums.event.NotifyType;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.List;
 import java.util.Map;
 
 @Builder
@@ -14,8 +15,8 @@ public class MeetJoinNotifyEvent implements NotifyEvent {
 
     private final Long meetId;
     private final String meetName;
-    private final Long newMemberId;
     private final String newMemberNickname;
+    private final List<Long> targetIds;
 
     @Override
     public NotificationPayload payload() {
@@ -28,6 +29,11 @@ public class MeetJoinNotifyEvent implements NotifyEvent {
     @Override
     public Map<String, String> routing() {
         return Map.of("meetId", meetId.toString());
+    }
+
+    @Override
+    public List<Long> targetIds() {
+        return this.targetIds;
     }
 
     @Override

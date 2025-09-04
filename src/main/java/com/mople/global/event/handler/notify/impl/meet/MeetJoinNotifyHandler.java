@@ -3,15 +3,12 @@ package com.mople.global.event.handler.notify.impl.meet;
 import com.mople.dto.event.data.notify.meet.MeetJoinNotifyEvent;
 import com.mople.dto.response.notification.NotifySendRequest;
 import com.mople.entity.notification.Notification;
-import com.mople.entity.user.User;
 import com.mople.global.event.handler.notify.NotifyEventHandler;
 import com.mople.notification.utils.NotifySendRequestFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-
-import static com.mople.global.enums.Action.COMPLETE;
 
 @Component
 @RequiredArgsConstructor
@@ -26,18 +23,17 @@ public class MeetJoinNotifyHandler implements NotifyEventHandler<MeetJoinNotifyE
 
     @Override
     public NotifySendRequest getSendRequest(MeetJoinNotifyEvent event) {
-        return requestFactory.getMeetPushTokens(event.getNewMemberId(), event.getMeetId(), event.notifyType().getTopic());
+        return requestFactory.buildForTargets(event.getTargetIds(), event.notifyType().getTopic());
     }
 
     @Override
-    public List<Notification> getNotifications(MeetJoinNotifyEvent event, List<User> users) {
-        return users.stream()
-                .map(u -> Notification.builder()
+    public List<Notification> getNotifications(MeetJoinNotifyEvent event, List<Long> userIds) {
+        return userIds.stream()
+                .map(userId -> Notification.builder()
                         .type(event.notifyType())
-                        .action(COMPLETE)
                         .meetId(event.getMeetId())
                         .payload(event.payload())
-                        .userId(u.getId())
+                        .userId(userId)
                         .build())
                 .toList();
     }

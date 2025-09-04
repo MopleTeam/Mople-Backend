@@ -14,10 +14,10 @@ import static com.mople.global.enums.event.EventTypeNames.COMMENT_UPDATED;
 @Getter
 public class CommentUpdatedEvent implements DomainEvent {
 
-    private final Long meetId;
+    private final Long postId;
     private final Long commentId;
-    private final Long senderId;
-    private final List<Long> originMentions;
-    private final List<Long> newMentions;
+    private final Long commentWriterId;
+    private final Boolean isExistMention;
+    private final List<Long> originMentionedIds;
     private final Long parentId;
 }

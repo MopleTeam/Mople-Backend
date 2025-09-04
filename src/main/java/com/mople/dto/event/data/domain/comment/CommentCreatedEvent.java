@@ -5,8 +5,6 @@ import com.mople.dto.event.data.domain.DomainEvent;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.util.List;
-
 import static com.mople.global.enums.event.EventTypeNames.COMMENT_CREATED;
 
 @JsonTypeName(COMMENT_CREATED)
@@ -14,9 +12,9 @@ import static com.mople.global.enums.event.EventTypeNames.COMMENT_CREATED;
 @Getter
 public class CommentCreatedEvent implements DomainEvent {
 
-    private final Long meetId;
+    private final Long postId;
     private final Long commentId;
-    private final Long senderId;
-    private final List<Long> mentions;
+    private final Long commentWriterId;
+    private final Boolean isExistMention;
     private final Long parentId;
 }

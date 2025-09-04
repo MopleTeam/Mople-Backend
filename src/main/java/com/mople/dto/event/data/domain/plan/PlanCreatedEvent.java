@@ -14,6 +14,7 @@ import static com.mople.global.enums.event.EventTypeNames.PLAN_CREATED;
 @Getter
 public class PlanCreatedEvent implements DomainEvent {
 
+    private final Long meetId;
     private final Long planId;
     private final LocalDateTime planTime;
     private final Long planCreatorId;

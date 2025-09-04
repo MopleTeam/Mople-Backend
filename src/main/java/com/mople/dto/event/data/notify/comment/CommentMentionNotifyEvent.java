@@ -13,13 +13,13 @@ import java.util.Map;
 @Getter
 public class CommentMentionNotifyEvent implements NotifyEvent {
 
+    private final Long meetId;
     private final String meetName;
     private final Long postId;
-    private final Long commentId;
-    private final String commentContent;
-    private final Long senderId;
+    private final Long planId;
+    private final Long reviewId;
     private final String senderNickname;
-    private final List<Long> originMentions;
+    private final List<Long> targetIds;
 
     @Override
     public NotificationPayload payload() {
@@ -31,7 +31,12 @@ public class CommentMentionNotifyEvent implements NotifyEvent {
 
     @Override
     public Map<String, String> routing() {
-        return Map.of("commentId", commentId.toString());
+        return Map.of("postId", postId.toString());
+    }
+
+    @Override
+    public List<Long> targetIds() {
+        return this.targetIds;
     }
 
     @Override

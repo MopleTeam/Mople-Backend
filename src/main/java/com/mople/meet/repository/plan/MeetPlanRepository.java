@@ -9,14 +9,15 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface MeetPlanRepository extends JpaRepository<MeetPlan, Long>{
 
-    @Query("select p from MeetPlan p where p.planTime < :time")
-    List<MeetPlan> findPreviousPlanAll(LocalDateTime time);
+    @Query("select p from MeetPlan p where p.planTime < :time and p.status = :status")
+    List<MeetPlan> findPreviousPlanAll(LocalDateTime time, Status status);
 
-    @Query("select p from MeetPlan p where p.id in :planIds")
-    List<MeetPlan> findPlanAndTime(List<Long> planIds);
+    @Query("select p from MeetPlan p where p.id in :planIds and p.status = :status")
+    List<MeetPlan> findPlanAndTime(List<Long> planIds, Status status);
 
     @Modifying(clearAutomatically = true)
     @Query(value = """
@@ -40,9 +41,6 @@ public interface MeetPlanRepository extends JpaRepository<MeetPlan, Long>{
        """, nativeQuery = true)
     int deleteWeather(Long planId);
 
-    @Query("select p.id from MeetPlan p where p.meetId = :meetId and p.creatorId = :creatorId")
-    List<Long> findIdsByMeetIdAndCreatorId(Long meetId, Long creatorId);
-
     @Modifying(clearAutomatically = true)
     @Query("update MeetPlan p set p.status = :status, p.deletedAt = now(), p.deletedBy = :userId where p.id = :planId and p.status <> :status")
     int softDelete(Status status, Long planId, Long userId);
@@ -51,11 +49,16 @@ public interface MeetPlanRepository extends JpaRepository<MeetPlan, Long>{
     @Query("update MeetPlan p set p.status = :status, p.deletedAt = now(), p.deletedBy = :userId where p.id in :planIds and p.status <> :status")
     int softDeleteAll(Status status, List<Long> planIds, Long userId);
 
-    @Query("select p.id from MeetPlan p where p.meetId = :meetId")
-    List<Long> findIdsByMeetId(Long meetId);
-
     @Query("select p.status from MeetPlan p where p.id = :planId")
     Status findStatusById(Long planId);
 
-    Integer countByMeetId(Long meetId);
+    Integer countByMeetIdAndStatus(Long meetId, Status status);
+
+    boolean existsByIdAndStatus(Long id, Status status);
+
+    Optional<MeetPlan> findByIdAndStatus(Long id, Status status);
+
+    List<Long> findIdsByMeetIdAndCreatorIdAndStatus(Long meetId, Long creatorId, Status status);
+
+    List<Long> findIdsByMeetIdAndStatus(Long meetId, Status status);
 }

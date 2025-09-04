@@ -6,8 +6,6 @@ import com.mople.dto.event.data.notify.NotifyEvent;
 import com.mople.dto.response.notification.NotifySendRequest;
 import com.mople.entity.notification.FirebaseToken;
 import com.mople.entity.notification.Notification;
-import com.mople.entity.user.User;
-import com.mople.global.enums.Action;
 import com.mople.global.event.handler.notify.NotifyEventHandler;
 import com.mople.global.event.handler.notify.NotifyHandlerRegistry;
 import com.mople.notification.repository.NotificationRepository;
@@ -39,18 +37,15 @@ public class NotificationSendService {
             return;
         }
 
-        List<Notification> notifications = handler.getNotifications(event, sendRequest.users());
+        List<Notification> notifications = handler.getNotifications(event, sendRequest.userIds());
         notificationRepository.saveAll(notifications);
 
         List<Message> messages = sendRequest
                 .tokens()
                 .stream()
                 .map(token -> {
-                    User user = sendRequest.findUserByToken(token);
-                    Long badgeCount = notificationRepository.countBadgeCount(
-                            user.getId(),
-                            Action.COMPLETE.name()
-                    );
+                    Long userId = sendRequest.findUserByToken(token);
+                    Long badgeCount = notificationRepository.countBadgeCount(userId);
 
                     return buildMessage(event, token, sendRequest, badgeCount);
                 })

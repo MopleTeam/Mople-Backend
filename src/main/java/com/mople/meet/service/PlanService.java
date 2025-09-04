@@ -279,7 +279,7 @@ public class PlanService {
         List<PlanListResponse> plans = getPlans(userId, meetId, request.cursor(), size);
 
         return FlatCursorPageResponse.of(
-                meetPlanRepository.countByMeetId(meetId),
+                meetPlanRepository.countByMeetIdAndStatus(meetId, Status.ACTIVE),
                 buildPlanCursorPage(size, plans)
         );
     }

@@ -20,11 +20,10 @@ public interface MeetRepository extends JpaRepository<Meet, Long> {
     @Query("update Meet m set m.status = :status, m.deletedAt = now(), m.deletedBy = :userId where m.id in :meetIds and m.status <> :status")
     int softDeleteAll(Status status, List<Long> meetIds, Long userId);
 
-    @Query("select m.id from Meet m where m.creatorId = :creatorId")
-    List<Long> findIdsByCreatorId(Long creatorId);
-
     @Query("select m.status from Meet m where m.id = :meetId")
     Status findStatusById(Long meetId);
 
     Optional<Meet> findByIdAndStatus(Long id, Status status);
+
+    List<Long> findIdsByCreatorIdAndStatus(Long creatorId, Status status);
 }

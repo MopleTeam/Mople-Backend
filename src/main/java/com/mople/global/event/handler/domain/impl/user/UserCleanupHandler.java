@@ -3,6 +3,7 @@ package com.mople.global.event.handler.domain.impl.user;
 import com.mople.dto.event.data.domain.user.UserDeletedEvent;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.notification.repository.NotificationRepository;
+import com.mople.notification.repository.TopicRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 public class UserCleanupHandler implements DomainEventHandler<UserDeletedEvent> {
 
     private final NotificationRepository notificationRepository;
+    private final TopicRepository topicRepository;
 
     @Override
     public Class<UserDeletedEvent> getHandledType() {
@@ -20,5 +22,6 @@ public class UserCleanupHandler implements DomainEventHandler<UserDeletedEvent> 
     @Override
     public void handle(UserDeletedEvent event) {
         notificationRepository.deleteByUserId(event.getUserId());
+        topicRepository.deleteByUserId(event.getUserId());
     }
 }

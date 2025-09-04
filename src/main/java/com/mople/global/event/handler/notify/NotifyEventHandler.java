@@ -13,5 +13,5 @@ public interface NotifyEventHandler<T extends NotifyEvent> {
 
     NotifySendRequest getSendRequest(T event);
 
-    List<Notification> getNotifications(T event, List<User> users);
+    List<Notification> getNotifications(T event, List<Long> userIds);
 }

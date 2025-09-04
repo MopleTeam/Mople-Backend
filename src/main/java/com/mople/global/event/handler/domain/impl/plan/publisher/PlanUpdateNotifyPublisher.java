@@ -6,12 +6,16 @@ import com.mople.dto.event.data.notify.plan.PlanUpdateNotifyEvent;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.global.enums.ExceptionReturnCode;
+import com.mople.global.enums.Status;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.MeetRepository;
 import com.mople.meet.repository.plan.MeetPlanRepository;
+import com.mople.notification.reader.NotificationUserReader;
 import com.mople.notification.service.NotificationSendService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -19,6 +23,8 @@ public class PlanUpdateNotifyPublisher implements DomainEventHandler<PlanUpdated
 
     private final MeetRepository meetRepository;
     private final MeetPlanRepository planRepository;
+
+    private final NotificationUserReader userReader;
     private final NotificationSendService sendService;
 
     @Override
@@ -28,10 +34,12 @@ public class PlanUpdateNotifyPublisher implements DomainEventHandler<PlanUpdated
 
     @Override
     public void handle(PlanUpdatedEvent event) {
-        MeetPlan plan = planRepository.findById(event.getPlanId())
+        List<Long> targetIds = userReader.findPlanUsersNoTriggers(event.getPlanUpdatedBy(), event.getPlanId());
+
+        MeetPlan plan = planRepository.findByIdAndStatus(event.getPlanId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_PLAN));
 
-        Meet meet = meetRepository.findById(plan.getMeetId())
+        Meet meet = meetRepository.findByIdAndStatus(plan.getMeetId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
 
         PlanUpdateNotifyEvent notifyEvent = PlanUpdateNotifyEvent.builder()
@@ -39,7 +47,7 @@ public class PlanUpdateNotifyPublisher implements DomainEventHandler<PlanUpdated
                 .meetName(meet.getName())
                 .planId(event.getPlanId())
                 .planName(plan.getName())
-                .planUpdatedBy(event.getPlanUpdatedBy())
+                .targetIds(targetIds)
                 .build();
 
         sendService.sendMultiNotification(notifyEvent);

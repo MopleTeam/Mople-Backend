@@ -1,27 +1,37 @@
 package com.mople.global.event.handler.domain.impl.comment.publisher;
 
 import com.mople.core.exception.custom.NonRetryableOutboxException;
+import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.event.data.domain.comment.CommentUpdatedEvent;
 import com.mople.dto.event.data.notify.comment.CommentMentionNotifyEvent;
 import com.mople.entity.meet.Meet;
-import com.mople.entity.meet.comment.PlanComment;
+import com.mople.entity.meet.plan.MeetPlan;
+import com.mople.entity.meet.review.PlanReview;
 import com.mople.entity.user.User;
 import com.mople.global.enums.ExceptionReturnCode;
+import com.mople.global.enums.Status;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.MeetRepository;
-import com.mople.meet.repository.comment.PlanCommentRepository;
+import com.mople.meet.repository.plan.MeetPlanRepository;
+import com.mople.meet.repository.review.PlanReviewRepository;
+import com.mople.notification.reader.NotificationUserReader;
 import com.mople.notification.service.NotificationSendService;
 import com.mople.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class CommentUpdatedMentionNotifyPublisher implements DomainEventHandler<CommentUpdatedEvent> {
 
     private final MeetRepository meetRepository;
+    private final MeetPlanRepository planRepository;
+    private final PlanReviewRepository reviewRepository;
     private final UserRepository userRepository;
-    private final PlanCommentRepository commentRepository;
+
+    private final NotificationUserReader userReader;
     private final NotificationSendService sendService;
 
     @Override
@@ -31,29 +41,68 @@ public class CommentUpdatedMentionNotifyPublisher implements DomainEventHandler<
 
     @Override
     public void handle(CommentUpdatedEvent event) {
-        if (event.getNewMentions() == null || !event.getNewMentions().isEmpty()) {
+        if (!event.getIsExistMention()) {
             return;
         }
 
-        PlanComment comment = commentRepository.findById(event.getCommentId())
-                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_COMMENT));
+        List<Long> filteredTargetIds = userReader.findUpdatedMentionedUsers(
+                event.getOriginMentionedIds(), event.getCommentWriterId(), event.getCommentId()
+        );
 
-        Meet meet = meetRepository.findById(event.getMeetId())
-                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
-
-        User user = userRepository.findById(event.getSenderId())
+        User user = userRepository.findByIdAndStatus(event.getCommentWriterId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_USER));
 
+        if (isPlan(event.getPostId())) {
+            MeetPlan plan = planRepository.findByIdAndStatus(event.getPostId(), Status.ACTIVE)
+                    .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_PLAN));
+
+            Meet meet = meetRepository.findByIdAndStatus(plan.getMeetId(), Status.ACTIVE)
+                    .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_MEET));
+
+            CommentMentionNotifyEvent notifyEvent = CommentMentionNotifyEvent.builder()
+                    .meetId(meet.getId())
+                    .meetName(meet.getName())
+                    .postId(event.getPostId())
+                    .planId(plan.getId())
+                    .reviewId(null)
+                    .senderNickname(user.getNickname())
+                    .targetIds(filteredTargetIds)
+                    .build();
+
+            sendService.sendMultiNotification(notifyEvent);
+            return;
+        }
+
+        PlanReview review = reviewRepository.findByPlanIdAndStatus(event.getPostId(), Status.ACTIVE)
+                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_REVIEW));
+
+        Meet meet = meetRepository.findByIdAndStatus(review.getMeetId(), Status.ACTIVE)
+                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_MEET));
+
         CommentMentionNotifyEvent notifyEvent = CommentMentionNotifyEvent.builder()
-                .postId(comment.getPostId())
+                .meetId(meet.getId())
                 .meetName(meet.getName())
-                .commentId(event.getCommentId())
-                .commentContent(comment.getContent())
-                .senderId(event.getSenderId())
+                .postId(event.getPostId())
+                .planId(null)
+                .reviewId(review.getId())
                 .senderNickname(user.getNickname())
-                .originMentions(event.getOriginMentions())
+                .targetIds(filteredTargetIds)
                 .build();
 
         sendService.sendMultiNotification(notifyEvent);
+    }
+
+    private boolean isPlan(Long postId) {
+        try {
+            planRepository.findByIdAndStatus(postId, Status.ACTIVE)
+                    .orElseThrow(() -> new ResourceNotFoundException(ExceptionReturnCode.INVALID_PLAN));
+
+            return true;
+        } catch (ResourceNotFoundException e) {
+            reviewRepository.findByPlanIdAndStatus(postId, Status.ACTIVE)
+                    .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_REVIEW));
+
+            return false;
+        }
     }
 }

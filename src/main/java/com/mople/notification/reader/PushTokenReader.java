@@ -15,25 +15,25 @@ import java.util.List;
 public class PushTokenReader {
     private final JPAQueryFactory queryFactory;
 
-    public List<FirebaseToken> findPushToken(List<Long> userIds) {
+    public List<FirebaseToken> findTokensWithPushTopic(List<Long> userIds, PushTopic pushTopic) {
+        QTopic topic = QTopic.topic1;
 
+        List<Long> subscribedUserIds = queryFactory
+                .select(topic.userId)
+                .from(topic)
+                .where(topic.userId.in(userIds), topic.topic.eq(pushTopic))
+                .fetch();
+
+        return findPushTokens(subscribedUserIds);
+    }
+
+    private List<FirebaseToken> findPushTokens(List<Long> userIds) {
         QFirebaseToken token = QFirebaseToken.firebaseToken;
 
         return queryFactory
                 .select(token)
                 .from(token)
                 .where(token.userId.in(userIds), token.active.isTrue())
-                .fetch();
-    }
-
-    public List<Long> findAllTokenId(List<Long> userIds, PushTopic pushTopic) {
-
-        QTopic topic = QTopic.topic1;
-
-        return queryFactory
-                .select(topic.userId)
-                .from(topic)
-                .where(topic.userId.in(userIds), topic.topic.eq(pushTopic))
                 .fetch();
     }
 }

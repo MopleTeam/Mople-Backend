@@ -6,6 +6,7 @@ import com.mople.global.enums.event.NotifyType;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.List;
 import java.util.Map;
 
 @Builder
@@ -16,7 +17,7 @@ public class PlanUpdateNotifyEvent implements NotifyEvent {
     private final String meetName;
     private final Long planId;
     private final String planName;
-    private final Long planUpdatedBy;
+    private final List<Long> targetIds;
 
     @Override
     public NotificationPayload payload() {
@@ -29,6 +30,11 @@ public class PlanUpdateNotifyEvent implements NotifyEvent {
     @Override
     public Map<String, String> routing() {
         return Map.of("planId", planId.toString());
+    }
+
+    @Override
+    public List<Long> targetIds() {
+        return this.targetIds;
     }
 
     @Override

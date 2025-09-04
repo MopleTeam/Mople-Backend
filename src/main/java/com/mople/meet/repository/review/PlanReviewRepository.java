@@ -11,14 +11,12 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PlanReviewRepository extends JpaRepository<PlanReview, Long> {
-    @Query("select r from PlanReview r where r.creatorId = :userId")
-    List<PlanReview> findReviewByUserId(Long userId);
 
     @Query("select r from PlanReview r where r.planId = :postId")
     Optional<PlanReview> findReviewByPostId(Long postId);
 
-    @Query("select r from PlanReview r where r.planId in :postIds")
-    List<PlanReview> findReviewsByPostId(List<Long> postIds);
+    @Query("select r from PlanReview r where r.planId in :postIds and r.status = :status")
+    List<PlanReview> findReviewsByPostIdIn(List<Long> postIds, Status status);
 
     @Modifying(clearAutomatically = true)
     @Query("""
@@ -30,9 +28,6 @@ public interface PlanReviewRepository extends JpaRepository<PlanReview, Long> {
     """)
     int uploadedAtFirst(Long reviewId);
 
-    @Query("select r.id from PlanReview r where r.meetId = :meetId and r.creatorId = :creatorId")
-    List<Long> findIdsByMeetIdAndCreatorId(Long meetId, Long creatorId);
-
     @Modifying(clearAutomatically = true)
     @Query("update PlanReview r set r.status = :status, r.deletedAt = now(), r.deletedBy = :userId where r.id = :reviewId and r.status <> :status")
     int softDelete(Status status, Long reviewId, Long userId);
@@ -41,14 +36,21 @@ public interface PlanReviewRepository extends JpaRepository<PlanReview, Long> {
     @Query("update PlanReview r set r.status = :status, r.deletedAt = now(), r.deletedBy = :userId where r.id in :reviewIds and r.status <> :status")
     int softDeleteAll(Status status, List<Long> reviewIds, Long userId);
 
-    @Query("select r.id from PlanReview r where r.meetId = :meetId")
-    List<Long> findIdsByMeetId(Long meetId);
-
     @Query("select r.planId from PlanReview r where r.id = :reviewId")
     Long findPlanIdById(Long reviewId);
 
     @Query("select r.status from PlanReview r where r.id = :reviewId")
     Status findStatusById(Long reviewId);
 
-    Integer countByMeetId(Long meetId);
+    Integer countByMeetIdAndStatus(Long meetId, Status status);
+
+    boolean existsByPlanIdAndStatus(Long planId, Status status);
+
+    Optional<PlanReview> findByPlanIdAndStatus(Long planId, Status status);
+
+    Optional<PlanReview> findByIdAndStatus(Long id, Status status);
+
+    List<Long> findIdsByMeetIdAndCreatorIdAndStatus(Long meetId, Long creatorId, Status status);
+
+    List<Long> findIdsByMeetIdAndStatus(Long meetId, Status status);
 }

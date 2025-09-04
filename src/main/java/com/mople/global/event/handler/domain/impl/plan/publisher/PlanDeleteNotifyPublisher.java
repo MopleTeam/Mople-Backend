@@ -6,13 +6,17 @@ import com.mople.dto.event.data.notify.plan.PlanDeleteNotifyEvent;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.global.enums.ExceptionReturnCode;
+import com.mople.global.enums.Status;
 import com.mople.global.enums.event.DeletionCause;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.MeetRepository;
 import com.mople.meet.repository.plan.MeetPlanRepository;
+import com.mople.notification.reader.NotificationUserReader;
 import com.mople.notification.service.NotificationSendService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -20,6 +24,8 @@ public class PlanDeleteNotifyPublisher implements DomainEventHandler<PlanSoftDel
 
     private final MeetRepository meetRepository;
     private final MeetPlanRepository planRepository;
+
+    private final NotificationUserReader userReader;
     private final NotificationSendService sendService;
 
     @Override
@@ -33,10 +39,12 @@ public class PlanDeleteNotifyPublisher implements DomainEventHandler<PlanSoftDel
             return;
         }
 
-        MeetPlan plan = planRepository.findById(event.getPlanId())
+        List<Long> targetIds = userReader.findPlanUsersNoTriggers(event.getPlanDeletedBy(), event.getPlanId());
+
+        MeetPlan plan = planRepository.findByIdAndStatus(event.getPlanId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_PLAN));
 
-        Meet meet = meetRepository.findById(plan.getMeetId())
+        Meet meet = meetRepository.findByIdAndStatus(plan.getMeetId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
 
         PlanDeleteNotifyEvent notifyEvent = PlanDeleteNotifyEvent.builder()
@@ -44,7 +52,7 @@ public class PlanDeleteNotifyPublisher implements DomainEventHandler<PlanSoftDel
                 .meetName(meet.getName())
                 .planId(event.getPlanId())
                 .planName(plan.getName())
-                .planDeletedBy(event.getPlanDeletedBy())
+                .targetIds(targetIds)
                 .build();
 
         sendService.sendMultiNotification(notifyEvent);

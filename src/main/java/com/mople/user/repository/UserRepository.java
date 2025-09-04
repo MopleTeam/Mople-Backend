@@ -20,4 +20,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("select u from User u where u.email = :email and u.status = :status")
     Optional<User> loginCheck(@Param("email") String email, Status status);
+
+    Optional<User> findByIdAndStatus(Long id, Status status);
 }

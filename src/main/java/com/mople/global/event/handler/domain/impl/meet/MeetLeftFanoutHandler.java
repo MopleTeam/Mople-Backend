@@ -3,6 +3,7 @@ package com.mople.global.event.handler.domain.impl.meet;
 import com.mople.dto.event.data.domain.meet.MeetLeftEvent;
 import com.mople.dto.event.data.domain.plan.PlanSoftDeletedEvent;
 import com.mople.dto.event.data.domain.review.ReviewSoftDeletedEvent;
+import com.mople.global.enums.Status;
 import com.mople.global.enums.event.DeletionCause;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.plan.MeetPlanRepository;
@@ -33,8 +34,10 @@ public class MeetLeftFanoutHandler implements DomainEventHandler<MeetLeftEvent> 
 
     @Override
     public void handle(MeetLeftEvent event) {
-        List<Long> ownedPlanIds = planRepository.findIdsByMeetIdAndCreatorId(event.getMeetId(), event.getLeaveMemberId());
-        List<Long> ownedReviewIds = reviewRepository.findIdsByMeetIdAndCreatorId(event.getMeetId(), event.getLeaveMemberId());
+        List<Long> ownedPlanIds = planRepository
+                .findIdsByMeetIdAndCreatorIdAndStatus(event.getMeetId(), event.getLeaveMemberId(), Status.ACTIVE);
+        List<Long> ownedReviewIds = reviewRepository
+                .findIdsByMeetIdAndCreatorIdAndStatus(event.getMeetId(), event.getLeaveMemberId(), Status.ACTIVE);
 
         chunk(ownedPlanIds, ids -> {
             planRepository.softDeleteAll(DELETED, ids, event.getLeaveMemberId());

@@ -5,6 +5,7 @@ import com.mople.dto.event.data.domain.image.ImageDeletedEvent;
 import com.mople.dto.event.data.domain.meet.MeetSoftDeletedEvent;
 import com.mople.entity.meet.Meet;
 import com.mople.global.enums.ExceptionReturnCode;
+import com.mople.global.enums.Status;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.MeetInviteRepository;
 import com.mople.meet.repository.MeetMemberRepository;
@@ -35,7 +36,7 @@ public class MeetCleanupHandler implements DomainEventHandler<MeetSoftDeletedEve
         memberRepository.deleteByMeetId(event.getMeetId());
         inviteRepository.deleteByMeetId(event.getMeetId());
 
-        Meet meet = meetRepository.findById(event.getMeetId())
+        Meet meet = meetRepository.findByIdAndStatus(event.getMeetId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
 
         ImageDeletedEvent deletedEvent = ImageDeletedEvent.builder()

@@ -3,6 +3,7 @@ package com.mople.global.event.handler.domain.impl.user;
 import com.mople.dto.event.data.domain.meet.MeetLeftEvent;
 import com.mople.dto.event.data.domain.meet.MeetSoftDeletedEvent;
 import com.mople.dto.event.data.domain.user.UserDeletedEvent;
+import com.mople.global.enums.Status;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.MeetMemberRepository;
 import com.mople.meet.repository.MeetRepository;
@@ -34,11 +35,10 @@ public class UserDeletedFanoutHandler implements DomainEventHandler<UserDeletedE
     public void handle(UserDeletedEvent event) {
         List<Long> joinedMeetIds = memberRepository.findMeetIdsByUserId(event.getUserId());
 
-        List<Long> ownedMeetIds = meetRepository.findIdsByCreatorId(event.getUserId());
+        List<Long> ownedMeetIds = meetRepository.findIdsByCreatorIdAndStatus(event.getUserId(), Status.ACTIVE);
         List<Long> memberMeetIds = joinedMeetIds.stream()
                 .filter(id -> !ownedMeetIds.contains(id))
                 .toList();
-
 
         chunk(ownedMeetIds, ids -> {
             meetRepository.softDeleteAll(DELETED, ids, event.getUserId());

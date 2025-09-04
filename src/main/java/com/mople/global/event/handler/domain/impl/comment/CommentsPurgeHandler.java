@@ -1,7 +1,6 @@
 package com.mople.global.event.handler.domain.impl.comment;
 
 import com.mople.dto.event.data.domain.comment.CommentPurgeEvent;
-import com.mople.entity.meet.comment.PlanComment;
 import com.mople.global.enums.Status;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.comment.PlanCommentRepository;

@@ -2,6 +2,7 @@ package com.mople.global.event.handler.domain.impl.review;
 
 import com.mople.dto.event.data.domain.comment.CommentsSoftDeletedEvent;
 import com.mople.dto.event.data.domain.review.ReviewSoftDeletedEvent;
+import com.mople.global.enums.Status;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.comment.PlanCommentRepository;
 import com.mople.outbox.service.OutboxService;
@@ -28,7 +29,7 @@ public class ReviewDeletedFanoutHandler implements DomainEventHandler<ReviewSoft
 
     @Override
     public void handle(ReviewSoftDeletedEvent event) {
-        List<Long> commentIds = commentRepository.findIdsByPostId(event.getPlanId());
+        List<Long> commentIds = commentRepository.findIdsByPostIdAndStatus(event.getPlanId(), Status.ACTIVE);
         commentRepository.softDeleteAll(DELETED, commentIds, event.getReviewDeletedBy());
 
         CommentsSoftDeletedEvent deleteEvent = CommentsSoftDeletedEvent.builder()

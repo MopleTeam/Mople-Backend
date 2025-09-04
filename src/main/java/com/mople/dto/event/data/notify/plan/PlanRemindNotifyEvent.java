@@ -6,7 +6,7 @@ import com.mople.global.enums.event.NotifyType;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @Builder
@@ -17,10 +17,9 @@ public class PlanRemindNotifyEvent implements NotifyEvent {
     private final String meetName;
     private final Long planId;
     private final String planName;
-    private final LocalDateTime planTime;
-    private final Long planCreatorId;
     private final Double temperature;
     private final String iconImage;
+    private final List<Long> targetIds;
 
     @Override
     public NotificationPayload payload() {
@@ -33,6 +32,11 @@ public class PlanRemindNotifyEvent implements NotifyEvent {
     @Override
     public Map<String, String> routing() {
         return Map.of("planId", planId.toString());
+    }
+
+    @Override
+    public List<Long> targetIds() {
+        return this.targetIds;
     }
 
     @Override

@@ -20,11 +20,10 @@ public interface PlanCommentRepository extends JpaRepository<PlanComment, Long> 
     @Query("update PlanComment c set c.status = :status, c.deletedAt = now(), c.deletedBy = :userId where c.id in :commentIds and c.status <> :status")
     int softDeleteAll(Status status, List<Long> commentIds, Long userId);
 
-    @Query("select c.id from PlanComment c where c.postId = :postId")
-    List<Long> findIdsByPostId(Long postId);
-
     void deleteByIdIn(List<Long> commentIds);
 
     @Query("select c.status from PlanComment c where c.id in :commentIds")
     List<Status> findStatusByIdIn(List<Long> commentIds);
+
+    List<Long> findIdsByPostIdAndStatus(Long postId, Status status);
 }

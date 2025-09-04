@@ -97,7 +97,7 @@ public class ReviewService {
                 .toList();
 
         return FlatCursorPageResponse.of(
-                planReviewRepository.countByMeetId(meetId),
+                planReviewRepository.countByMeetIdAndStatus(meetId, Status.ACTIVE),
                 buildReviewCursorPage(size, reviewInfoResponses)
         );
     }

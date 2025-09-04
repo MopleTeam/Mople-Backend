@@ -3,6 +3,7 @@ package com.mople.global.event.handler.domain.impl.meet;
 import com.mople.dto.event.data.domain.meet.MeetSoftDeletedEvent;
 import com.mople.dto.event.data.domain.plan.PlanSoftDeletedEvent;
 import com.mople.dto.event.data.domain.review.ReviewSoftDeletedEvent;
+import com.mople.global.enums.Status;
 import com.mople.global.enums.event.DeletionCause;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.plan.MeetPlanRepository;
@@ -33,8 +34,8 @@ public class MeetDeletedFanoutHandler implements DomainEventHandler<MeetSoftDele
 
     @Override
     public void handle(MeetSoftDeletedEvent event) {
-        List<Long> planIds = planRepository.findIdsByMeetId(event.getMeetId());
-        List<Long> reviewIds = reviewRepository.findIdsByMeetId(event.getMeetId());
+        List<Long> planIds = planRepository.findIdsByMeetIdAndStatus(event.getMeetId(), Status.ACTIVE);
+        List<Long> reviewIds = reviewRepository.findIdsByMeetIdAndStatus(event.getMeetId(), Status.ACTIVE);
 
         chunk(planIds, ids -> {
             planRepository.softDeleteAll(DELETED, ids, event.getMeetDeletedBy());
