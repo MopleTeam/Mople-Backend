@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 import static com.mople.global.enums.Status.DELETED;
-import static com.mople.global.enums.event.AggregateType.PLAN;
+import static com.mople.global.enums.event.AggregateType.POST;
 import static com.mople.global.enums.event.EventTypeNames.COMMENTS_SOFT_DELETED;
 
 @Component
@@ -33,11 +33,11 @@ public class PlanDeletedFanoutHandler implements DomainEventHandler<PlanSoftDele
         commentRepository.softDeleteAll(DELETED, commentIds, event.getPlanDeletedBy());
 
         CommentsSoftDeletedEvent deleteEvent = CommentsSoftDeletedEvent.builder()
-                .planId(event.getPlanId())
+                .postId(event.getPlanId())
                 .commentIds(commentIds)
                 .commentsDeletedBy(event.getPlanDeletedBy())
                 .build();
 
-        outboxService.save(COMMENTS_SOFT_DELETED, PLAN, event.getPlanId(), deleteEvent);
+        outboxService.save(COMMENTS_SOFT_DELETED, POST, event.getPlanId(), deleteEvent);
     }
 }

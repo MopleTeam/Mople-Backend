@@ -10,12 +10,6 @@ import java.util.List;
 
 public interface PlanCommentRepository extends JpaRepository<PlanComment, Long> {
 
-    List<PlanComment> findAllByParentId(Long parentId);
-
-    @Modifying(clearAutomatically = true)
-    @Query("update PlanComment c set c.status = :status, c.deletedAt = now(), c.deletedBy = :userId where c.id = :commentId and c.status <> :status")
-    int softDelete(Status status, Long commentId, Long userId);
-
     @Modifying(clearAutomatically = true)
     @Query("update PlanComment c set c.status = :status, c.deletedAt = now(), c.deletedBy = :userId where c.id in :commentIds and c.status <> :status")
     int softDeleteAll(Status status, List<Long> commentIds, Long userId);

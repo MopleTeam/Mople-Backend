@@ -31,11 +31,6 @@ public class CommentsPurgeRegisterHandler implements DomainEventHandler<Comments
                 .commentIds(event.getCommentIds())
                 .build();
 
-        if (event.getReviewId() == null) {
-            outboxService.saveWithRunAt(COMMENTS_PURGE, PLAN, event.getPlanId(), runAt, purgeEvent);
-        } else if (event.getPlanId() == null) {
-            outboxService.saveWithRunAt(COMMENTS_PURGE, REVIEW, event.getReviewId(), runAt, purgeEvent);
-        }
-
+        outboxService.saveWithRunAt(COMMENTS_PURGE, POST, event.getPostId(), runAt, purgeEvent);
     }
 }

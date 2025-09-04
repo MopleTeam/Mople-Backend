@@ -20,6 +20,7 @@ public class CommentRepositorySupport {
         QPlanComment comment = QPlanComment.planComment;
 
         BooleanBuilder whereCondition = new BooleanBuilder()
+                .and(comment.status.eq(Status.ACTIVE))
                 .and(comment.postId.eq(postId))
                 .and(comment.parentId.isNull());
 
@@ -45,25 +46,27 @@ public class CommentRepositorySupport {
                 .fetch();
     }
 
-    public Long countComments(Long postId) {
+    public Integer countComments(Long postId) {
         QPlanComment comment = QPlanComment.planComment;
 
         Long count = queryFactory
                 .select(comment.count())
                 .from(comment)
                 .where(
+                        comment.status.eq(Status.ACTIVE),
                         comment.postId.eq(postId),
                         comment.parentId.isNull()
                 )
                 .fetchOne();
 
-        return count != null ? count : 0L;
+        return Math.toIntExact(count != null ? count : 0L);
     }
 
     public List<PlanComment> findCommentReplyPage(Long postId, Long commentId, Long cursorId, int size) {
         QPlanComment comment = QPlanComment.planComment;
 
         BooleanBuilder whereCondition = new BooleanBuilder()
+                .and(comment.status.eq(Status.ACTIVE))
                 .and(comment.postId.eq(postId))
                 .and(comment.parentId.eq(commentId));
 
@@ -109,7 +112,10 @@ public class CommentRepositorySupport {
         return queryFactory
                 .selectOne()
                 .from(comment)
-                .where(comment.id.eq(cursorId))
+                .where(
+                        comment.status.eq(Status.ACTIVE),
+                        comment.id.eq(cursorId)
+                )
                 .fetchFirst() == null;
     }
 }

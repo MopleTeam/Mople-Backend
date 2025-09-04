@@ -14,8 +14,7 @@ import static com.mople.global.enums.event.EventTypeNames.COMMENTS_SOFT_DELETED;
 @Getter
 public class CommentsSoftDeletedEvent implements DomainEvent {
 
-    private final Long planId;
-    private final Long reviewId;
+    private final Long postId;
     private final List<Long> commentIds;
     private final Long commentsDeletedBy;
 }

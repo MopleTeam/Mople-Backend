@@ -1,5 +1,5 @@
 package com.mople.global.enums.event;
 
 public enum AggregateType {
-    MEET, PLAN, REVIEW, COMMENT, USER
+    MEET, POST, PLAN, REVIEW, COMMENT, USER
 }

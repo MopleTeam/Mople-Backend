@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 import static com.mople.global.enums.Status.DELETED;
-import static com.mople.global.enums.event.AggregateType.REVIEW;
+import static com.mople.global.enums.event.AggregateType.POST;
 import static com.mople.global.enums.event.EventTypeNames.COMMENTS_SOFT_DELETED;
 
 @Component
@@ -33,11 +33,11 @@ public class ReviewDeletedFanoutHandler implements DomainEventHandler<ReviewSoft
         commentRepository.softDeleteAll(DELETED, commentIds, event.getReviewDeletedBy());
 
         CommentsSoftDeletedEvent deleteEvent = CommentsSoftDeletedEvent.builder()
-                .reviewId(event.getReviewId())
+                .postId(event.getPlanId())
                 .commentIds(commentIds)
                 .commentsDeletedBy(event.getReviewDeletedBy())
                 .build();
 
-        outboxService.save(COMMENTS_SOFT_DELETED, REVIEW, event.getReviewId(), deleteEvent);
+        outboxService.save(COMMENTS_SOFT_DELETED, POST, event.getPlanId(), deleteEvent);
     }
 }
