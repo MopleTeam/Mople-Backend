@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.mople.global.enums.event.AggregateType.PLAN;
@@ -57,7 +58,7 @@ public class PlanTransitionService {
         List<PlanParticipant> participants = participantRepository.findParticipantsByPlanId(plan.getId());
         participants.forEach(pp -> pp.updateReview(review.getId()));
 
-        planRepository.softDelete(Status.DELETED, plan.getId(), SYSTEM_USER_ID);
+        planRepository.softDelete(Status.DELETED, plan.getId(), SYSTEM_USER_ID, LocalDateTime.now());
 
         PlanTransitionedEvent transitionedEvent = PlanTransitionedEvent.builder()
                 .planId(review.getPlanId())

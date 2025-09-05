@@ -289,7 +289,7 @@ public class CommentService {
 
             if (stats.canDecreaseReplyCount()){
                 statsRepository.decreaseReplyCount(parentComment.getId());
-                commentRepository.softDeleteAll(Status.DELETED, commentIdsToDelete, userId);
+                commentRepository.softDeleteAll(Status.DELETED, commentIdsToDelete, userId, LocalDateTime.now());
                 deleteComments(commentIdsToDelete, comment.getPostId(), userId);
             }
             return;
@@ -301,7 +301,7 @@ public class CommentService {
             commentIdsToDelete.addAll(replies);
         }
 
-        commentRepository.softDeleteAll(Status.DELETED, commentIdsToDelete, userId);
+        commentRepository.softDeleteAll(Status.DELETED, commentIdsToDelete, userId, LocalDateTime.now());
         deleteComments(commentIdsToDelete, comment.getPostId(), userId);
     }
 

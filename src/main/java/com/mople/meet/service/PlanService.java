@@ -219,7 +219,7 @@ public class PlanService {
             throw new AsyncException(REQUEST_CONFLICT);
         }
 
-        meetPlanRepository.softDelete(Status.DELETED, planId, userId);
+        meetPlanRepository.softDelete(Status.DELETED, planId, userId, LocalDateTime.now());
 
         PlanSoftDeletedEvent deleteEvent = PlanSoftDeletedEvent.builder()
                 .planId(plan.getId())

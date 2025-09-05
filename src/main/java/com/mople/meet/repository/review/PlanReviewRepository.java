@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,12 +30,26 @@ public interface PlanReviewRepository extends JpaRepository<PlanReview, Long> {
     int uploadedAtFirst(Long reviewId);
 
     @Modifying(clearAutomatically = true)
-    @Query("update PlanReview r set r.status = :status, r.deletedAt = now(), r.deletedBy = :userId where r.id = :reviewId and r.status <> :status")
-    int softDelete(Status status, Long reviewId, Long userId);
+    @Query(
+            "update PlanReview r " +
+            "   set r.status = :status, " +
+            "       r.deletedAt = :deletedAt, " +
+            "       r.deletedBy = :userId " +
+            " where r.id = :reviewId " +
+            "   and r.status <> :status"
+    )
+    int softDelete(Status status, Long reviewId, Long userId, LocalDateTime deletedAt);
 
     @Modifying(clearAutomatically = true)
-    @Query("update PlanReview r set r.status = :status, r.deletedAt = now(), r.deletedBy = :userId where r.id in :reviewIds and r.status <> :status")
-    int softDeleteAll(Status status, List<Long> reviewIds, Long userId);
+    @Query(
+            "update PlanReview r " +
+            "   set r.status = :status, " +
+            "       r.deletedAt = :deletedAt, " +
+            "       r.deletedBy = :userId " +
+            " where r.id in :reviewIds " +
+            "   and r.status <> :status"
+    )
+    int softDeleteAll(Status status, List<Long> reviewIds, Long userId, LocalDateTime deletedAt);
 
     @Query("select r.planId from PlanReview r where r.id = :reviewId")
     Long findPlanIdById(Long reviewId);

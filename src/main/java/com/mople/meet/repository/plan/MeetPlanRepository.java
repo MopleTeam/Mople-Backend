@@ -42,12 +42,26 @@ public interface MeetPlanRepository extends JpaRepository<MeetPlan, Long>{
     int deleteWeather(Long planId);
 
     @Modifying(clearAutomatically = true)
-    @Query("update MeetPlan p set p.status = :status, p.deletedAt = now(), p.deletedBy = :userId where p.id = :planId and p.status <> :status")
-    int softDelete(Status status, Long planId, Long userId);
+    @Query(
+            "update MeetPlan p " +
+            "   set p.status = :status, " +
+            "       p.deletedAt = :deletedAt, " +
+            "       p.deletedBy = :userId " +
+            " where p.id = :planId " +
+            "   and p.status <> :status"
+    )
+    int softDelete(Status status, Long planId, Long userId, LocalDateTime deletedAt);
 
     @Modifying(clearAutomatically = true)
-    @Query("update MeetPlan p set p.status = :status, p.deletedAt = now(), p.deletedBy = :userId where p.id in :planIds and p.status <> :status")
-    int softDeleteAll(Status status, List<Long> planIds, Long userId);
+    @Query(
+            "update MeetPlan p " +
+            "   set p.status = :status, " +
+            "       p.deletedAt = :deletedAt, " +
+            "       p.deletedBy = :userId " +
+            " where p.id in :planIds " +
+            "   and p.status <> :status"
+    )
+    int softDeleteAll(Status status, List<Long> planIds, Long userId, LocalDateTime deletedAt);
 
     @Query("select p.status from MeetPlan p where p.id = :planId")
     Status findStatusById(Long planId);

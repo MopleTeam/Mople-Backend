@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 import static com.mople.dto.client.MeetClientResponse.*;
@@ -271,7 +272,7 @@ public class MeetService {
                 throw new AsyncException(REQUEST_CONFLICT);
             }
 
-            meetRepository.softDelete(Status.DELETED, meetId, userId);
+            meetRepository.softDelete(Status.DELETED, meetId, userId, LocalDateTime.now());
 
             MeetSoftDeletedEvent deletedEvent = MeetSoftDeletedEvent.builder()
                     .meetId(meetId)

@@ -43,6 +43,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -190,7 +191,7 @@ public class ReviewService {
             throw new AsyncException(REQUEST_CONFLICT);
         }
 
-        planReviewRepository.softDelete(Status.DELETED, reviewId, userId);
+        planReviewRepository.softDelete(Status.DELETED, reviewId, userId, LocalDateTime.now());
 
         ReviewSoftDeletedEvent deletedEvent = ReviewSoftDeletedEvent.builder()
                 .planId(review.getPlanId())

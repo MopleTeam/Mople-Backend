@@ -6,13 +6,21 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface PlanCommentRepository extends JpaRepository<PlanComment, Long> {
 
     @Modifying(clearAutomatically = true)
-    @Query("update PlanComment c set c.status = :status, c.deletedAt = now(), c.deletedBy = :userId where c.id in :commentIds and c.status <> :status")
-    int softDeleteAll(Status status, List<Long> commentIds, Long userId);
+    @Query(
+            "update PlanComment c " +
+            "   set c.status = :status, " +
+            "       c.deletedAt = :deletedAt, " +
+            "       c.deletedBy = :userId " +
+            " where c.id in :commentIds " +
+            "   and c.status <> :status"
+    )
+    int softDeleteAll(Status status, List<Long> commentIds, Long userId, LocalDateTime deletedAt);
 
     void deleteByIdIn(List<Long> commentIds);
 

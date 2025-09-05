@@ -9,6 +9,7 @@ import com.mople.outbox.service.OutboxService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.mople.global.enums.Status.DELETED;
@@ -30,7 +31,7 @@ public class PlanDeletedFanoutHandler implements DomainEventHandler<PlanSoftDele
     @Override
     public void handle(PlanSoftDeletedEvent event) {
         List<Long> commentIds = commentRepository.findIdsByPostIdAndStatus(event.getPlanId(), Status.ACTIVE);
-        commentRepository.softDeleteAll(DELETED, commentIds, event.getPlanDeletedBy());
+        commentRepository.softDeleteAll(DELETED, commentIds, event.getPlanDeletedBy(), LocalDateTime.now());
 
         CommentsSoftDeletedEvent deleteEvent = CommentsSoftDeletedEvent.builder()
                 .postId(event.getPlanId())

@@ -11,6 +11,7 @@ import com.mople.outbox.service.OutboxService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.mople.global.enums.Status.DELETED;
@@ -41,7 +42,7 @@ public class UserDeletedFanoutHandler implements DomainEventHandler<UserDeletedE
                 .toList();
 
         chunk(ownedMeetIds, ids -> {
-            meetRepository.softDeleteAll(DELETED, ids, event.getUserId());
+            meetRepository.softDeleteAll(DELETED, ids, event.getUserId(), LocalDateTime.now());
 
             ids.forEach(id -> {
                 MeetSoftDeletedEvent deleteEvent = MeetSoftDeletedEvent.builder()
