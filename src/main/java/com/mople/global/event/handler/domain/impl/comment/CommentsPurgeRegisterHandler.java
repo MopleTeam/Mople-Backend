@@ -28,9 +28,9 @@ public class CommentsPurgeRegisterHandler implements DomainEventHandler<Comments
         LocalDateTime runAt = LocalDateTime.now().plusDays(7);
 
         CommentsPurgeEvent purgeEvent = CommentsPurgeEvent.builder()
-                .commentIds(event.getCommentIds())
+                .commentIds(event.commentIds())
                 .build();
 
-        outboxService.saveWithRunAt(COMMENTS_PURGE, POST, event.getPostId(), runAt, purgeEvent);
+        outboxService.saveWithRunAt(COMMENTS_PURGE, POST, event.postId(), runAt, purgeEvent);
     }
 }

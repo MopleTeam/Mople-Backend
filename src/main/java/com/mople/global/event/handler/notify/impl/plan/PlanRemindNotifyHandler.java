@@ -23,7 +23,7 @@ public class PlanRemindNotifyHandler implements NotifyEventHandler<PlanRemindNot
 
     @Override
     public NotifySendRequest getSendRequest(PlanRemindNotifyEvent event) {
-        return requestFactory.buildForTargets(event.getTargetIds(), event.notifyType().getTopic());
+        return requestFactory.buildForTargets(event.targetIds(), event.notifyType().getTopic());
     }
 
     @Override
@@ -32,8 +32,8 @@ public class PlanRemindNotifyHandler implements NotifyEventHandler<PlanRemindNot
                 .map(userId ->
                         Notification.builder()
                                 .type(event.notifyType())
-                                .meetId(event.getMeetId())
-                                .planId(event.getPlanId())
+                                .meetId(event.meetId())
+                                .planId(event.planId())
                                 .payload(event.payload())
                                 .userId(userId)
                                 .build()

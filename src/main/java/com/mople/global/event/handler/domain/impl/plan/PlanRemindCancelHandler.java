@@ -22,6 +22,6 @@ public class PlanRemindCancelHandler implements DomainEventHandler<PlanSoftDelet
 
     @Override
     public void handle(PlanSoftDeletedEvent event) {
-        outboxService.cancel(PLAN_REMIND, PLAN, event.getPlanId());
+        outboxService.cancel(PLAN_REMIND, PLAN, event.planId());
     }
 }

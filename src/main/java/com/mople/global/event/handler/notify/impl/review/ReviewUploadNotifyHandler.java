@@ -23,7 +23,7 @@ public class ReviewUploadNotifyHandler implements NotifyEventHandler<ReviewUploa
 
     @Override
     public NotifySendRequest getSendRequest(ReviewUploadNotifyEvent event) {
-        return requestFactory.buildForTargets(event.getTargetIds(), event.notifyType().getTopic());
+        return requestFactory.buildForTargets(event.targetIds(), event.notifyType().getTopic());
     }
 
     @Override
@@ -32,8 +32,8 @@ public class ReviewUploadNotifyHandler implements NotifyEventHandler<ReviewUploa
                 .map(userId ->
                         Notification.builder()
                                 .type(event.notifyType())
-                                .meetId(event.getMeetId())
-                                .reviewId(event.getReviewId())
+                                .meetId(event.meetId())
+                                .reviewId(event.reviewId())
                                 .payload(event.payload())
                                 .userId(userId)
                                 .build()

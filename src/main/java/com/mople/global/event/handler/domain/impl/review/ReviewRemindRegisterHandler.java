@@ -30,16 +30,16 @@ public class ReviewRemindRegisterHandler implements DomainEventHandler<PlanTrans
 
     @Override
     public void handle(PlanTransitionedEvent event) {
-        outboxService.cancel(PLAN_REMIND, PLAN, event.getPlanId());
+        outboxService.cancel(PLAN_REMIND, PLAN, event.planId());
 
         LocalDateTime runAt = LocalDateTime
                 .of(LocalDate.now(), LocalTime.of(12, 0, 0))
                 .atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
 
         ReviewRemindEvent remindEvent = ReviewRemindEvent.builder()
-                .reviewId(event.getReviewId())
+                .reviewId(event.reviewId())
                 .build();
 
-        outboxService.saveWithRunAt(REVIEW_REMIND, REVIEW, event.getReviewId(), runAt, remindEvent);
+        outboxService.saveWithRunAt(REVIEW_REMIND, REVIEW, event.reviewId(), runAt, remindEvent);
     }
 }

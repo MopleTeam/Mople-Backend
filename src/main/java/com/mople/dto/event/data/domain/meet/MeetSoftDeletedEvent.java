@@ -1,17 +1,12 @@
 package com.mople.dto.event.data.domain.meet;
 
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.mople.dto.event.data.domain.DomainEvent;
 import lombok.Builder;
-import lombok.Getter;
 
-import static com.mople.global.enums.event.EventTypeNames.MEET_SOFT_DELETED;
-
-@JsonTypeName(MEET_SOFT_DELETED)
 @Builder
-@Getter
-public class MeetSoftDeletedEvent implements DomainEvent {
+public record MeetSoftDeletedEvent(
+        Long meetId,
+        Long meetDeletedBy
+) implements DomainEvent {
 
-    private final Long meetId;
-    private final Long meetDeletedBy;
 }

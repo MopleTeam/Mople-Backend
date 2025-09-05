@@ -41,28 +41,28 @@ public class CommentReplyNotifier implements DomainEventHandler<CommentCreatedEv
 
     @Override
     public void handle(CommentCreatedEvent event) {
-        if (event.getParentId() == null) {
+        if (event.parentId() == null) {
             return;
         }
 
-        Long targetId = userReader.findCommentRepliedUserNoWriter(event.getCommentWriterId(), event.getParentId());
+        Long targetId = userReader.findCommentRepliedUserNoWriter(event.commentWriterId(), event.parentId());
         if (targetId == null) {
             return;
         }
 
-        User user = userRepository.findByIdAndStatus(event.getCommentWriterId(), Status.ACTIVE)
+        User user = userRepository.findByIdAndStatus(event.commentWriterId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_USER));
 
-        if (event.getIsExistMention()) {
-            List<Long> mentionedUsers = userReader.findCreatedMentionedUsers(event.getCommentWriterId(), event.getCommentId());
+        if (event.isExistMention()) {
+            List<Long> mentionedUsers = userReader.findCreatedMentionedUsers(event.commentWriterId(), event.commentId());
 
             if (!mentionedUsers.isEmpty() && mentionedUsers.contains(targetId)) {
                 return;
             }
         }
 
-        if (isPlan(event.getPostId())) {
-            MeetPlan plan = planRepository.findByIdAndStatus(event.getPostId(), Status.ACTIVE)
+        if (isPlan(event.postId())) {
+            MeetPlan plan = planRepository.findByIdAndStatus(event.postId(), Status.ACTIVE)
                     .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_PLAN));
 
             Meet meet = meetRepository.findByIdAndStatus(plan.getMeetId(), Status.ACTIVE)
@@ -71,7 +71,7 @@ public class CommentReplyNotifier implements DomainEventHandler<CommentCreatedEv
             CommentReplyNotifyEvent notifyEvent = CommentReplyNotifyEvent.builder()
                     .meetId(meet.getId())
                     .meetName(meet.getName())
-                    .postId(event.getPostId())
+                    .postId(event.postId())
                     .planId(plan.getId())
                     .reviewId(null)
                     .senderNickname(user.getNickname())
@@ -82,7 +82,7 @@ public class CommentReplyNotifier implements DomainEventHandler<CommentCreatedEv
             return;
         }
 
-        PlanReview review = reviewRepository.findByPlanIdAndStatus(event.getPostId(), Status.ACTIVE)
+        PlanReview review = reviewRepository.findByPlanIdAndStatus(event.postId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_REVIEW));
 
         Meet meet = meetRepository.findByIdAndStatus(review.getMeetId(), Status.ACTIVE)
@@ -91,7 +91,7 @@ public class CommentReplyNotifier implements DomainEventHandler<CommentCreatedEv
         CommentReplyNotifyEvent notifyEvent = CommentReplyNotifyEvent.builder()
                 .meetId(meet.getId())
                 .meetName(meet.getName())
-                .postId(event.getPostId())
+                .postId(event.postId())
                 .planId(null)
                 .reviewId(review.getId())
                 .senderNickname(user.getNickname())

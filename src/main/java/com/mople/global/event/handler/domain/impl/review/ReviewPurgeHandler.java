@@ -22,12 +22,12 @@ public class ReviewPurgeHandler implements DomainEventHandler<ReviewPurgeEvent> 
 
     @Override
     public void handle(ReviewPurgeEvent event) {
-        Status reviewStatus = reviewRepository.findStatusById(event.getReviewId());
+        Status reviewStatus = reviewRepository.findStatusById(event.reviewId());
 
         if (!Objects.equals(reviewStatus, Status.DELETED)) {
             return;
         }
 
-        reviewRepository.deleteById(event.getReviewId());
+        reviewRepository.deleteById(event.reviewId());
     }
 }

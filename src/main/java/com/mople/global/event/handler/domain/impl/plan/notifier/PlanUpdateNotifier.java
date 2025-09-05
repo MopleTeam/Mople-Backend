@@ -34,9 +34,9 @@ public class PlanUpdateNotifier implements DomainEventHandler<PlanTimeChangedEve
 
     @Override
     public void handle(PlanTimeChangedEvent event) {
-        List<Long> targetIds = userReader.findPlanUsersNoTriggers(event.getTimeChangedBy(), event.getPlanId());
+        List<Long> targetIds = userReader.findPlanUsersNoTriggers(event.timeChangedBy(), event.planId());
 
-        MeetPlan plan = planRepository.findByIdAndStatus(event.getPlanId(), Status.ACTIVE)
+        MeetPlan plan = planRepository.findByIdAndStatus(event.planId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_PLAN));
 
         Meet meet = meetRepository.findByIdAndStatus(plan.getMeetId(), Status.ACTIVE)
@@ -45,7 +45,7 @@ public class PlanUpdateNotifier implements DomainEventHandler<PlanTimeChangedEve
         PlanUpdateNotifyEvent notifyEvent = PlanUpdateNotifyEvent.builder()
                 .meetId(meet.getId())
                 .meetName(meet.getName())
-                .planId(event.getPlanId())
+                .planId(event.planId())
                 .planName(plan.getName())
                 .targetIds(targetIds)
                 .build();

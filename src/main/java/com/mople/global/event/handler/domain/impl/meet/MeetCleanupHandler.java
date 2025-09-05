@@ -33,19 +33,19 @@ public class MeetCleanupHandler implements DomainEventHandler<MeetSoftDeletedEve
 
     @Override
     public void handle(MeetSoftDeletedEvent event) {
-        memberRepository.deleteByMeetId(event.getMeetId());
-        inviteRepository.deleteByMeetId(event.getMeetId());
+        memberRepository.deleteByMeetId(event.meetId());
+        inviteRepository.deleteByMeetId(event.meetId());
 
-        Meet meet = meetRepository.findByIdAndStatus(event.getMeetId(), Status.DELETED)
+        Meet meet = meetRepository.findByIdAndStatus(event.meetId(), Status.DELETED)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
 
         ImageDeletedEvent deletedEvent = ImageDeletedEvent.builder()
                 .aggregateType(MEET)
-                .aggregateId(event.getMeetId())
+                .aggregateId(event.meetId())
                 .imageUrl(meet.getMeetImage())
-                .imageDeletedBy(event.getMeetDeletedBy())
+                .imageDeletedBy(event.meetDeletedBy())
                 .build();
 
-        outboxService.save(IMAGE_DELETED, MEET, event.getMeetId(), deletedEvent);
+        outboxService.save(IMAGE_DELETED, MEET, event.meetId(), deletedEvent);
     }
 }

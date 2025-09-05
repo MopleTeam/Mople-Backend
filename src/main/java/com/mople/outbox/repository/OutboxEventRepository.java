@@ -11,20 +11,21 @@ import java.util.List;
 
 public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> {
 
+    @Modifying(clearAutomatically = true)
     @Query(value = """
               WITH picked AS (
-                  SELECT id
+                  SELECT outbox_id
                     FROM outbox_event
                    WHERE status = 'PENDING'
                      AND available_at <= now()
-                   ORDER BY available_at, id
+                   ORDER BY available_at, outbox_id
                    FOR UPDATE SKIP LOCKED
                    LIMIT :limit
               )
               UPDATE outbox_event o
                  SET available_at = now() + make_interval(secs => :leaseSec)
                 FROM picked
-               WHERE o.id = picked.id
+               WHERE o.outbox_id = picked.outbox_id
             RETURNING o.*;
             """, nativeQuery = true)
     List<OutboxEvent> lockNextBatch(int limit, int leaseSec);
@@ -75,8 +76,8 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
     @Modifying(clearAutomatically = true)
     @Query(value = """
             DELETE FROM outbox_event
-             WHERE id IN (
-               SELECT id FROM outbox_event
+             WHERE outbox_id IN (
+               SELECT outbox_id FROM outbox_event
                 WHERE status = 'PUBLISHED'
                   AND published_at < :before
                 ORDER BY id
@@ -88,8 +89,8 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
     @Modifying(clearAutomatically = true)
     @Query(value = """
             DELETE FROM outbox_event
-             WHERE id IN (
-               SELECT id FROM outbox_event
+             WHERE outbox_id IN (
+               SELECT outbox_id FROM outbox_event
                 WHERE status = 'FAILED'
                   AND created_at < :before
                 ORDER BY id

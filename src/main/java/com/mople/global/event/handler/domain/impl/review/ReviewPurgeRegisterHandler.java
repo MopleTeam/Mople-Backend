@@ -28,9 +28,9 @@ public class ReviewPurgeRegisterHandler implements DomainEventHandler<ReviewSoft
         LocalDateTime runAt = LocalDateTime.now().plusDays(7);
 
         ReviewPurgeEvent purgeEvent = ReviewPurgeEvent.builder()
-                .reviewId(event.getReviewId())
+                .reviewId(event.reviewId())
                 .build();
 
-        outboxService.saveWithRunAt(REVIEW_PURGE, REVIEW, event.getReviewId(), runAt, purgeEvent);
+        outboxService.saveWithRunAt(REVIEW_PURGE, REVIEW, event.reviewId(), runAt, purgeEvent);
     }
 }

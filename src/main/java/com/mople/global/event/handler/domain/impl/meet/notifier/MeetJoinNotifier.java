@@ -34,16 +34,16 @@ public class MeetJoinNotifier implements DomainEventHandler<MeetJoinedEvent> {
 
     @Override
     public void handle(MeetJoinedEvent event) {
-        List<Long> targetIds = userReader.findMeetUsersNoTriggers(event.getNewMemberId(), event.getMeetId());
+        List<Long> targetIds = userReader.findMeetUsersNoTriggers(event.newMemberId(), event.meetId());
 
-        Meet meet = meetRepository.findByIdAndStatus(event.getMeetId(), Status.ACTIVE)
+        Meet meet = meetRepository.findByIdAndStatus(event.meetId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
 
-        User user = userRepository.findByIdAndStatus(event.getNewMemberId(), Status.ACTIVE)
+        User user = userRepository.findByIdAndStatus(event.newMemberId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_USER));
 
         MeetJoinNotifyEvent notifyEvent = MeetJoinNotifyEvent.builder()
-                .meetId(event.getMeetId())
+                .meetId(event.meetId())
                 .meetName(meet.getName())
                 .newMemberNickname(user.getNickname())
                 .targetIds(targetIds)

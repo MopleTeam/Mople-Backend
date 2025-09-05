@@ -34,9 +34,9 @@ public class PlanCreatedNotifier implements DomainEventHandler<PlanCreatedEvent>
 
     @Override
     public void handle(PlanCreatedEvent event) {
-        List<Long> targetIds = userReader.findMeetUsersNoTriggers(event.getPlanCreatorId(), event.getMeetId());
+        List<Long> targetIds = userReader.findMeetUsersNoTriggers(event.planCreatorId(), event.meetId());
 
-        MeetPlan plan = planRepository.findByIdAndStatus(event.getPlanId(), Status.ACTIVE)
+        MeetPlan plan = planRepository.findByIdAndStatus(event.planId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_PLAN));
 
         Meet meet = meetRepository.findByIdAndStatus(plan.getMeetId(), Status.ACTIVE)
@@ -45,7 +45,7 @@ public class PlanCreatedNotifier implements DomainEventHandler<PlanCreatedEvent>
         PlanCreateNotifyEvent notifyEvent = PlanCreateNotifyEvent.builder()
                 .meetId(plan.getMeetId())
                 .meetName(meet.getName())
-                .planId(event.getPlanId())
+                .planId(event.planId())
                 .planName(plan.getName())
                 .targetIds(targetIds)
                 .build();

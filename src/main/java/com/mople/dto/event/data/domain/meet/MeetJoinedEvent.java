@@ -1,17 +1,11 @@
 package com.mople.dto.event.data.domain.meet;
 
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.mople.dto.event.data.domain.DomainEvent;
 import lombok.Builder;
-import lombok.Getter;
 
-import static com.mople.global.enums.event.EventTypeNames.MEET_JOINED;
-
-@JsonTypeName(MEET_JOINED)
 @Builder
-@Getter
-public class MeetJoinedEvent implements DomainEvent {
-
-    private final Long meetId;
-    private final Long newMemberId;
+public record MeetJoinedEvent(
+        Long meetId,
+        Long newMemberId
+) implements DomainEvent {
 }

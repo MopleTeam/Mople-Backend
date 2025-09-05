@@ -29,20 +29,20 @@ public class ReviewCleanupHandler implements DomainEventHandler<ReviewSoftDelete
 
     @Override
     public void handle(ReviewSoftDeletedEvent event) {
-        List<String> reviewImages = reviewImageRepository.findReviewImagesByReviewId(event.getReviewId());
+        List<String> reviewImages = reviewImageRepository.findReviewImagesByReviewId(event.reviewId());
 
-        participantRepository.deleteByReviewId(event.getReviewId());
-        reviewImageRepository.deleteByReviewId(event.getReviewId());
+        participantRepository.deleteByReviewId(event.reviewId());
+        reviewImageRepository.deleteByReviewId(event.reviewId());
 
         reviewImages.forEach(i -> {
             ImageDeletedEvent deletedEvent = ImageDeletedEvent.builder()
                     .aggregateType(REVIEW)
-                    .aggregateId(event.getReviewId())
+                    .aggregateId(event.reviewId())
                     .imageUrl(i)
-                    .imageDeletedBy(event.getReviewDeletedBy())
+                    .imageDeletedBy(event.reviewDeletedBy())
                     .build();
 
-            outboxService.save(IMAGE_DELETED, REVIEW, event.getReviewId(), deletedEvent);
+            outboxService.save(IMAGE_DELETED, REVIEW, event.reviewId(), deletedEvent);
         });
     }
 }

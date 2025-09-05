@@ -23,7 +23,7 @@ public class MeetJoinNotifyHandler implements NotifyEventHandler<MeetJoinNotifyE
 
     @Override
     public NotifySendRequest getSendRequest(MeetJoinNotifyEvent event) {
-        return requestFactory.buildForTargets(event.getTargetIds(), event.notifyType().getTopic());
+        return requestFactory.buildForTargets(event.targetIds(), event.notifyType().getTopic());
     }
 
     @Override
@@ -31,7 +31,7 @@ public class MeetJoinNotifyHandler implements NotifyEventHandler<MeetJoinNotifyE
         return userIds.stream()
                 .map(userId -> Notification.builder()
                         .type(event.notifyType())
-                        .meetId(event.getMeetId())
+                        .meetId(event.meetId())
                         .payload(event.payload())
                         .userId(userId)
                         .build())

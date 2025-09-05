@@ -36,17 +36,17 @@ public class MeetLeftFanoutHandler implements DomainEventHandler<MeetLeftEvent> 
     @Override
     public void handle(MeetLeftEvent event) {
         List<Long> ownedPlanIds = planRepository
-                .findIdsByMeetIdAndCreatorIdAndStatus(event.getMeetId(), event.getLeaveMemberId(), Status.ACTIVE);
+                .findIdsByMeetIdAndCreatorIdAndStatus(event.meetId(), event.leaveMemberId(), Status.ACTIVE);
         List<Long> ownedReviewIds = reviewRepository
-                .findIdsByMeetIdAndCreatorIdAndStatus(event.getMeetId(), event.getLeaveMemberId(), Status.ACTIVE);
+                .findIdsByMeetIdAndCreatorIdAndStatus(event.meetId(), event.leaveMemberId(), Status.ACTIVE);
 
         chunk(ownedPlanIds, ids -> {
-            planRepository.softDeleteAll(DELETED, ids, event.getLeaveMemberId(), LocalDateTime.now());
+            planRepository.softDeleteAll(DELETED, ids, event.leaveMemberId(), LocalDateTime.now());
 
             ids.forEach(id -> {
                 PlanSoftDeletedEvent deleteEvent = PlanSoftDeletedEvent.builder()
                         .planId(id)
-                        .planDeletedBy(event.getLeaveMemberId())
+                        .planDeletedBy(event.leaveMemberId())
                         .cause(DeletionCause.CASCADE_FROM_MEET_LEAVE)
                         .build();
 
@@ -55,13 +55,13 @@ public class MeetLeftFanoutHandler implements DomainEventHandler<MeetLeftEvent> 
         });
 
         chunk(ownedReviewIds, ids -> {
-            reviewRepository.softDeleteAll(DELETED, ids, event.getLeaveMemberId(), LocalDateTime.now());
+            reviewRepository.softDeleteAll(DELETED, ids, event.leaveMemberId(), LocalDateTime.now());
 
             ids.forEach(id -> {
                 ReviewSoftDeletedEvent deleteEvent = ReviewSoftDeletedEvent.builder()
                         .planId(reviewRepository.findPlanIdById(id))
                         .reviewId(id)
-                        .reviewDeletedBy(event.getLeaveMemberId())
+                        .reviewDeletedBy(event.leaveMemberId())
                         .build();
 
                 outboxService.save(REVIEW_SOFT_DELETED, REVIEW, id, deleteEvent);

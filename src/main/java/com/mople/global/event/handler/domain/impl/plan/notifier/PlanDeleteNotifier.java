@@ -35,13 +35,13 @@ public class PlanDeleteNotifier implements DomainEventHandler<PlanSoftDeletedEve
 
     @Override
     public void handle(PlanSoftDeletedEvent event) {
-        if (event.getCause() != DeletionCause.DIRECT_PLAN_DELETE) {
+        if (event.cause() != DeletionCause.DIRECT_PLAN_DELETE) {
             return;
         }
 
-        List<Long> targetIds = userReader.findPlanUsersNoTriggers(event.getPlanDeletedBy(), event.getPlanId());
+        List<Long> targetIds = userReader.findPlanUsersNoTriggers(event.planDeletedBy(), event.planId());
 
-        MeetPlan plan = planRepository.findByIdAndStatus(event.getPlanId(), Status.DELETED)
+        MeetPlan plan = planRepository.findByIdAndStatus(event.planId(), Status.DELETED)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_PLAN));
 
         Meet meet = meetRepository.findByIdAndStatus(plan.getMeetId(), Status.ACTIVE)
@@ -50,7 +50,7 @@ public class PlanDeleteNotifier implements DomainEventHandler<PlanSoftDeletedEve
         PlanDeleteNotifyEvent notifyEvent = PlanDeleteNotifyEvent.builder()
                 .meetId(meet.getId())
                 .meetName(meet.getName())
-                .planId(event.getPlanId())
+                .planId(event.planId())
                 .planName(plan.getName())
                 .targetIds(targetIds)
                 .build();

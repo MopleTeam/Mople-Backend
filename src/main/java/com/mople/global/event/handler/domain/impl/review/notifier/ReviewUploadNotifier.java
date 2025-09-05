@@ -34,10 +34,10 @@ public class ReviewUploadNotifier implements DomainEventHandler<ReviewUploadEven
 
     @Override
     public void handle(ReviewUploadEvent event) {
-        PlanReview review = reviewRepository.findByIdAndStatus(event.getReviewId(), Status.ACTIVE)
+        PlanReview review = reviewRepository.findByIdAndStatus(event.reviewId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_REVIEW));
 
-        List<Long> targetIds = userReader.findReviewUsersNoTriggers(event.getReviewUpdatedBy(), event.getReviewId());
+        List<Long> targetIds = userReader.findReviewUsersNoTriggers(event.reviewUpdatedBy(), event.reviewId());
 
         Meet meet = meetRepository.findByIdAndStatus(review.getMeetId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
@@ -45,9 +45,9 @@ public class ReviewUploadNotifier implements DomainEventHandler<ReviewUploadEven
         ReviewUploadNotifyEvent notifyEvent = ReviewUploadNotifyEvent.builder()
                 .meetId(meet.getId())
                 .meetName(meet.getName())
-                .reviewId(event.getReviewId())
+                .reviewId(event.reviewId())
                 .reviewName(review.getName())
-                .reviewUpdatedBy(event.getReviewUpdatedBy())
+                .reviewUpdatedBy(event.reviewUpdatedBy())
                 .targetIds(targetIds)
                 .build();
 

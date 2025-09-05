@@ -3,7 +3,6 @@ package com.mople.global.event.handler.notify;
 import com.mople.dto.event.data.notify.NotifyEvent;
 import com.mople.dto.response.notification.NotifySendRequest;
 import com.mople.entity.notification.Notification;
-import com.mople.entity.user.User;
 
 import java.util.List;
 

@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class OutboxProcessor {
@@ -31,12 +33,31 @@ public class OutboxProcessor {
         }
 
         DomainEvent domainEvent = mapper.readValue(event.getPayload(), DomainEvent.class);
+        List<DomainEventHandler<? extends DomainEvent>> handlers = registry.getHandler(domainEvent);
 
-        @SuppressWarnings("unchecked")
-        DomainEventHandler<DomainEvent> handler = (DomainEventHandler<DomainEvent>) registry.getHandler(domainEvent);
-        handler.handle(domainEvent);
+        for (DomainEventHandler<? extends DomainEvent> handler : handlers) {
+            handleSafely(handler, domainEvent);
+        }
 
         processedEventRepository.save(new ProcessedEvent(event.getEventId()));
         outboxEventRepository.eventPublished(event.getEventId());
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends DomainEvent> void handleSafely(DomainEventHandler<T> handler, DomainEvent event) {
+        handler.handle((T) event);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void markFailed(String eventId, String errorMessage) {
+        System.out.println("실패");
+        outboxEventRepository.eventFailed(eventId, errorMessage);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void markRetry(String eventId, String errorMessage, int retrySec, int maxAttempts) {
+        System.out.println("재시도");
+
+        outboxEventRepository.eventRetry(eventId, errorMessage, retrySec, maxAttempts);
     }
 }

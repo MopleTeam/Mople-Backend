@@ -33,7 +33,7 @@ public class ImageDeletionHandler implements DomainEventHandler<ImageDeletedEven
 
     @Override
     public void handle(ImageDeletedEvent event) {
-        String imageUrl = event.getImageUrl();
+        String imageUrl = event.imageUrl();
 
         if (imageUrl == null || imageUrl.isBlank()) {
             return;

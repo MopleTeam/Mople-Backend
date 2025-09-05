@@ -40,7 +40,7 @@ public class PlanRemindNotifier implements DomainEventHandler<PlanRemindEvent> {
 
     @Override
     public void handle(PlanRemindEvent event) {
-        MeetPlan plan = planRepository.findByIdAndStatus(event.getPlanId(), Status.ACTIVE)
+        MeetPlan plan = planRepository.findByIdAndStatus(event.planId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_PLAN));
 
         List<Long> targetIds = userReader.findPlanUsersAll(plan.getCreatorId());
@@ -54,7 +54,7 @@ public class PlanRemindNotifier implements DomainEventHandler<PlanRemindEvent> {
         PlanRemindNotifyEvent notifyEvent = PlanRemindNotifyEvent.builder()
                 .meetId(meet.getId())
                 .meetName(meet.getName())
-                .planId(event.getPlanId())
+                .planId(event.planId())
                 .planName(plan.getName())
                 .temperature(weather.temperature())
                 .iconImage(weather.weatherIconImage())

@@ -22,12 +22,12 @@ public class PlanPurgeHandler implements DomainEventHandler<PlanPurgeEvent> {
 
     @Override
     public void handle(PlanPurgeEvent event) {
-        Status planStatus = planRepository.findStatusById(event.getPlanId());
+        Status planStatus = planRepository.findStatusById(event.planId());
 
         if (!Objects.equals(planStatus, Status.DELETED)) {
             return;
         }
 
-        planRepository.deleteById(event.getPlanId());
+        planRepository.deleteById(event.planId());
     }
 }

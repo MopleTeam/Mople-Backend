@@ -22,6 +22,6 @@ public class ReviewRemindCancelHandler implements DomainEventHandler<ReviewSoftD
 
     @Override
     public void handle(ReviewSoftDeletedEvent event) {
-        outboxService.cancel(REVIEW_REMIND, REVIEW, event.getReviewId());
+        outboxService.cancel(REVIEW_REMIND, REVIEW, event.reviewId());
     }
 }

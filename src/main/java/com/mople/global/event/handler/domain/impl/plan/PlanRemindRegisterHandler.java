@@ -29,17 +29,17 @@ public class PlanRemindRegisterHandler implements DomainEventHandler<PlanCreated
     public void handle(PlanCreatedEvent event) {
         LocalDateTime now = LocalDateTime.now();
 
-        if (event.getPlanTime().isBefore(now.plusHours(1))) {
+        if (event.planTime().isBefore(now.plusHours(1))) {
             return;
         }
 
-        long hour = now.until(event.getPlanTime(), ChronoUnit.HOURS) == 1 ? 1 : 2;
-        LocalDateTime runAt = event.getPlanTime().minusHours(hour).atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+        long hour = now.until(event.planTime(), ChronoUnit.HOURS) == 1 ? 1 : 2;
+        LocalDateTime runAt = event.planTime().minusHours(hour).atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
 
         PlanRemindEvent remindEvent = PlanRemindEvent.builder()
-                .planId(event.getPlanId())
+                .planId(event.planId())
                 .build();
 
-        outboxService.saveWithRunAt(PLAN_REMIND, PLAN, event.getPlanId(), runAt, remindEvent);
+        outboxService.saveWithRunAt(PLAN_REMIND, PLAN, event.planId(), runAt, remindEvent);
     }
 }

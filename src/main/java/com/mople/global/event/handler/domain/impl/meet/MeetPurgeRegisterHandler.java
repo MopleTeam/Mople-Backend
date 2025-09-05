@@ -28,9 +28,9 @@ public class MeetPurgeRegisterHandler implements DomainEventHandler<MeetSoftDele
         LocalDateTime runAt = LocalDateTime.now().plusDays(7);
 
         MeetPurgeEvent purgeEvent = MeetPurgeEvent.builder()
-                .meetId(event.getMeetId())
+                .meetId(event.meetId())
                 .build();
 
-        outboxService.saveWithRunAt(MEET_PURGE, MEET, event.getMeetId(), runAt, purgeEvent);
+        outboxService.saveWithRunAt(MEET_PURGE, MEET, event.meetId(), runAt, purgeEvent);
     }
 }

@@ -23,13 +23,13 @@ public class CommentsPurgeHandler implements DomainEventHandler<CommentsPurgeEve
 
     @Override
     public void handle(CommentsPurgeEvent event) {
-        List<Status> commentStatus = commentRepository.findStatusByIdIn(event.getCommentIds());
+        List<Status> commentStatus = commentRepository.findStatusByIdIn(event.commentIds());
 
         boolean deleted = commentStatus.stream().allMatch(s -> Objects.equals(s, Status.DELETED));
         if (!deleted) {
             return;
         }
 
-        commentRepository.deleteByIdIn(event.getCommentIds());
+        commentRepository.deleteByIdIn(event.commentIds());
     }
 }

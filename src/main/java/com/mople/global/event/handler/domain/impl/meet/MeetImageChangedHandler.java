@@ -25,11 +25,11 @@ public class MeetImageChangedHandler implements DomainEventHandler<MeetImageChan
     public void handle(MeetImageChangedEvent event) {
         ImageDeletedEvent deletedEvent = ImageDeletedEvent.builder()
                 .aggregateType(MEET)
-                .aggregateId(event.getMeetId())
-                .imageUrl(event.getImageUrl())
-                .imageDeletedBy(event.getImageDeletedBy())
+                .aggregateId(event.meetId())
+                .imageUrl(event.imageUrl())
+                .imageDeletedBy(event.imageDeletedBy())
                 .build();
 
-        outboxService.save(IMAGE_DELETED, MEET, event.getMeetId(), deletedEvent);
+        outboxService.save(IMAGE_DELETED, MEET, event.meetId(), deletedEvent);
     }
 }

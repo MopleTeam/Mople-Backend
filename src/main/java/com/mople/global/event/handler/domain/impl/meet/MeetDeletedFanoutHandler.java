@@ -35,16 +35,16 @@ public class MeetDeletedFanoutHandler implements DomainEventHandler<MeetSoftDele
 
     @Override
     public void handle(MeetSoftDeletedEvent event) {
-        List<Long> planIds = planRepository.findIdsByMeetIdAndStatus(event.getMeetId(), Status.ACTIVE);
-        List<Long> reviewIds = reviewRepository.findIdsByMeetIdAndStatus(event.getMeetId(), Status.ACTIVE);
+        List<Long> planIds = planRepository.findIdsByMeetIdAndStatus(event.meetId(), Status.ACTIVE);
+        List<Long> reviewIds = reviewRepository.findIdsByMeetIdAndStatus(event.meetId(), Status.ACTIVE);
 
         chunk(planIds, ids -> {
-            planRepository.softDeleteAll(DELETED, ids, event.getMeetDeletedBy(), LocalDateTime.now());
+            planRepository.softDeleteAll(DELETED, ids, event.meetDeletedBy(), LocalDateTime.now());
 
             ids.forEach(id -> {
                 PlanSoftDeletedEvent deleteEvent = PlanSoftDeletedEvent.builder()
                         .planId(id)
-                        .planDeletedBy(event.getMeetDeletedBy())
+                        .planDeletedBy(event.meetDeletedBy())
                         .cause(DeletionCause.CASCADE_FROM_MEET_DELETE)
                         .build();
 
@@ -53,13 +53,13 @@ public class MeetDeletedFanoutHandler implements DomainEventHandler<MeetSoftDele
         });
 
         chunk(reviewIds, ids -> {
-            reviewRepository.softDeleteAll(DELETED, ids, event.getMeetDeletedBy(), LocalDateTime.now());
+            reviewRepository.softDeleteAll(DELETED, ids, event.meetDeletedBy(), LocalDateTime.now());
 
             ids.forEach(id -> {
                 ReviewSoftDeletedEvent deleteEvent = ReviewSoftDeletedEvent.builder()
                         .planId(reviewRepository.findPlanIdById(id))
                         .reviewId(id)
-                        .reviewDeletedBy(event.getMeetDeletedBy())
+                        .reviewDeletedBy(event.meetDeletedBy())
                         .build();
 
                 outboxService.save(REVIEW_SOFT_DELETED, REVIEW, id, deleteEvent);

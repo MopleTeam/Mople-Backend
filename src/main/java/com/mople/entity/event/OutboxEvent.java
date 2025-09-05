@@ -36,8 +36,7 @@ public class OutboxEvent {
     @Column(name = "aggregate_id", nullable = false)
     private Long aggregateId;
 
-    @Type(JsonType.class)
-    @Column(columnDefinition = "json")
+    @Column(name = "payload", nullable = false)
     private String payload;
 
     @Enumerated(EnumType.STRING)

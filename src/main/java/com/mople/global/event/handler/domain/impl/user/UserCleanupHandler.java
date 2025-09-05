@@ -21,7 +21,7 @@ public class UserCleanupHandler implements DomainEventHandler<UserDeletedEvent> 
 
     @Override
     public void handle(UserDeletedEvent event) {
-        notificationRepository.deleteByUserId(event.getUserId());
-        topicRepository.deleteByUserId(event.getUserId());
+        notificationRepository.deleteByUserId(event.userId());
+        topicRepository.deleteByUserId(event.userId());
     }
 }

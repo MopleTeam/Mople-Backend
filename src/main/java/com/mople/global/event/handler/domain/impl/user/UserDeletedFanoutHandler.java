@@ -34,20 +34,20 @@ public class UserDeletedFanoutHandler implements DomainEventHandler<UserDeletedE
 
     @Override
     public void handle(UserDeletedEvent event) {
-        List<Long> joinedMeetIds = memberRepository.findMeetIdsByUserId(event.getUserId());
+        List<Long> joinedMeetIds = memberRepository.findMeetIdsByUserId(event.userId());
 
-        List<Long> ownedMeetIds = meetRepository.findIdsByCreatorIdAndStatus(event.getUserId(), Status.ACTIVE);
+        List<Long> ownedMeetIds = meetRepository.findIdsByCreatorIdAndStatus(event.userId(), Status.ACTIVE);
         List<Long> memberMeetIds = joinedMeetIds.stream()
                 .filter(id -> !ownedMeetIds.contains(id))
                 .toList();
 
         chunk(ownedMeetIds, ids -> {
-            meetRepository.softDeleteAll(DELETED, ids, event.getUserId(), LocalDateTime.now());
+            meetRepository.softDeleteAll(DELETED, ids, event.userId(), LocalDateTime.now());
 
             ids.forEach(id -> {
                 MeetSoftDeletedEvent deleteEvent = MeetSoftDeletedEvent.builder()
                         .meetId(id)
-                        .meetDeletedBy(event.getUserId())
+                        .meetDeletedBy(event.userId())
                         .build();
 
                 outboxService.save(MEET_SOFT_DELETED, MEET, id, deleteEvent);
@@ -58,7 +58,7 @@ public class UserDeletedFanoutHandler implements DomainEventHandler<UserDeletedE
             ids.forEach(id -> {
                 MeetLeftEvent deleteEvent = MeetLeftEvent.builder()
                         .meetId(id)
-                        .leaveMemberId(event.getUserId())
+                        .leaveMemberId(event.userId())
                         .build();
 
                 outboxService.save(MEET_LEFT, MEET, id, deleteEvent);

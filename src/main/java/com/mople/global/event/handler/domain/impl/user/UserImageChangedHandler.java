@@ -25,11 +25,11 @@ public class UserImageChangedHandler implements DomainEventHandler<UserImageChan
     public void handle(UserImageChangedEvent event) {
         ImageDeletedEvent deletedEvent = ImageDeletedEvent.builder()
                 .aggregateType(USER)
-                .aggregateId(event.getUserId())
-                .imageUrl(event.getImageUrl())
-                .imageDeletedBy(event.getImageDeletedBy())
+                .aggregateId(event.userId())
+                .imageUrl(event.imageUrl())
+                .imageDeletedBy(event.imageDeletedBy())
                 .build();
 
-        outboxService.save(IMAGE_DELETED, USER, event.getUserId(), deletedEvent);
+        outboxService.save(IMAGE_DELETED, USER, event.userId(), deletedEvent);
     }
 }

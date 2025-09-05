@@ -38,15 +38,15 @@ public class OutboxPublisher {
             try {
                 processor.processOne(event);
             } catch (JsonProcessingException | NonRetryableOutboxException ex) {
-                outboxEventRepository.eventFailed(event.getEventId(), shorten(ex.getMessage()));
+                processor.markFailed(event.getEventId(), shorten(ex.getMessage()));
             } catch (Exception ex) {
-                outboxEventRepository.eventRetry(event.getEventId(), shorten(ex.getMessage()), retrySec, maxAttempts);
+                processor.markRetry(event.getEventId(), shorten(ex.getMessage()), retrySec, maxAttempts);
             }
         }
     }
 
     private String shorten(String s) {
         if (s == null) return null;
-        return s.length() > 800 ? s.substring(0, 800) : s;
+        return s.length() > 255 ? s.substring(0, 255) : s;
     }
 }

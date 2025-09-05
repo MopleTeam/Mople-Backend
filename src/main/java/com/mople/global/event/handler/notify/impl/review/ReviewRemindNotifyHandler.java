@@ -23,7 +23,7 @@ public class ReviewRemindNotifyHandler implements NotifyEventHandler<ReviewRemin
 
     @Override
     public NotifySendRequest getSendRequest(ReviewRemindNotifyEvent event) {
-        return requestFactory.buildForTargets(event.getTargetIds(), event.notifyType().getTopic());
+        return requestFactory.buildForTargets(event.targetIds(), event.notifyType().getTopic());
     }
 
     @Override
@@ -32,8 +32,8 @@ public class ReviewRemindNotifyHandler implements NotifyEventHandler<ReviewRemin
                 .map(userId ->
                         Notification.builder()
                                 .type(event.notifyType())
-                                .meetId(event.getMeetId())
-                                .reviewId(event.getReviewId())
+                                .meetId(event.meetId())
+                                .reviewId(event.reviewId())
                                 .payload(event.payload())
                                 .userId(userId)
                                 .build()

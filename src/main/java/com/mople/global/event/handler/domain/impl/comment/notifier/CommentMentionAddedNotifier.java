@@ -42,14 +42,14 @@ public class CommentMentionAddedNotifier implements DomainEventHandler<CommentMe
     @Override
     public void handle(CommentMentionAddedEvent event) {
         List<Long> filteredTargetIds = userReader.findUpdatedMentionedUsers(
-                event.getOriginMentions(), event.getCommentWriterId(), event.getCommentId()
+                event.originMentions(), event.commentWriterId(), event.commentId()
         );
 
-        User user = userRepository.findByIdAndStatus(event.getCommentWriterId(), Status.ACTIVE)
+        User user = userRepository.findByIdAndStatus(event.commentWriterId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_USER));
 
-        if (isPlan(event.getPostId())) {
-            MeetPlan plan = planRepository.findByIdAndStatus(event.getPostId(), Status.ACTIVE)
+        if (isPlan(event.postId())) {
+            MeetPlan plan = planRepository.findByIdAndStatus(event.postId(), Status.ACTIVE)
                     .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_PLAN));
 
             Meet meet = meetRepository.findByIdAndStatus(plan.getMeetId(), Status.ACTIVE)
@@ -58,7 +58,7 @@ public class CommentMentionAddedNotifier implements DomainEventHandler<CommentMe
             CommentMentionNotifyEvent notifyEvent = CommentMentionNotifyEvent.builder()
                     .meetId(meet.getId())
                     .meetName(meet.getName())
-                    .postId(event.getPostId())
+                    .postId(event.postId())
                     .planId(plan.getId())
                     .reviewId(null)
                     .senderNickname(user.getNickname())
@@ -69,7 +69,7 @@ public class CommentMentionAddedNotifier implements DomainEventHandler<CommentMe
             return;
         }
 
-        PlanReview review = reviewRepository.findByPlanIdAndStatus(event.getPostId(), Status.ACTIVE)
+        PlanReview review = reviewRepository.findByPlanIdAndStatus(event.postId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_REVIEW));
 
         Meet meet = meetRepository.findByIdAndStatus(review.getMeetId(), Status.ACTIVE)
@@ -78,7 +78,7 @@ public class CommentMentionAddedNotifier implements DomainEventHandler<CommentMe
         CommentMentionNotifyEvent notifyEvent = CommentMentionNotifyEvent.builder()
                 .meetId(meet.getId())
                 .meetName(meet.getName())
-                .postId(event.getPostId())
+                .postId(event.postId())
                 .planId(null)
                 .reviewId(review.getId())
                 .senderNickname(user.getNickname())

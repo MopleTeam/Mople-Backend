@@ -25,7 +25,7 @@ public class CommentsCleanupHandler implements DomainEventHandler<CommentsSoftDe
 
     @Override
     public void handle(CommentsSoftDeletedEvent event) {
-        chunk(event.getCommentIds(), ids -> {
+        chunk(event.commentIds(), ids -> {
             likeRepository.deleteAllByCommentIdIn(ids);
             mentionRepository.deleteAllByCommentIdIn(ids);
             statsRepository.deleteAllByCommentIdIn(ids);

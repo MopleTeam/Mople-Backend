@@ -34,7 +34,7 @@ public class ReviewRemindNotifier implements DomainEventHandler<ReviewRemindEven
 
     @Override
     public void handle(ReviewRemindEvent event) {
-        PlanReview review = reviewRepository.findByIdAndStatus(event.getReviewId(), Status.ACTIVE)
+        PlanReview review = reviewRepository.findByIdAndStatus(event.reviewId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_REVIEW));
 
         if (review.getUpload()) {
@@ -49,7 +49,7 @@ public class ReviewRemindNotifier implements DomainEventHandler<ReviewRemindEven
         ReviewRemindNotifyEvent notifyEvent = ReviewRemindNotifyEvent.builder()
                 .meetId(meet.getId())
                 .meetName(meet.getName())
-                .reviewId(event.getReviewId())
+                .reviewId(event.reviewId())
                 .reviewName(review.getName())
                 .reviewCreatorId(review.getCreatorId())
                 .targetIds(targetIds)

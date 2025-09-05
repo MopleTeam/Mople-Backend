@@ -25,11 +25,11 @@ public class ReviewImageRemoveHandler implements DomainEventHandler<ReviewImageR
     public void handle(ReviewImageRemoveEvent event) {
         ImageDeletedEvent deletedEvent = ImageDeletedEvent.builder()
                 .aggregateType(REVIEW)
-                .aggregateId(event.getReviewId())
-                .imageUrl(event.getImageUrl())
-                .imageDeletedBy(event.getImageDeletedBy())
+                .aggregateId(event.reviewId())
+                .imageUrl(event.imageUrl())
+                .imageDeletedBy(event.imageDeletedBy())
                 .build();
 
-        outboxService.save(IMAGE_DELETED, REVIEW, event.getReviewId(), deletedEvent);
+        outboxService.save(IMAGE_DELETED, REVIEW, event.reviewId(), deletedEvent);
     }
 }

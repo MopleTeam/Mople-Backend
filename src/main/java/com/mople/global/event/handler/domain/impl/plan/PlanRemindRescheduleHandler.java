@@ -27,17 +27,17 @@ public class PlanRemindRescheduleHandler implements DomainEventHandler<PlanTimeC
 
     @Override
     public void handle(PlanTimeChangedEvent event) {
-        outboxService.cancel(PLAN_REMIND, PLAN, event.getPlanId());
+        outboxService.cancel(PLAN_REMIND, PLAN, event.planId());
 
-        if (event.getNewTime().isAfter(LocalDateTime.now().plusHours(1))) {
-            long hour = event.getNewTime().until(event.getOldTime(), ChronoUnit.HOURS) == 1 ? 1 : 2;
-            LocalDateTime runAt = event.getNewTime().minusHours(hour).atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+        if (event.newTime().isAfter(LocalDateTime.now().plusHours(1))) {
+            long hour = event.newTime().until(event.oldTime(), ChronoUnit.HOURS) == 1 ? 1 : 2;
+            LocalDateTime runAt = event.newTime().minusHours(hour).atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
 
             PlanRemindEvent remindEvent = PlanRemindEvent.builder()
-                    .planId(event.getPlanId())
+                    .planId(event.planId())
                     .build();
 
-            outboxService.saveWithRunAt(PLAN_REMIND, PLAN, event.getPlanId(), runAt, remindEvent);
+            outboxService.saveWithRunAt(PLAN_REMIND, PLAN, event.planId(), runAt, remindEvent);
         }
     }
 }

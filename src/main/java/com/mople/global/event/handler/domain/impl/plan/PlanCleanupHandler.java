@@ -19,6 +19,6 @@ public class PlanCleanupHandler implements DomainEventHandler<PlanSoftDeletedEve
 
     @Override
     public void handle(PlanSoftDeletedEvent event) {
-        participantRepository.deleteByPlanId(event.getPlanId());
+        participantRepository.deleteByPlanId(event.planId());
     }
 }

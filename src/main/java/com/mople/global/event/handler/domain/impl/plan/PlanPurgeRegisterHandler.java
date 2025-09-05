@@ -28,9 +28,9 @@ public class PlanPurgeRegisterHandler implements DomainEventHandler<PlanSoftDele
         LocalDateTime runAt = LocalDateTime.now().plusDays(7);
 
         PlanPurgeEvent purgeEvent = PlanPurgeEvent.builder()
-                .planId(event.getPlanId())
+                .planId(event.planId())
                 .build();
 
-        outboxService.saveWithRunAt(PLAN_PURGE, PLAN, event.getPlanId(), runAt, purgeEvent);
+        outboxService.saveWithRunAt(PLAN_PURGE, PLAN, event.planId(), runAt, purgeEvent);
     }
 }

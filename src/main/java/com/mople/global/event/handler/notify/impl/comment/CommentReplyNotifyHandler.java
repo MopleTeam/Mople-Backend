@@ -23,18 +23,18 @@ public class CommentReplyNotifyHandler implements NotifyEventHandler<CommentRepl
 
     @Override
     public NotifySendRequest getSendRequest(CommentReplyNotifyEvent event) {
-        return requestFactory.buildForTargets(event.getTargetIds(), event.notifyType().getTopic());
+        return requestFactory.buildForTargets(event.targetIds(), event.notifyType().getTopic());
     }
 
     @Override
     public List<Notification> getNotifications(CommentReplyNotifyEvent event, List<Long> userIds) {
-        if (event.getPlanId() != null && event.getReviewId() == null) {
+        if (event.planId() != null && event.reviewId() == null) {
             return userIds.stream()
                     .map(userId ->
                             Notification.builder()
                                     .type(event.notifyType())
-                                    .meetId(event.getMeetId())
-                                    .planId(event.getPlanId())
+                                    .meetId(event.meetId())
+                                    .planId(event.planId())
                                     .payload(event.payload())
                                     .userId(userId)
                                     .build()
@@ -46,8 +46,8 @@ public class CommentReplyNotifyHandler implements NotifyEventHandler<CommentRepl
                 .map(userId ->
                         Notification.builder()
                                 .type(event.notifyType())
-                                .meetId(event.getMeetId())
-                                .reviewId(event.getReviewId())
+                                .meetId(event.meetId())
+                                .reviewId(event.reviewId())
                                 .payload(event.payload())
                                 .userId(userId)
                                 .build()
