@@ -1,4 +1,4 @@
-package com.mople.global.event.handler.domain.impl.meet.publisher;
+package com.mople.global.event.handler.domain.impl.meet.notifier;
 
 import com.mople.core.exception.custom.NonRetryableOutboxException;
 import com.mople.dto.event.data.domain.meet.MeetJoinedEvent;
@@ -19,7 +19,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class MeetJoinNotifyPublisher implements DomainEventHandler<MeetJoinedEvent> {
+public class MeetJoinNotifier implements DomainEventHandler<MeetJoinedEvent> {
 
     private final MeetRepository meetRepository;
     private final UserRepository userRepository;

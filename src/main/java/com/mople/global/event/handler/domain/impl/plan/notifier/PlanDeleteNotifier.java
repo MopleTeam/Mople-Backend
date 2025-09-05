@@ -1,4 +1,4 @@
-package com.mople.global.event.handler.domain.impl.plan.publisher;
+package com.mople.global.event.handler.domain.impl.plan.notifier;
 
 import com.mople.core.exception.custom.NonRetryableOutboxException;
 import com.mople.dto.event.data.domain.plan.PlanSoftDeletedEvent;
@@ -20,7 +20,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class PlanDeleteNotifyPublisher implements DomainEventHandler<PlanSoftDeletedEvent> {
+public class PlanDeleteNotifier implements DomainEventHandler<PlanSoftDeletedEvent> {
 
     private final MeetRepository meetRepository;
     private final MeetPlanRepository planRepository;
@@ -41,7 +41,7 @@ public class PlanDeleteNotifyPublisher implements DomainEventHandler<PlanSoftDel
 
         List<Long> targetIds = userReader.findPlanUsersNoTriggers(event.getPlanDeletedBy(), event.getPlanId());
 
-        MeetPlan plan = planRepository.findByIdAndStatus(event.getPlanId(), Status.ACTIVE)
+        MeetPlan plan = planRepository.findByIdAndStatus(event.getPlanId(), Status.DELETED)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_PLAN));
 
         Meet meet = meetRepository.findByIdAndStatus(plan.getMeetId(), Status.ACTIVE)

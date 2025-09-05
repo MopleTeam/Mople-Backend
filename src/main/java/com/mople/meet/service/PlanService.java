@@ -5,7 +5,7 @@ import com.mople.dto.client.PlanClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
 import com.mople.dto.event.data.domain.plan.PlanCreatedEvent;
 import com.mople.dto.event.data.domain.plan.PlanSoftDeletedEvent;
-import com.mople.dto.event.data.domain.plan.PlanUpdatedEvent;
+import com.mople.dto.event.data.domain.plan.PlanTimeChangedEvent;
 import com.mople.dto.request.meet.plan.PlanReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.weather.CoordinateRequest;
@@ -20,7 +20,6 @@ import com.mople.global.enums.event.DeletionCause;
 import com.mople.global.utils.cursor.MemberCursor;
 import com.mople.dto.response.weather.WeatherInfoResponse;
 import com.mople.entity.meet.Meet;
-import com.mople.entity.meet.MeetTime;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.plan.PlanParticipant;
 import com.mople.entity.meet.plan.PlanReport;
@@ -28,7 +27,6 @@ import com.mople.entity.user.User;
 import com.mople.global.utils.cursor.CursorUtils;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.MeetMemberRepository;
-import com.mople.meet.repository.MeetTimeRepository;
 import com.mople.meet.repository.impl.MeetRepositorySupport;
 import com.mople.meet.repository.impl.comment.CommentRepositorySupport;
 import com.mople.meet.repository.impl.plan.ParticipantRepositorySupport;
@@ -78,7 +76,6 @@ public class PlanService {
     private final PlanParticipantRepository planParticipantRepository;
     private final ParticipantRepositorySupport participantRepositorySupport;
     private final PlanRepositorySupport planRepositorySupport;
-    private final MeetTimeRepository timeRepository;
     private final CommentRepositorySupport commentRepositorySupport;
     private final MeetRepositorySupport meetRepositorySupport;
 
@@ -89,6 +86,8 @@ public class PlanService {
 
     @Transactional(readOnly = true)
     public PlanHomeViewResponse getPlanView(Long userId) {
+        reader.findUser(userId);
+
         List<PlanViewResponse> homeViewPlan = planRepositorySupport.findHomeViewPlan(userId, PLAN_HOME_VIEW_SIZE);
 
         return new PlanHomeViewResponse(
@@ -135,14 +134,6 @@ public class PlanService {
                         .build()
         );
 
-        timeRepository.save(
-                MeetTime.builder()
-                        .meetId(plan.getMeetId())
-                        .planId(plan.getId())
-                        .planTime(request.planTime())
-                        .build()
-        );
-
         PlanCreatedEvent createEvent = PlanCreatedEvent.builder()
                 .planId(plan.getId())
                 .planTime(plan.getPlanTime())
@@ -180,13 +171,8 @@ public class PlanService {
             throw new AsyncException(REQUEST_CONFLICT);
         }
 
-        MeetTime meetTime = timeRepository.findByPlanId(plan.getId())
-                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_TIME));
-
         LocalDateTime newTime = request.planTime();
-        LocalDateTime preTime = plan.getPlanTime();
-
-        meetTime.updateTime(newTime);
+        LocalDateTime oldTime = plan.getPlanTime();
 
         if (plan.updatePlan(request) || newTime.isBefore(LocalDateTime.now().plusDays(5))) {
             WeatherInfoResponse weather = getPlanWeather(request.lot(), request.lat(), request.planTime());
@@ -197,14 +183,16 @@ public class PlanService {
             meetPlanRepository.deleteWeather(plan.getId());
         }
 
-        PlanUpdatedEvent updateEvent = PlanUpdatedEvent.builder()
-                .planId(plan.getId())
-                .planUpdatedBy(userId)
-                .newTime(newTime)
-                .preTime(preTime)
-                .build();
+        if (!newTime.equals(oldTime)) {
+            PlanTimeChangedEvent changedEvent = PlanTimeChangedEvent.builder()
+                    .planId(plan.getId())
+                    .timeChangedBy(userId)
+                    .newTime(newTime)
+                    .oldTime(oldTime)
+                    .build();
 
-        outboxService.save(PLAN_UPDATED, PLAN, plan.getId(), updateEvent);
+            outboxService.save(PLAN_TIME_CHANGED, PLAN, plan.getId(), changedEvent);
+        }
 
         Integer participantCount = planParticipantRepository.countByPlanId(plan.getId());
 

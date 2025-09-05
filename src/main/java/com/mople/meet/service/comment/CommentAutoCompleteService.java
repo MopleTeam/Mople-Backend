@@ -1,14 +1,15 @@
 package com.mople.meet.service.comment;
 
 import com.mople.core.exception.custom.CursorException;
-import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.UserRoleClientResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.user.UserInfo;
 import com.mople.entity.user.User;
+import com.mople.global.enums.Status;
 import com.mople.global.utils.cursor.AutoCompleteCursor;
 import com.mople.entity.meet.MeetMember;
 import com.mople.global.utils.cursor.CursorUtils;
+import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.impl.MeetMemberRepositorySupport;
 import com.mople.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class CommentAutoCompleteService {
 
     private final MeetMemberRepositorySupport memberRepositorySupport;
     private final UserRepository userRepository;
+    private final EntityReader reader;
 
     public List<MeetMember> getMeetMembers(Long meetId, Long hostId, Long creatorId, String keyword, String encodedCursor, int size) {
 
@@ -53,14 +55,13 @@ public class CommentAutoCompleteService {
                 .map(MeetMember::getUserId)
                 .toList();
 
-        Map<Long, UserInfo> userInfoById = ofMap(userRepository.findAllById(userIds));
+        Map<Long, UserInfo> userInfoById = ofMap(userRepository.findByIdInAndStatus(userIds, Status.ACTIVE));
 
         return buildCursorPage(
                 members,
                 size,
                 m -> {
-                    User user = userRepository.findById(m.getUserId())
-                            .orElseThrow(() -> new ResourceNotFoundException(NOT_USER));
+                    User user = reader.findUser(m.getUserId());
 
                     return new String[]{
                             user.getNickname(),

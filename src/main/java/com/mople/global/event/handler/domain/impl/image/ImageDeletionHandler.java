@@ -10,13 +10,13 @@ import org.springframework.stereotype.Component;
 import java.util.Locale;
 
 @Component
-public class ImageDeletedHandler implements DomainEventHandler<ImageDeletedEvent> {
+public class ImageDeletionHandler implements DomainEventHandler<ImageDeletedEvent> {
 
     private final String bucketName;
     private final String namespace;
     private final Storage storage;
 
-    public ImageDeletedHandler(
+    public ImageDeletionHandler(
             @Value("${oci.bucket}") String bucketName,
             @Value("${oci.namespace}") String namespace,
             Storage storage

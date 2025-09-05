@@ -1,7 +1,7 @@
-package com.mople.global.event.handler.domain.impl.plan.publisher;
+package com.mople.global.event.handler.domain.impl.plan.notifier;
 
 import com.mople.core.exception.custom.NonRetryableOutboxException;
-import com.mople.dto.event.data.domain.plan.PlanUpdatedEvent;
+import com.mople.dto.event.data.domain.plan.PlanTimeChangedEvent;
 import com.mople.dto.event.data.notify.plan.PlanUpdateNotifyEvent;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.plan.MeetPlan;
@@ -19,7 +19,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class PlanUpdateNotifyPublisher implements DomainEventHandler<PlanUpdatedEvent> {
+public class PlanUpdateNotifier implements DomainEventHandler<PlanTimeChangedEvent> {
 
     private final MeetRepository meetRepository;
     private final MeetPlanRepository planRepository;
@@ -28,13 +28,13 @@ public class PlanUpdateNotifyPublisher implements DomainEventHandler<PlanUpdated
     private final NotificationSendService sendService;
 
     @Override
-    public Class<PlanUpdatedEvent> getHandledType() {
-        return PlanUpdatedEvent.class;
+    public Class<PlanTimeChangedEvent> getHandledType() {
+        return PlanTimeChangedEvent.class;
     }
 
     @Override
-    public void handle(PlanUpdatedEvent event) {
-        List<Long> targetIds = userReader.findPlanUsersNoTriggers(event.getPlanUpdatedBy(), event.getPlanId());
+    public void handle(PlanTimeChangedEvent event) {
+        List<Long> targetIds = userReader.findPlanUsersNoTriggers(event.getTimeChangedBy(), event.getPlanId());
 
         MeetPlan plan = planRepository.findByIdAndStatus(event.getPlanId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_PLAN));

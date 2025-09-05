@@ -1,4 +1,4 @@
-package com.mople.global.event.handler.domain.impl.review.publisher;
+package com.mople.global.event.handler.domain.impl.review.notifier;
 
 import com.mople.core.exception.custom.NonRetryableOutboxException;
 import com.mople.dto.event.data.domain.review.ReviewRemindEvent;
@@ -19,7 +19,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class ReviewRemindNotifyPublisher implements DomainEventHandler<ReviewRemindEvent> {
+public class ReviewRemindNotifier implements DomainEventHandler<ReviewRemindEvent> {
 
     private final MeetRepository meetRepository;
     private final PlanReviewRepository reviewRepository;

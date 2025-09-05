@@ -5,14 +5,13 @@ import com.mople.dto.event.data.domain.DomainEvent;
 import lombok.Builder;
 import lombok.Getter;
 
-import static com.mople.global.enums.event.EventTypeNames.REVIEW_UPDATED;
+import static com.mople.global.enums.event.EventTypeNames.REVIEW_UPLOAD;
 
-@JsonTypeName(REVIEW_UPDATED)
+@JsonTypeName(REVIEW_UPLOAD)
 @Builder
 @Getter
-public class ReviewUpdatedEvent implements DomainEvent {
+public class ReviewUploadEvent implements DomainEvent {
 
     private final Long reviewId;
     private final Long reviewUpdatedBy;
-    private final boolean isFirstUpload;
 }

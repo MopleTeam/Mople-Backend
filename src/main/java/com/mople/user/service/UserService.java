@@ -2,13 +2,12 @@ package com.mople.user.service;
 
 import com.mople.core.exception.custom.AsyncException;
 import com.mople.dto.client.UserClientResponse;
-import com.mople.dto.event.data.domain.image.ImageDeletedEvent;
 import com.mople.dto.event.data.domain.user.UserDeletedEvent;
+import com.mople.dto.event.data.domain.user.UserImageChangedEvent;
 import com.mople.dto.request.user.RandomNicknameRequest;
 import com.mople.dto.request.user.UserInfoRequest;
 import com.mople.entity.user.User;
 import com.mople.global.enums.ExceptionReturnCode;
-import com.mople.global.enums.event.AggregateType;
 import com.mople.meet.reader.EntityReader;
 import com.mople.notification.repository.FirebaseTokenRepository;
 import com.mople.notification.repository.NotificationRepository;
@@ -20,8 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.mople.global.enums.event.EventTypeNames.IMAGE_DELETED;
-import static com.mople.global.enums.event.EventTypeNames.USER_DELETED;
+import static com.mople.global.enums.event.AggregateType.USER;
+import static com.mople.global.enums.event.EventTypeNames.*;
 
 @Service
 @RequiredArgsConstructor
@@ -57,14 +56,13 @@ public class UserService {
         }
 
         if (user.imageValid()) {
-            ImageDeletedEvent deletedEvent = ImageDeletedEvent.builder()
-                    .aggregateType(AggregateType.USER)
-                    .aggregateId(id)
+            UserImageChangedEvent changedEvent = UserImageChangedEvent.builder()
+                    .userId(id)
                     .imageUrl(user.getProfileImg())
                     .imageDeletedBy(id)
                     .build();
 
-            outboxService.save(IMAGE_DELETED, AggregateType.USER, id, deletedEvent);
+            outboxService.save(USER_IMAGE_CHANGED, USER, id, changedEvent);
         }
 
         user.updateImageAndNickname(updateInfo.image(), updateInfo.nickname());
@@ -94,7 +92,7 @@ public class UserService {
                 .userId(id)
                 .build();
 
-        outboxService.save(USER_DELETED, AggregateType.USER, id, deletedEvent);
+        outboxService.save(USER_DELETED, USER, id, deletedEvent);
     }
 
     @Transactional(readOnly = true)

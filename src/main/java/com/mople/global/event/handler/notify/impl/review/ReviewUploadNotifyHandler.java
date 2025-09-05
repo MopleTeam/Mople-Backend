@@ -1,6 +1,6 @@
 package com.mople.global.event.handler.notify.impl.review;
 
-import com.mople.dto.event.data.notify.review.ReviewUpdateNotifyEvent;
+import com.mople.dto.event.data.notify.review.ReviewUploadNotifyEvent;
 import com.mople.dto.response.notification.NotifySendRequest;
 import com.mople.entity.notification.Notification;
 import com.mople.global.event.handler.notify.NotifyEventHandler;
@@ -12,22 +12,22 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class ReviewUpdateNotifyHandler implements NotifyEventHandler<ReviewUpdateNotifyEvent> {
+public class ReviewUploadNotifyHandler implements NotifyEventHandler<ReviewUploadNotifyEvent> {
 
     private final NotifySendRequestFactory requestFactory;
 
     @Override
-    public Class<ReviewUpdateNotifyEvent> getHandledType() {
-        return ReviewUpdateNotifyEvent.class;
+    public Class<ReviewUploadNotifyEvent> getHandledType() {
+        return ReviewUploadNotifyEvent.class;
     }
 
     @Override
-    public NotifySendRequest getSendRequest(ReviewUpdateNotifyEvent event) {
+    public NotifySendRequest getSendRequest(ReviewUploadNotifyEvent event) {
         return requestFactory.buildForTargets(event.getTargetIds(), event.notifyType().getTopic());
     }
 
     @Override
-    public List<Notification> getNotifications(ReviewUpdateNotifyEvent event, List<Long> userIds) {
+    public List<Notification> getNotifications(ReviewUploadNotifyEvent event, List<Long> userIds) {
         return userIds.stream()
                 .map(userId ->
                         Notification.builder()

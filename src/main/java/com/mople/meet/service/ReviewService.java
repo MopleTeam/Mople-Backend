@@ -3,9 +3,9 @@ package com.mople.meet.service;
 import com.mople.core.exception.custom.*;
 import com.mople.dto.client.ReviewClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
-import com.mople.dto.event.data.domain.image.ImageDeletedEvent;
+import com.mople.dto.event.data.domain.review.ReviewImageRemoveEvent;
 import com.mople.dto.event.data.domain.review.ReviewSoftDeletedEvent;
-import com.mople.dto.event.data.domain.review.ReviewUpdatedEvent;
+import com.mople.dto.event.data.domain.review.ReviewUploadEvent;
 import com.mople.dto.request.meet.review.ReviewImageDeleteRequest;
 import com.mople.dto.request.meet.review.ReviewReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
@@ -297,14 +297,13 @@ public class ReviewService {
         reviewImageRepository.deleteAll(reviewImages);
 
         reviewImages.forEach(i -> {
-            ImageDeletedEvent deletedEvent = ImageDeletedEvent.builder()
-                    .aggregateType(REVIEW)
-                    .aggregateId(reviewId)
+            ReviewImageRemoveEvent removeEvent = ReviewImageRemoveEvent.builder()
+                    .reviewId(reviewId)
                     .imageUrl(i.getReviewImage())
                     .imageDeletedBy(userId)
                     .build();
 
-            outboxService.save(IMAGE_DELETED, REVIEW, reviewId, deletedEvent);
+            outboxService.save(REVIEW_IMAGE_REMOVE, REVIEW, reviewId, removeEvent);
         });
 
         List<ReviewImage> images = reviewImageRepository.findByReviewId(reviewImages.get(0).getReviewId());
@@ -332,13 +331,14 @@ public class ReviewService {
                         .toList()
         );
 
-        ReviewUpdatedEvent updatedEvent = ReviewUpdatedEvent.builder()
-                .reviewId(review.getId())
-                .reviewUpdatedBy(userId)
-                .isFirstUpload(review.getUpload())
-                .build();
+        if (!review.getUpload()) {
+            ReviewUploadEvent uploadEvent = ReviewUploadEvent.builder()
+                    .reviewId(review.getId())
+                    .reviewUpdatedBy(userId)
+                    .build();
 
-        outboxService.save(REVIEW_UPDATED, REVIEW, review.getId(), updatedEvent);
+            outboxService.save(REVIEW_UPLOAD, REVIEW, review.getId(), uploadEvent);
+        }
 
         planReviewRepository.uploadedAtFirst(review.getId());
 

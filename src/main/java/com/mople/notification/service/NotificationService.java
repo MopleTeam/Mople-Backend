@@ -2,7 +2,6 @@ package com.mople.notification.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mople.core.exception.custom.CursorException;
-import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.request.notification.topic.PushTopicRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.notification.NotificationResponse;
@@ -21,7 +20,6 @@ import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.meet.repository.review.PlanReviewRepository;
 import com.mople.notification.repository.NotificationRepository;
 import com.mople.notification.repository.TopicRepository;
-import com.mople.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -46,7 +44,6 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final TopicRepository topicRepository;
-    private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
     private final MeetPlanRepository planRepository;
     private final PlanReviewRepository reviewRepository;
@@ -172,8 +169,7 @@ public class NotificationService {
 
     @Transactional
     public void readAllNotifications(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException(NOT_USER));
+        User user = reader.findUser(userId);
 
         notificationRepository
                 .getUserNotificationList(user.getId())

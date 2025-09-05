@@ -36,7 +36,7 @@ public class MeetCleanupHandler implements DomainEventHandler<MeetSoftDeletedEve
         memberRepository.deleteByMeetId(event.getMeetId());
         inviteRepository.deleteByMeetId(event.getMeetId());
 
-        Meet meet = meetRepository.findByIdAndStatus(event.getMeetId(), Status.ACTIVE)
+        Meet meet = meetRepository.findByIdAndStatus(event.getMeetId(), Status.DELETED)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
 
         ImageDeletedEvent deletedEvent = ImageDeletedEvent.builder()

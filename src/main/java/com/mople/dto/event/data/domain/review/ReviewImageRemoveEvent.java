@@ -5,12 +5,14 @@ import com.mople.dto.event.data.domain.DomainEvent;
 import lombok.Builder;
 import lombok.Getter;
 
-import static com.mople.global.enums.event.EventTypeNames.REVIEW_CREATED;
+import static com.mople.global.enums.event.EventTypeNames.REVIEW_IMAGE_REMOVE;
 
-@JsonTypeName(REVIEW_CREATED)
+@JsonTypeName(REVIEW_IMAGE_REMOVE)
 @Builder
 @Getter
-public class ReviewCreatedEvent implements DomainEvent {
+public class ReviewImageRemoveEvent implements DomainEvent {
 
     private final Long reviewId;
+    private final String imageUrl;
+    private final Long imageDeletedBy;
 }

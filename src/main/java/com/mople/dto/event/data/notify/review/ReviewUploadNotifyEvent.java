@@ -11,7 +11,7 @@ import java.util.Map;
 
 @Builder
 @Getter
-public class ReviewUpdateNotifyEvent implements NotifyEvent {
+public class ReviewUploadNotifyEvent implements NotifyEvent {
 
     private final Long meetId;
     private final String meetName;

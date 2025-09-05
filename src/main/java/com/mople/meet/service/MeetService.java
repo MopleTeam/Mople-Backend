@@ -3,7 +3,7 @@ package com.mople.meet.service;
 import com.mople.core.exception.custom.*;
 import com.mople.dto.client.MeetClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
-import com.mople.dto.event.data.domain.image.ImageDeletedEvent;
+import com.mople.dto.event.data.domain.meet.MeetImageChangedEvent;
 import com.mople.dto.event.data.domain.meet.MeetJoinedEvent;
 import com.mople.dto.event.data.domain.meet.MeetLeftEvent;
 import com.mople.dto.event.data.domain.meet.MeetSoftDeletedEvent;
@@ -122,14 +122,13 @@ public class MeetService {
         meet.updateMeetInfo(request.name(), request.image());
 
         if (!Objects.equals(oldImage, request.image())) {
-            ImageDeletedEvent deletedEvent = ImageDeletedEvent.builder()
-                    .aggregateType(MEET)
-                    .aggregateId(meetId)
+            MeetImageChangedEvent changedEvent = MeetImageChangedEvent.builder()
+                    .meetId(meetId)
                     .imageUrl(oldImage)
                     .imageDeletedBy(creatorId)
                     .build();
 
-            outboxService.save(IMAGE_DELETED, MEET, meetId, deletedEvent);
+            outboxService.save(MEET_IMAGE_CHANGED, MEET, meetId, changedEvent);
         }
 
         Integer memberCount = meetRepositorySupport.countMeetMember(meet.getId());

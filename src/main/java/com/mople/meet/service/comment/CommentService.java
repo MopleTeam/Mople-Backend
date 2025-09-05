@@ -4,7 +4,7 @@ import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.CommentClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
 import com.mople.dto.event.data.domain.comment.CommentCreatedEvent;
-import com.mople.dto.event.data.domain.comment.CommentUpdatedEvent;
+import com.mople.dto.event.data.domain.comment.CommentMentionAddedEvent;
 import com.mople.dto.event.data.domain.comment.CommentsSoftDeletedEvent;
 import com.mople.dto.request.meet.comment.CommentCreateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
@@ -246,17 +246,17 @@ public class CommentService {
         comment.updateContent(request.contents());
         mentionService.updateMentions(request.mentions(), comment.getId());
 
-        Boolean isExistMention = request.mentions() != null && !request.mentions().isEmpty();
-        CommentUpdatedEvent updatedEvent = CommentUpdatedEvent.builder()
-                .postId(comment.getPostId())
-                .commentId(comment.getId())
-                .commentWriterId(comment.getWriterId())
-                .isExistMention(isExistMention)
-                .originMentionedIds(originMentions)
-                .parentId(comment.getParentId())
-                .build();
+        if (request.mentions() != null && !request.mentions().isEmpty()) {
+            CommentMentionAddedEvent addedEvent = CommentMentionAddedEvent.builder()
+                    .postId(comment.getPostId())
+                    .commentId(comment.getId())
+                    .commentWriterId(comment.getWriterId())
+                    .originMentions(originMentions)
+                    .parentId(comment.getParentId())
+                    .build();
 
-        outboxService.save(COMMENT_UPDATED, COMMENT, comment.getId(), updatedEvent);
+            outboxService.save(COMMENT_MENTION_ADDED, COMMENT, comment.getId(), addedEvent);
+        }
 
         return getCommentUpdateClientResponse(userId, comment);
     }

@@ -1,11 +1,8 @@
-package com.mople.global.event.handler.domain.impl.plan.publisher;
+package com.mople.global.event.handler.domain.impl.plan.notifier;
 
 import com.mople.core.exception.custom.NonRetryableOutboxException;
-import com.mople.dto.event.data.domain.plan.PlanRemindEvent;
-import com.mople.dto.event.data.notify.plan.PlanRemindNotifyEvent;
-import com.mople.dto.request.weather.CoordinateRequest;
-import com.mople.dto.response.weather.OpenWeatherResponse;
-import com.mople.dto.response.weather.WeatherInfoScheduleResponse;
+import com.mople.dto.event.data.domain.plan.PlanCreatedEvent;
+import com.mople.dto.event.data.notify.plan.PlanCreateNotifyEvent;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.global.enums.ExceptionReturnCode;
@@ -15,56 +12,44 @@ import com.mople.meet.repository.MeetRepository;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.notification.reader.NotificationUserReader;
 import com.mople.notification.service.NotificationSendService;
-import com.mople.weather.service.WeatherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class PlanRemindNotifyPublisher implements DomainEventHandler<PlanRemindEvent> {
+public class PlanCreatedNotifier implements DomainEventHandler<PlanCreatedEvent> {
 
     private final MeetRepository meetRepository;
     private final MeetPlanRepository planRepository;
 
-    private final WeatherService weatherService;
     private final NotificationUserReader userReader;
     private final NotificationSendService sendService;
 
     @Override
-    public Class<PlanRemindEvent> getHandledType() {
-        return PlanRemindEvent.class;
+    public Class<PlanCreatedEvent> getHandledType() {
+        return PlanCreatedEvent.class;
     }
 
     @Override
-    public void handle(PlanRemindEvent event) {
+    public void handle(PlanCreatedEvent event) {
+        List<Long> targetIds = userReader.findMeetUsersNoTriggers(event.getPlanCreatorId(), event.getMeetId());
+
         MeetPlan plan = planRepository.findByIdAndStatus(event.getPlanId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_PLAN));
-
-        List<Long> targetIds = userReader.findPlanUsersAll(plan.getCreatorId());
 
         Meet meet = meetRepository.findByIdAndStatus(plan.getMeetId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
 
-        WeatherInfoScheduleResponse weather =
-                new WeatherInfoScheduleResponse(weatherInfo(plan.getLongitude(), plan.getLatitude()));
-
-        PlanRemindNotifyEvent notifyEvent = PlanRemindNotifyEvent.builder()
-                .meetId(meet.getId())
+        PlanCreateNotifyEvent notifyEvent = PlanCreateNotifyEvent.builder()
+                .meetId(plan.getMeetId())
                 .meetName(meet.getName())
                 .planId(event.getPlanId())
                 .planName(plan.getName())
-                .temperature(weather.temperature())
-                .iconImage(weather.weatherIconImage())
                 .targetIds(targetIds)
                 .build();
 
         sendService.sendMultiNotification(notifyEvent);
-    }
-
-    private OpenWeatherResponse weatherInfo(BigDecimal lot, BigDecimal lat) {
-        return weatherService.getWeatherInfoByLocation(new CoordinateRequest(lot, lat)).join();
     }
 }

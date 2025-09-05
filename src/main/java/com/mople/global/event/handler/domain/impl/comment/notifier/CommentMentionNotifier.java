@@ -1,8 +1,8 @@
-package com.mople.global.event.handler.domain.impl.comment.publisher;
+package com.mople.global.event.handler.domain.impl.comment.notifier;
 
 import com.mople.core.exception.custom.NonRetryableOutboxException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
-import com.mople.dto.event.data.domain.comment.CommentUpdatedEvent;
+import com.mople.dto.event.data.domain.comment.CommentCreatedEvent;
 import com.mople.dto.event.data.notify.comment.CommentMentionNotifyEvent;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.plan.MeetPlan;
@@ -24,7 +24,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class CommentUpdatedMentionNotifyPublisher implements DomainEventHandler<CommentUpdatedEvent> {
+public class CommentMentionNotifier implements DomainEventHandler<CommentCreatedEvent> {
 
     private final MeetRepository meetRepository;
     private final MeetPlanRepository planRepository;
@@ -35,22 +35,20 @@ public class CommentUpdatedMentionNotifyPublisher implements DomainEventHandler<
     private final NotificationSendService sendService;
 
     @Override
-    public Class<CommentUpdatedEvent> getHandledType() {
-        return CommentUpdatedEvent.class;
+    public Class<CommentCreatedEvent> getHandledType() {
+        return CommentCreatedEvent.class;
     }
 
     @Override
-    public void handle(CommentUpdatedEvent event) {
+    public void handle(CommentCreatedEvent event) {
         if (!event.getIsExistMention()) {
             return;
         }
 
-        List<Long> filteredTargetIds = userReader.findUpdatedMentionedUsers(
-                event.getOriginMentionedIds(), event.getCommentWriterId(), event.getCommentId()
-        );
+        List<Long> targetIds = userReader.findCreatedMentionedUsers(event.getCommentWriterId(), event.getCommentId());
 
         User user = userRepository.findByIdAndStatus(event.getCommentWriterId(), Status.ACTIVE)
-                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_USER));
+                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_USER));
 
         if (isPlan(event.getPostId())) {
             MeetPlan plan = planRepository.findByIdAndStatus(event.getPostId(), Status.ACTIVE)
@@ -66,7 +64,7 @@ public class CommentUpdatedMentionNotifyPublisher implements DomainEventHandler<
                     .planId(plan.getId())
                     .reviewId(null)
                     .senderNickname(user.getNickname())
-                    .targetIds(filteredTargetIds)
+                    .targetIds(targetIds)
                     .build();
 
             sendService.sendMultiNotification(notifyEvent);
@@ -86,7 +84,7 @@ public class CommentUpdatedMentionNotifyPublisher implements DomainEventHandler<
                 .planId(null)
                 .reviewId(review.getId())
                 .senderNickname(user.getNickname())
-                .targetIds(filteredTargetIds)
+                .targetIds(targetIds)
                 .build();
 
         sendService.sendMultiNotification(notifyEvent);

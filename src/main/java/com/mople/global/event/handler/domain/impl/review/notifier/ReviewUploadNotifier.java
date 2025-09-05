@@ -1,8 +1,8 @@
-package com.mople.global.event.handler.domain.impl.review.publisher;
+package com.mople.global.event.handler.domain.impl.review.notifier;
 
 import com.mople.core.exception.custom.NonRetryableOutboxException;
-import com.mople.dto.event.data.domain.review.ReviewUpdatedEvent;
-import com.mople.dto.event.data.notify.review.ReviewUpdateNotifyEvent;
+import com.mople.dto.event.data.domain.review.ReviewUploadEvent;
+import com.mople.dto.event.data.notify.review.ReviewUploadNotifyEvent;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.review.PlanReview;
 import com.mople.global.enums.ExceptionReturnCode;
@@ -19,7 +19,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class ReviewUpdateNotifyPublisher implements DomainEventHandler<ReviewUpdatedEvent> {
+public class ReviewUploadNotifier implements DomainEventHandler<ReviewUploadEvent> {
 
     private final MeetRepository meetRepository;
     private final PlanReviewRepository reviewRepository;
@@ -28,16 +28,12 @@ public class ReviewUpdateNotifyPublisher implements DomainEventHandler<ReviewUpd
     private final NotificationSendService sendService;
 
     @Override
-    public Class<ReviewUpdatedEvent> getHandledType() {
-        return ReviewUpdatedEvent.class;
+    public Class<ReviewUploadEvent> getHandledType() {
+        return ReviewUploadEvent.class;
     }
 
     @Override
-    public void handle(ReviewUpdatedEvent event) {
-        if (!event.isFirstUpload()) {
-            return;
-        }
-
+    public void handle(ReviewUploadEvent event) {
         PlanReview review = reviewRepository.findByIdAndStatus(event.getReviewId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_REVIEW));
 
@@ -46,7 +42,7 @@ public class ReviewUpdateNotifyPublisher implements DomainEventHandler<ReviewUpd
         Meet meet = meetRepository.findByIdAndStatus(review.getMeetId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
 
-        ReviewUpdateNotifyEvent notifyEvent = ReviewUpdateNotifyEvent.builder()
+        ReviewUploadNotifyEvent notifyEvent = ReviewUploadNotifyEvent.builder()
                 .meetId(meet.getId())
                 .meetName(meet.getName())
                 .reviewId(event.getReviewId())

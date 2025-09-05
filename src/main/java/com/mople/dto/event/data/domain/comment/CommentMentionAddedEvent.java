@@ -7,17 +7,16 @@ import lombok.Getter;
 
 import java.util.List;
 
-import static com.mople.global.enums.event.EventTypeNames.COMMENT_UPDATED;
+import static com.mople.global.enums.event.EventTypeNames.COMMENT_MENTION_ADDED;
 
-@JsonTypeName(COMMENT_UPDATED)
+@JsonTypeName(COMMENT_MENTION_ADDED)
 @Builder
 @Getter
-public class CommentUpdatedEvent implements DomainEvent {
+public class CommentMentionAddedEvent implements DomainEvent {
 
     private final Long postId;
     private final Long commentId;
     private final Long commentWriterId;
-    private final Boolean isExistMention;
-    private final List<Long> originMentionedIds;
+    private final List<Long> originMentions;
     private final Long parentId;
 }
