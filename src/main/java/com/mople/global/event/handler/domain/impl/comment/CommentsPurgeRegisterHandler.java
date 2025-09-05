@@ -1,6 +1,6 @@
 package com.mople.global.event.handler.domain.impl.comment;
 
-import com.mople.dto.event.data.domain.comment.CommentPurgeEvent;
+import com.mople.dto.event.data.domain.comment.CommentsPurgeEvent;
 import com.mople.dto.event.data.domain.comment.CommentsSoftDeletedEvent;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.outbox.service.OutboxService;
@@ -27,7 +27,7 @@ public class CommentsPurgeRegisterHandler implements DomainEventHandler<Comments
     public void handle(CommentsSoftDeletedEvent event) {
         LocalDateTime runAt = LocalDateTime.now().plusDays(7);
 
-        CommentPurgeEvent purgeEvent = CommentPurgeEvent.builder()
+        CommentsPurgeEvent purgeEvent = CommentsPurgeEvent.builder()
                 .commentIds(event.getCommentIds())
                 .build();
 

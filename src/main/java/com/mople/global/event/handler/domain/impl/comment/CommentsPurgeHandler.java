@@ -1,6 +1,6 @@
 package com.mople.global.event.handler.domain.impl.comment;
 
-import com.mople.dto.event.data.domain.comment.CommentPurgeEvent;
+import com.mople.dto.event.data.domain.comment.CommentsPurgeEvent;
 import com.mople.global.enums.Status;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.comment.PlanCommentRepository;
@@ -12,17 +12,17 @@ import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
-public class CommentsPurgeHandler implements DomainEventHandler<CommentPurgeEvent> {
+public class CommentsPurgeHandler implements DomainEventHandler<CommentsPurgeEvent> {
 
     private final PlanCommentRepository commentRepository;
 
     @Override
-    public Class<CommentPurgeEvent> getHandledType() {
-        return CommentPurgeEvent.class;
+    public Class<CommentsPurgeEvent> getHandledType() {
+        return CommentsPurgeEvent.class;
     }
 
     @Override
-    public void handle(CommentPurgeEvent event) {
+    public void handle(CommentsPurgeEvent event) {
         List<Status> commentStatus = commentRepository.findStatusByIdIn(event.getCommentIds());
 
         boolean deleted = commentStatus.stream().allMatch(s -> Objects.equals(s, Status.DELETED));
