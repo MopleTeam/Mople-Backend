@@ -47,6 +47,6 @@ public class OutboxPublisher {
 
     private String shorten(String s) {
         if (s == null) return null;
-        return s.length() > 255 ? s.substring(0, 255) : s;
+        return s.length() > 500 ? s.substring(0, 500) : s;
     }
 }

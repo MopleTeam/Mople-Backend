@@ -46,7 +46,7 @@ public class OutboxEvent {
     @Column(name = "attempts")
     private Integer attempts = 0;
 
-    @Column(name = "last_error")
+    @Column(name = "last_error", length = 500)
     private String lastError;
 
     @Column(name = "available_at", nullable = false)
