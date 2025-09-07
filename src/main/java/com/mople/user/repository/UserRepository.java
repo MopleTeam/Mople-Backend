@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-
 import java.util.List;
 import java.util.Optional;
 
@@ -19,8 +18,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select u from User u where u.id in :ids and u.status = :status")
     List<User> findByIdInAndStatus(List<Long> ids, Status status);
 
-    @Query("select u from User u where u.email = :email and u.status = :status")
-    Optional<User> loginCheck(@Param("email") String email, Status status);
+    @Query(
+            "select u " +
+            "  from User u " +
+            " where u.email = :email " +
+            "   and u.status = com.mople.global.enums.Status.ACTIVE"
+    )
+    Optional<User> loginCheck(@Param("email") String email);
 
     @Query("select u from User u where u.id = :id and u.status = :status")
     Optional<User> findByIdAndStatus(Long id, Status status);

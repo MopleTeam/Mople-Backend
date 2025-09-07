@@ -54,9 +54,6 @@ public interface PlanReviewRepository extends JpaRepository<PlanReview, Long> {
     @Query("select r.planId from PlanReview r where r.id = :reviewId")
     Long findPlanIdById(Long reviewId);
 
-    @Query("select r.status from PlanReview r where r.id = :reviewId")
-    Status findStatusById(Long reviewId);
-
     Integer countByMeetIdAndStatus(Long meetId, Status status);
 
     boolean existsByPlanIdAndStatus(Long planId, Status status);
@@ -67,9 +64,29 @@ public interface PlanReviewRepository extends JpaRepository<PlanReview, Long> {
     @Query("select r from PlanReview r where r.id = :id and r.status = :status")
     Optional<PlanReview> findByIdAndStatus(Long id, Status status);
 
-    @Query("select r.id from PlanReview r where r.meetId = :meetId and r.creatorId = :creatorId and r.status = :status")
-    List<Long> findIdsByMeetIdAndCreatorIdAndStatus(Long meetId, Long creatorId, Status status);
+    @Query(
+            "select r.id " +
+            "  from PlanReview r " +
+            " where r.meetId = :meetId " +
+            "   and r.creatorId = :creatorId " +
+            "   and r.status = com.mople.global.enums.Status.ACTIVE"
+    )
+    List<Long> findIdsByMeetIdAndCreatorId(Long meetId, Long creatorId);
 
-    @Query("select r.id from PlanReview r where r.meetId = :meetId and r.status = :status")
-    List<Long> findIdsByMeetIdAndStatus(Long meetId, Status status);
+    @Query(
+            "select r.id " +
+            "  from PlanReview r " +
+            " where r.meetId = :meetId " +
+            "   and r.status = com.mople.global.enums.Status.ACTIVE"
+    )
+    List<Long> findIdsByMeetId(Long meetId);
+
+    @Modifying(clearAutomatically = true)
+    @Query(
+            "delete " +
+              "from PlanReview r " +
+            " where r.id = :reviewId " +
+            "   and r.status = com.mople.global.enums.Status.DELETED"
+    )
+    void hardDeleteById(Long reviewId);
 }

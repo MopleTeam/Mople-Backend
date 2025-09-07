@@ -33,12 +33,22 @@ public interface MeetRepository extends JpaRepository<Meet, Long> {
     )
     int softDeleteAll(Status status, List<Long> meetIds, Long userId, LocalDateTime deletedAt);
 
-    @Query("select m.status from Meet m where m.id = :meetId")
-    Status findStatusById(Long meetId);
-
     @Query("select m from Meet m where m.id = :id and m.status = :status")
     Optional<Meet> findByIdAndStatus(Long id, Status status);
 
-    @Query("select m.id from Meet m where m.creatorId = :creatorId and m.status = :status")
-    List<Long> findIdsByCreatorIdAndStatus(Long creatorId, Status status);
+    @Query(
+            "select m.id " +
+            "  from Meet m " +
+            " where m.creatorId = :creatorId " +
+            "   and m.status = com.mople.global.enums.Status.ACTIVE"
+    )
+    List<Long> findIdsByCreatorId(Long creatorId);
+
+    @Modifying(clearAutomatically = true)
+    @Query(
+            "delete from Meet m " +
+            "      where m.id = :meetId " +
+            "        and m.status = com.mople.global.enums.Status.DELETED"
+    )
+    void hardDeleteById(Long meetId);
 }

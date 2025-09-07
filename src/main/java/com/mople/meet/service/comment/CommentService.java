@@ -297,7 +297,7 @@ public class CommentService {
             return;
         }
 
-        List<Long> replies = commentRepository.findIdsByPostIdAndStatus(comment.getId(), Status.ACTIVE);
+        List<Long> replies = commentRepository.findIdsByPostId(comment.getId());
 
         if (!replies.isEmpty()) {
             commentIdsToDelete.addAll(replies);

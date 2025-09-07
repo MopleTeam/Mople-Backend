@@ -13,7 +13,6 @@ import com.mople.entity.notification.FirebaseToken;
 import com.mople.entity.user.User;
 import com.mople.global.enums.ExceptionReturnCode;
 import com.mople.global.enums.Role;
-import com.mople.global.enums.Status;
 import com.mople.notification.repository.FirebaseTokenRepository;
 import com.mople.user.repository.UserRepository;
 
@@ -60,7 +59,7 @@ public class SignService {
             throw new AuthException(ExceptionReturnCode.TOKEN_NOT_VALID);
         }
 
-        final User user = userRepository.loginCheck(sign.email(), Status.ACTIVE)
+        final User user = userRepository.loginCheck(sign.email())
                 .orElseThrow(() -> new AuthException(ExceptionReturnCode.NOT_USER));
 
         if (!user.getSocialProvider().equals(sign.socialProvider())) {

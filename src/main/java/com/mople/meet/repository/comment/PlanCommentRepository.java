@@ -22,11 +22,15 @@ public interface PlanCommentRepository extends JpaRepository<PlanComment, Long> 
     )
     int softDeleteAll(Status status, List<Long> commentIds, Long userId, LocalDateTime deletedAt);
 
-    void deleteByIdIn(List<Long> commentIds);
+    @Query("select c.id from PlanComment c where c.postId = :postId and c.status = com.mople.global.enums.Status.ACTIVE")
+    List<Long> findIdsByPostId(Long postId);
 
-    @Query("select c.status from PlanComment c where c.id in :commentIds")
-    List<Status> findStatusByIdIn(List<Long> commentIds);
-
-    @Query("select c.id from PlanComment c where c.postId = :postId and c.status = :status")
-    List<Long> findIdsByPostIdAndStatus(Long postId, Status status);
+    @Modifying(clearAutomatically = true)
+    @Query(
+            "delete " +
+            "  from PlanComment c " +
+            " where c.id in :commentIds " +
+            "   and c.status = com.mople.global.enums.Status.DELETED"
+    )
+    void hardDeleteById(List<Long> commentIds);
 }
