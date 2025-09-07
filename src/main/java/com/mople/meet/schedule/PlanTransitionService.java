@@ -2,7 +2,6 @@ package com.mople.meet.schedule;
 
 import com.mople.dto.event.data.domain.plan.PlanTransitionedEvent;
 import com.mople.entity.meet.plan.MeetPlan;
-import com.mople.entity.meet.plan.PlanParticipant;
 import com.mople.entity.meet.review.PlanReview;
 import com.mople.global.enums.Status;
 import com.mople.meet.reader.EntityReader;
@@ -16,7 +15,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import static com.mople.global.enums.event.AggregateType.PLAN;
 import static com.mople.global.enums.event.EventTypeNames.*;
@@ -54,9 +52,9 @@ public class PlanTransitionService {
                         .meetId(plan.getMeetId())
                         .build()
         );
+        reviewRepository.flush();
 
-        List<PlanParticipant> participants = participantRepository.findByPlanId(plan.getId());
-        participants.forEach(pp -> pp.updateReview(review.getId()));
+        participantRepository.updateReviewId(plan.getId(), review.getId());
 
         planRepository.softDelete(Status.DELETED, plan.getId(), SYSTEM_USER_ID, LocalDateTime.now());
 
