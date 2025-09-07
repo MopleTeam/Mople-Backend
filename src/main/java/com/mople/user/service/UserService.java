@@ -42,6 +42,7 @@ public class UserService {
 
         return UserClientResponse.builder()
                 .userId(user.getId())
+                .version(user.getVersion())
                 .nickname(user.getNickname())
                 .image(user.getProfileImg())
                 .isExistBadgeCount(isExistBadgeCount)
@@ -56,7 +57,7 @@ public class UserService {
             throw new AsyncException(ExceptionReturnCode.REQUEST_CONFLICT);
         }
 
-        if (user.imageValid()) {
+        if (user.imageValid() && !user.getProfileImg().equals(updateInfo.image())) {
             UserImageChangedEvent changedEvent = UserImageChangedEvent.builder()
                     .userId(id)
                     .imageUrl(user.getProfileImg())
@@ -72,6 +73,7 @@ public class UserService {
 
         return UserClientResponse.builder()
                 .userId(user.getId())
+                .version(user.getVersion())
                 .nickname(user.getNickname())
                 .image(user.getProfileImg())
                 .isExistBadgeCount(isExistBadgeCount)

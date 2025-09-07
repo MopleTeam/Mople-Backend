@@ -16,7 +16,7 @@ public class CommentStats {
     @Column(name = "comment_id")
     private Long commentId;
 
-    @Column(name = "reply_count", nullable = false)
+    @Column(name = "reply_count")
     private Integer replyCount = null;
 
     @Column(name = "like_count", nullable = false)
