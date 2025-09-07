@@ -50,14 +50,11 @@ public class OutboxProcessor {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void markFailed(String eventId, String errorMessage) {
-        System.out.println("실패");
         outboxEventRepository.eventFailed(eventId, errorMessage);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void markRetry(String eventId, String errorMessage, int retrySec, int maxAttempts) {
-        System.out.println("재시도");
-
         outboxEventRepository.eventRetry(eventId, errorMessage, retrySec, maxAttempts);
     }
 }

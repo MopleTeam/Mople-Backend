@@ -15,6 +15,7 @@ import java.util.List;
 import static com.mople.global.enums.Status.DELETED;
 import static com.mople.global.enums.event.AggregateType.POST;
 import static com.mople.global.enums.event.EventTypeNames.COMMENTS_SOFT_DELETED;
+import static com.mople.global.utils.batch.Batching.chunk;
 
 @Component
 @RequiredArgsConstructor
@@ -31,14 +32,17 @@ public class PlanDeletedFanoutHandler implements DomainEventHandler<PlanSoftDele
     @Override
     public void handle(PlanSoftDeletedEvent event) {
         List<Long> commentIds = commentRepository.findIdsByPostIdAndStatus(event.planId(), Status.ACTIVE);
-        commentRepository.softDeleteAll(DELETED, commentIds, event.planDeletedBy(), LocalDateTime.now());
 
-        CommentsSoftDeletedEvent deleteEvent = CommentsSoftDeletedEvent.builder()
-                .postId(event.planId())
-                .commentIds(commentIds)
-                .commentsDeletedBy(event.planDeletedBy())
-                .build();
+        chunk(commentIds, ids -> {
+            commentRepository.softDeleteAll(DELETED, ids, event.planDeletedBy(), LocalDateTime.now());
 
-        outboxService.save(COMMENTS_SOFT_DELETED, POST, event.planId(), deleteEvent);
+            CommentsSoftDeletedEvent deleteEvent = CommentsSoftDeletedEvent.builder()
+                    .postId(event.planId())
+                    .commentIds(ids)
+                    .commentsDeletedBy(event.planDeletedBy())
+                    .build();
+
+            outboxService.save(COMMENTS_SOFT_DELETED, POST, event.planId(), deleteEvent);
+        });
     }
 }

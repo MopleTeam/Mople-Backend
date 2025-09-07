@@ -20,25 +20,25 @@ public interface MeetPlanRepository extends JpaRepository<MeetPlan, Long>{
     List<MeetPlan> findPlanAndTime(List<Long> planIds, Status status);
 
     @Modifying(clearAutomatically = true)
-    @Query(value = """
-       UPDATE meet_plan
-          SET temperature = :temperature,
-              pop = :pop,
-              weather_icon = :icon,
-              weather_update_at = now()
-        WHERE id = :planId
-       """, nativeQuery = true)
+    @Query(
+            "update MeetPlan p " +
+            "   set p.temperature = :temperature, " +
+            "       p.pop = :pop, " +
+            "       p.weatherIcon = :icon, " +
+            "       p.weatherUpdatedAt = CURRENT_TIMESTAMP " +
+            " where p.id = :planId "
+    )
     int updateWeather(Long planId, Double temperature, Double pop, String icon);
 
     @Modifying(clearAutomatically = true)
-    @Query(value = """
-       UPDATE meet_plan
-          SET temperature = null,
-              pop = null,
-              weather_icon = null,
-              weather_update_at = now()
-        WHERE id = :planId
-       """, nativeQuery = true)
+    @Query(
+            "update MeetPlan p " +
+            "   set p.temperature = null, " +
+            "       p.pop = null, " +
+            "       p.weatherIcon = null, " +
+            "       p.weatherUpdatedAt = CURRENT_TIMESTAMP " +
+            " where p.id = :planId "
+    )
     int deleteWeather(Long planId);
 
     @Modifying(clearAutomatically = true)

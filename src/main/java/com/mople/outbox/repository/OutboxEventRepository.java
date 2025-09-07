@@ -31,24 +31,34 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
     List<OutboxEvent> lockNextBatch(int limit, int leaseSec);
 
     @Modifying(clearAutomatically = true)
-    @Query(value = """
-            UPDATE outbox_event
-               SET status = 'CANCELED'
-             WHERE event_type = :eventType
-               AND aggregate_type = :aggregateType                           
-               AND aggregate_id = :aggregateId
-               AND status = 'PENDING';
-            """, nativeQuery = true)
+    @Query(
+            "update OutboxEvent o " +
+            "   set o.status = com.mople.global.enums.event.OutboxStatus.CANCELED " +
+            " where o.eventType = :eventType " +
+            "   and o.aggregateType = :aggregateType " +
+            "   and o.aggregateId = :aggregateId " +
+            "   and o.status = com.mople.global.enums.event.OutboxStatus.PENDING"
+    )
     int eventCanceled(String eventType, AggregateType aggregateType, Long aggregateId);
 
     @Modifying(clearAutomatically = true)
-    @Query(value = """
-            UPDATE outbox_event
-               SET status = 'PUBLISHED',
-                   published_at = now()
-             WHERE event_id = :eventId
-            """, nativeQuery = true)
+    @Query(
+            "update OutboxEvent o " +
+            "   set o.status = com.mople.global.enums.event.OutboxStatus.PUBLISHED, " +
+            "       o.publishedAt = CURRENT_TIMESTAMP " +
+            " where o.eventId = :eventId"
+    )
     int eventPublished(String eventId);
+
+    @Modifying(clearAutomatically = true)
+    @Query(
+            "update OutboxEvent o " +
+            "   set o.status = com.mople.global.enums.event.OutboxStatus.FAILED, " +
+            "       o.attempts = o.attempts + 1, " +
+            "       o.lastError = :errorMessage " +
+            " where o.eventId = :eventId"
+    )
+    int eventFailed(String eventId, String errorMessage);
 
     @Modifying(clearAutomatically = true)
     @Query(value = """
@@ -62,16 +72,6 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
                 WHERE event_id = :eventId
             """, nativeQuery = true)
     int eventRetry(String eventId, String errorMessage, int retrySec, int maxAttempts);
-
-    @Modifying(clearAutomatically = true)
-    @Query(value = """
-            UPDATE outbox_event
-               SET status = 'FAILED',
-                   attempts = attempts + 1,
-                   last_error = :errorMessage
-             WHERE event_id = :eventId
-            """, nativeQuery = true)
-    int eventFailed(String eventId, String errorMessage);
 
     @Modifying(clearAutomatically = true)
     @Query(value = """
