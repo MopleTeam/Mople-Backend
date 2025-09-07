@@ -16,10 +16,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query(value = "select count(u.id) = 1 from User u where u.nickname = :nickname")
     Boolean existsByNickname(@Param("nickname") String nickname);
 
+    @Query("select u from User u where u.id in :ids and u.status = :status")
     List<User> findByIdInAndStatus(List<Long> ids, Status status);
 
     @Query("select u from User u where u.email = :email and u.status = :status")
     Optional<User> loginCheck(@Param("email") String email, Status status);
 
+    @Query("select u from User u where u.id = :id and u.status = :status")
     Optional<User> findByIdAndStatus(Long id, Status status);
 }

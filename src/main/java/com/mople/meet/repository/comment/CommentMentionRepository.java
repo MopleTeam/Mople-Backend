@@ -8,8 +8,6 @@ import java.util.List;
 
 public interface CommentMentionRepository extends JpaRepository<CommentMention, Long> {
 
-    void deleteByCommentIdIn(List<Long> commentIds);
-
     void deleteByCommentId(Long commentId);
 
     List<CommentMention> findCommentMentionByCommentId(Long commentId);

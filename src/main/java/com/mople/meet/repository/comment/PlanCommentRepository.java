@@ -27,5 +27,6 @@ public interface PlanCommentRepository extends JpaRepository<PlanComment, Long> 
     @Query("select c.status from PlanComment c where c.id in :commentIds")
     List<Status> findStatusByIdIn(List<Long> commentIds);
 
+    @Query("select c.id from PlanComment c where c.postId = :postId and c.status = :status")
     List<Long> findIdsByPostIdAndStatus(Long postId, Status status);
 }

@@ -55,7 +55,7 @@ public class PlanTransitionService {
                         .build()
         );
 
-        List<PlanParticipant> participants = participantRepository.findParticipantsByPlanId(plan.getId());
+        List<PlanParticipant> participants = participantRepository.findByPlanId(plan.getId());
         participants.forEach(pp -> pp.updateReview(review.getId()));
 
         planRepository.softDelete(Status.DELETED, plan.getId(), SYSTEM_USER_ID, LocalDateTime.now());

@@ -61,11 +61,15 @@ public interface PlanReviewRepository extends JpaRepository<PlanReview, Long> {
 
     boolean existsByPlanIdAndStatus(Long planId, Status status);
 
+    @Query("select r from PlanReview r where r.planId = :planId and r.status = :status")
     Optional<PlanReview> findByPlanIdAndStatus(Long planId, Status status);
 
+    @Query("select r from PlanReview r where r.id = :id and r.status = :status")
     Optional<PlanReview> findByIdAndStatus(Long id, Status status);
 
+    @Query("select r.id from PlanReview r where r.meetId = :meetId and r.creatorId = :creatorId and r.status = :status")
     List<Long> findIdsByMeetIdAndCreatorIdAndStatus(Long meetId, Long creatorId, Status status);
 
+    @Query("select r.id from PlanReview r where r.meetId = :meetId and r.status = :status")
     List<Long> findIdsByMeetIdAndStatus(Long meetId, Status status);
 }

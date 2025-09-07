@@ -36,7 +36,9 @@ public interface MeetRepository extends JpaRepository<Meet, Long> {
     @Query("select m.status from Meet m where m.id = :meetId")
     Status findStatusById(Long meetId);
 
+    @Query("select m from Meet m where m.id = :id and m.status = :status")
     Optional<Meet> findByIdAndStatus(Long id, Status status);
 
+    @Query("select m.id from Meet m where m.creatorId = :creatorId and m.status = :status")
     List<Long> findIdsByCreatorIdAndStatus(Long creatorId, Status status);
 }
