@@ -136,6 +136,7 @@ public class PlanService {
         );
 
         PlanCreatedEvent createEvent = PlanCreatedEvent.builder()
+                .meetId(plan.getMeetId())
                 .planId(plan.getId())
                 .planTime(plan.getPlanTime())
                 .planCreatorId(plan.getCreatorId())
