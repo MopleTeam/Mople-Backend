@@ -34,7 +34,7 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
     @Query(value = """
             UPDATE outbox_event
                SET status = 'CANCELED'
-             WHERE type = :eventType
+             WHERE event_type = :eventType
                AND aggregate_type = :aggregateType                           
                AND aggregate_id = :aggregateId
                AND status = 'PENDING';

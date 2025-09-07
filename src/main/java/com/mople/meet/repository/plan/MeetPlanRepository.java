@@ -73,9 +73,9 @@ public interface MeetPlanRepository extends JpaRepository<MeetPlan, Long>{
     @Query("select p from MeetPlan p where p.id = :id and p.status = :status")
     Optional<MeetPlan> findByIdAndStatus(Long id, Status status);
 
-    @Query("select p.id from MeetPlan p where p.meetId = : meetId and p.creatorId = :creatorId and p.status = :status")
+    @Query("select p.id from MeetPlan p where p.meetId = :meetId and p.creatorId = :creatorId and p.status = :status")
     List<Long> findIdsByMeetIdAndCreatorIdAndStatus(Long meetId, Long creatorId, Status status);
 
-    @Query("select p.id from MeetPlan p where p.meetId = : meetId and p.status = :status")
+    @Query("select p.id from MeetPlan p where p.meetId = :meetId and p.status = :status")
     List<Long> findIdsByMeetIdAndStatus(Long meetId, Status status);
 }
