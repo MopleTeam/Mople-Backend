@@ -47,6 +47,10 @@ public class CommentMentionNotifier implements DomainEventHandler<CommentCreated
 
         List<Long> targetIds = userReader.findCreatedMentionedUsers(event.commentWriterId(), event.commentId());
 
+        if (targetIds.isEmpty()) {
+            return;
+        }
+
         User user = userRepository.findByIdAndStatus(event.commentWriterId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_USER));
 

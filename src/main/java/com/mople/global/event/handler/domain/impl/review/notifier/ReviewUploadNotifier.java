@@ -39,6 +39,10 @@ public class ReviewUploadNotifier implements DomainEventHandler<ReviewUploadEven
 
         List<Long> targetIds = userReader.findReviewUsersNoTriggers(event.reviewUpdatedBy(), event.reviewId());
 
+        if (targetIds.isEmpty()) {
+            return;
+        }
+
         Meet meet = meetRepository.findByIdAndStatus(review.getMeetId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
 

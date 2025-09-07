@@ -41,6 +41,10 @@ public class PlanDeleteNotifier implements DomainEventHandler<PlanSoftDeletedEve
 
         List<Long> targetIds = userReader.findPlanUsersNoTriggers(event.planDeletedBy(), event.planId());
 
+        if (targetIds.isEmpty()) {
+            return;
+        }
+
         MeetPlan plan = planRepository.findByIdAndStatus(event.planId(), Status.DELETED)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_PLAN));
 

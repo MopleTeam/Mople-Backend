@@ -46,6 +46,7 @@ public class CommentReplyNotifier implements DomainEventHandler<CommentCreatedEv
         }
 
         Long targetId = userReader.findCommentRepliedUserNoWriter(event.commentWriterId(), event.parentId());
+
         if (targetId == null) {
             return;
         }

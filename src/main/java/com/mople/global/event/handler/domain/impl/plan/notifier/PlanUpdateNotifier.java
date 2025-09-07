@@ -36,6 +36,10 @@ public class PlanUpdateNotifier implements DomainEventHandler<PlanTimeChangedEve
     public void handle(PlanTimeChangedEvent event) {
         List<Long> targetIds = userReader.findPlanUsersNoTriggers(event.timeChangedBy(), event.planId());
 
+        if (targetIds.isEmpty()) {
+            return;
+        }
+
         MeetPlan plan = planRepository.findByIdAndStatus(event.planId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_PLAN));
 

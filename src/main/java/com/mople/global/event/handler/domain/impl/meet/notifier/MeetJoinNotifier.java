@@ -36,6 +36,10 @@ public class MeetJoinNotifier implements DomainEventHandler<MeetJoinedEvent> {
     public void handle(MeetJoinedEvent event) {
         List<Long> targetIds = userReader.findMeetUsersNoTriggers(event.newMemberId(), event.meetId());
 
+        if (targetIds.isEmpty()) {
+            return;
+        }
+
         Meet meet = meetRepository.findByIdAndStatus(event.meetId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
 

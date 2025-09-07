@@ -36,6 +36,10 @@ public class PlanCreatedNotifier implements DomainEventHandler<PlanCreatedEvent>
     public void handle(PlanCreatedEvent event) {
         List<Long> targetIds = userReader.findMeetUsersNoTriggers(event.planCreatorId(), event.meetId());
 
+        if (targetIds.isEmpty()) {
+            return;
+        }
+
         MeetPlan plan = planRepository.findByIdAndStatus(event.planId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_PLAN));
 

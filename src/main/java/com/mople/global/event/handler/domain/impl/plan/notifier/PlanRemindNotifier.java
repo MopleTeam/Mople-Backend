@@ -45,6 +45,10 @@ public class PlanRemindNotifier implements DomainEventHandler<PlanRemindEvent> {
 
         List<Long> targetIds = userReader.findPlanUsersAll(plan.getCreatorId());
 
+        if (targetIds.isEmpty()) {
+            return;
+        }
+
         Meet meet = meetRepository.findByIdAndStatus(plan.getMeetId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
 

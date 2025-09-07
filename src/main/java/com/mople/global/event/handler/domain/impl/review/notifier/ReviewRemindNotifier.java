@@ -43,6 +43,10 @@ public class ReviewRemindNotifier implements DomainEventHandler<ReviewRemindEven
 
         List<Long> targetIds = userReader.findReviewCreator(review.getCreatorId());
 
+        if (targetIds.isEmpty()) {
+            return;
+        }
+
         Meet meet = meetRepository.findByIdAndStatus(review.getMeetId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
 

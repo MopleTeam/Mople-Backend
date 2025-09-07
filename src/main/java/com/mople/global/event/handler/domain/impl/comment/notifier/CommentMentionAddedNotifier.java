@@ -45,6 +45,10 @@ public class CommentMentionAddedNotifier implements DomainEventHandler<CommentMe
                 event.originMentions(), event.commentWriterId(), event.commentId()
         );
 
+        if (filteredTargetIds.isEmpty()) {
+            return;
+        }
+
         User user = userRepository.findByIdAndStatus(event.commentWriterId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_USER));
 
