@@ -13,6 +13,7 @@ import com.mople.notification.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -27,18 +28,18 @@ public class NotificationSendService {
     private final NotifyHandlerRegistry registry;
     private final NotificationRepository notificationRepository;
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void sendMultiNotification(NotifyEvent event) {
         @SuppressWarnings("unchecked")
-        NotifyEventHandler<NotifyEvent> handler = (NotifyEventHandler<NotifyEvent>) registry.getHandler(event);
+        NotifyEventHandler<NotifyEvent> handler = (NotifyEventHandler<NotifyEvent>) registry.getSingleHandler(event);
         NotifySendRequest sendRequest = handler.getSendRequest(event);
+
+        List<Notification> notifications = handler.getNotifications(event, sendRequest.userIds());
+        notificationRepository.saveAll(notifications);
 
         if (sendRequest.tokens().isEmpty()) {
             return;
         }
-
-        List<Notification> notifications = handler.getNotifications(event, sendRequest.userIds());
-        notificationRepository.saveAll(notifications);
 
         List<Message> messages = sendRequest
                 .tokens()

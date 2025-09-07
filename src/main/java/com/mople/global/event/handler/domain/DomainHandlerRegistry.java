@@ -17,7 +17,7 @@ public class DomainHandlerRegistry
     }
 
     @Override
-    public DomainEventHandler<? extends DomainEvent> getHandler(DomainEvent event) {
+    public List<DomainEventHandler<? extends DomainEvent>> getHandler(DomainEvent event) {
         return super.getHandler(event);
     }
 }
