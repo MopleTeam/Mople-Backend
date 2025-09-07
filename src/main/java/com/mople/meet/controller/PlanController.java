@@ -4,6 +4,7 @@ import com.mople.core.annotation.auth.SignUser;
 import com.mople.core.annotation.log.BusinessLogicLogging;
 import com.mople.dto.client.PlanClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
+import com.mople.dto.request.meet.plan.PlanDeleteRequest;
 import com.mople.dto.request.meet.plan.PlanReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
@@ -67,10 +68,9 @@ public class PlanController {
     @PatchMapping("/update")
     public ResponseEntity<PlanClientResponse> updatePlan(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
-            @RequestBody @Valid PlanUpdateRequest planUpdateRequest,
-            @RequestParam Long version
+            @RequestBody @Valid PlanUpdateRequest planUpdateRequest
     ) {
-        return ResponseEntity.ok(planService.updatePlan(user.id(), planUpdateRequest, version));
+        return ResponseEntity.ok(planService.updatePlan(user.id(), planUpdateRequest));
     }
 
     @Operation(
@@ -81,9 +81,9 @@ public class PlanController {
     public ResponseEntity<Void> deletePlan(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long planId,
-            @RequestParam Long version
+            @RequestBody @Valid PlanDeleteRequest planDeleteRequest
     ) {
-        planService.deletePlan(user.id(), planId, version);
+        planService.deletePlan(user.id(), planId, planDeleteRequest);
         return ResponseEntity.ok().build();
     }
 

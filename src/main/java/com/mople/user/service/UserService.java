@@ -5,6 +5,7 @@ import com.mople.dto.client.UserClientResponse;
 import com.mople.dto.event.data.domain.user.UserDeletedEvent;
 import com.mople.dto.event.data.domain.user.UserImageChangedEvent;
 import com.mople.dto.request.user.RandomNicknameRequest;
+import com.mople.dto.request.user.UserDeleteRequest;
 import com.mople.dto.request.user.UserInfoRequest;
 import com.mople.entity.user.User;
 import com.mople.global.enums.ExceptionReturnCode;
@@ -48,10 +49,10 @@ public class UserService {
     }
 
     @Transactional
-    public UserClientResponse updateInfo(Long id, UserInfoRequest updateInfo, Long version) {
+    public UserClientResponse updateInfo(Long id, UserInfoRequest updateInfo) {
         User user = reader.findUser(id);
 
-        if (!user.getVersion().equals(version)) {
+        if (!user.getVersion().equals(updateInfo.version())) {
             throw new AsyncException(ExceptionReturnCode.REQUEST_CONFLICT);
         }
 
@@ -78,10 +79,10 @@ public class UserService {
     }
 
     @Transactional
-    public void removeUser(final Long id, Long version) {
+    public void removeUser(final Long id, UserDeleteRequest request) {
         User user = reader.findUser(id);
 
-        if (!user.getVersion().equals(version)) {
+        if (!user.getVersion().equals(request.version())) {
             throw new AsyncException(ExceptionReturnCode.REQUEST_CONFLICT);
         }
 

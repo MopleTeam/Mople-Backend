@@ -3,6 +3,7 @@ package com.mople.user.controller;
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.UserClientResponse;
 import com.mople.dto.request.user.AuthUserRequest;
+import com.mople.dto.request.user.UserDeleteRequest;
 import com.mople.dto.request.user.UserInfoRequest;
 import com.mople.user.service.UserService;
 
@@ -42,10 +43,9 @@ public class UserController {
     @PatchMapping("/info")
     public ResponseEntity<UserClientResponse> updateInfo(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
-            @Valid @RequestBody UserInfoRequest userInfoRequest,
-            @RequestParam Long version
+            @Valid @RequestBody UserInfoRequest userInfoRequest
     ) {
-        var updateUserInfo = userService.updateInfo(user.id(), userInfoRequest, version);
+        var updateUserInfo = userService.updateInfo(user.id(), userInfoRequest);
         return ResponseEntity.ok(updateUserInfo);
     }
 
@@ -56,9 +56,9 @@ public class UserController {
     @DeleteMapping("/remove")
     public ResponseEntity<Void> removeUser(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
-            @RequestParam Long version
+            @Valid @RequestBody UserDeleteRequest userDeleteRequest
     ) {
-        userService.removeUser(user.id(), version);
+        userService.removeUser(user.id(), userDeleteRequest);
         return ResponseEntity.ok().build();
     }
 

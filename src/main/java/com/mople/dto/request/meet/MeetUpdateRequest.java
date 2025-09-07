@@ -1,3 +1,9 @@
 package com.mople.dto.request.meet;
 
-public record MeetUpdateRequest(String name, String image) {}
+import jakarta.validation.constraints.NotNull;
+
+public record MeetUpdateRequest(
+        @NotNull Long version,
+        String name,
+        String image
+) {}

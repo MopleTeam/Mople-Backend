@@ -3,6 +3,8 @@ package com.mople.meet.controller;
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.CommentClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
+import com.mople.dto.request.meet.comment.CommentDeleteRequest;
+import com.mople.dto.request.meet.comment.CommentUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.response.pagination.CursorPageResponse;
@@ -65,7 +67,7 @@ public class CommentController {
     public ResponseEntity<CommentClientResponse> createComment(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
-            @Valid @RequestBody CommentCreateRequest commentCreateRequest
+            @RequestBody @Valid CommentCreateRequest commentCreateRequest
     ) {
         return ResponseEntity.ok(commentService.createComment(user.id(), postId, commentCreateRequest));
     }
@@ -79,7 +81,7 @@ public class CommentController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
             @PathVariable Long commentId,
-            @Valid @RequestBody CommentCreateRequest commentCreateRequest
+            @RequestBody @Valid CommentCreateRequest commentCreateRequest
     ) {
         return ResponseEntity.ok(commentService.createCommentReply(user.id(), postId, commentId, commentCreateRequest));
     }
@@ -92,10 +94,9 @@ public class CommentController {
     public ResponseEntity<CommentClientResponse> updateComment(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long commentId,
-            @RequestBody CommentCreateRequest commentCreateRequest,
-            @RequestParam Long version
+            @RequestBody @Valid CommentUpdateRequest commentUpdateRequest
     ) {
-        return ResponseEntity.ok(commentService.updateComment(user.id(), commentId, commentCreateRequest, version));
+        return ResponseEntity.ok(commentService.updateComment(user.id(), commentId, commentUpdateRequest));
     }
 
     @Operation(
@@ -106,9 +107,9 @@ public class CommentController {
     public ResponseEntity<Void> deleteReviewComment(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long commentId,
-            @RequestParam Long version
+            @RequestBody @Valid CommentDeleteRequest commentDeleteRequest
     ) {
-        commentService.deleteComment(user.id(), commentId, version);
+        commentService.deleteComment(user.id(), commentId, commentDeleteRequest);
         return ResponseEntity.ok().build();
     }
 

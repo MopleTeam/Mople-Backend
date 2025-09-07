@@ -4,6 +4,7 @@ import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.MeetClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
 import com.mople.dto.request.meet.MeetCreateRequest;
+import com.mople.dto.request.meet.MeetDeleteRequest;
 import com.mople.dto.request.meet.MeetUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
@@ -49,10 +50,9 @@ public class MeetController {
     public ResponseEntity<MeetClientResponse> update(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long meetId,
-            @RequestBody MeetUpdateRequest updateRequest,
-            @RequestParam Long version
+            @RequestBody @Valid MeetUpdateRequest updateRequest
     ) {
-        return ResponseEntity.ok(meetService.updateMeet(user.id(), meetId, updateRequest, version));
+        return ResponseEntity.ok(meetService.updateMeet(user.id(), meetId, updateRequest));
     }
 
     @Operation(
@@ -100,9 +100,9 @@ public class MeetController {
     public ResponseEntity<Void> deleteMeet(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long meetId,
-            @RequestParam Long version
+            @RequestBody MeetDeleteRequest deleteRequest
     ) {
-        meetService.removeMeet(user.id(), meetId, version);
+        meetService.removeMeet(user.id(), meetId, deleteRequest);
         return ResponseEntity.ok().build();
     }
 

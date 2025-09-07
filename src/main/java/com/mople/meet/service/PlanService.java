@@ -6,6 +6,7 @@ import com.mople.dto.client.UserRoleClientResponse;
 import com.mople.dto.event.data.domain.plan.PlanCreatedEvent;
 import com.mople.dto.event.data.domain.plan.PlanSoftDeletedEvent;
 import com.mople.dto.event.data.domain.plan.PlanTimeChangedEvent;
+import com.mople.dto.request.meet.plan.PlanDeleteRequest;
 import com.mople.dto.request.meet.plan.PlanReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.weather.CoordinateRequest;
@@ -155,11 +156,7 @@ public class PlanService {
     }
 
     @Transactional
-    public PlanClientResponse updatePlan(
-            Long userId,
-            PlanUpdateRequest request,
-            Long version
-    ) {
+    public PlanClientResponse updatePlan(Long userId, PlanUpdateRequest request) {
         MeetPlan plan = reader.findPlan(request.planId());
         Meet meet = reader.findMeet(plan.getMeetId());
 
@@ -167,7 +164,7 @@ public class PlanService {
             throw new AuthException(NOT_CREATOR);
         }
 
-        if (!Objects.equals(version, plan.getVersion())) {
+        if (!Objects.equals(request.version(), plan.getVersion())) {
             throw new AsyncException(REQUEST_CONFLICT);
         }
 
@@ -207,7 +204,7 @@ public class PlanService {
     }
 
     @Transactional
-    public void deletePlan(Long userId, Long planId, Long version) {
+    public void deletePlan(Long userId, Long planId, PlanDeleteRequest request) {
         reader.findUser(userId);
         var plan = reader.findPlan(planId);
 
@@ -215,7 +212,7 @@ public class PlanService {
             throw new AuthException(NOT_CREATOR);
         }
 
-        if (!Objects.equals(version, plan.getVersion())) {
+        if (!Objects.equals(request.version(), plan.getVersion())) {
             throw new AsyncException(REQUEST_CONFLICT);
         }
 

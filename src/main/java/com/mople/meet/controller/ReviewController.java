@@ -3,6 +3,7 @@ package com.mople.meet.controller;
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.ReviewClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
+import com.mople.dto.request.meet.review.ReviewDeleteRequest;
 import com.mople.dto.request.meet.review.ReviewImageDeleteRequest;
 import com.mople.dto.request.meet.review.ReviewReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
@@ -74,9 +75,9 @@ public class ReviewController {
     public ResponseEntity<Void> removeReview(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long reviewId,
-            @RequestParam Long version
+            @RequestBody @Valid ReviewDeleteRequest deleteRequest
     ) {
-        reviewService.removeReview(user.id(), reviewId, version);
+        reviewService.removeReview(user.id(), reviewId, deleteRequest);
         return ResponseEntity.ok().build();
     }
 

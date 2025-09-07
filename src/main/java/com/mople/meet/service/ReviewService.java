@@ -6,6 +6,7 @@ import com.mople.dto.client.UserRoleClientResponse;
 import com.mople.dto.event.data.domain.review.ReviewImageRemoveEvent;
 import com.mople.dto.event.data.domain.review.ReviewSoftDeletedEvent;
 import com.mople.dto.event.data.domain.review.ReviewUploadEvent;
+import com.mople.dto.request.meet.review.ReviewDeleteRequest;
 import com.mople.dto.request.meet.review.ReviewImageDeleteRequest;
 import com.mople.dto.request.meet.review.ReviewReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
@@ -179,7 +180,7 @@ public class ReviewService {
     }
 
     @Transactional
-    public void removeReview(Long userId, Long reviewId, Long version) {
+    public void removeReview(Long userId, Long reviewId, ReviewDeleteRequest request) {
         reader.findUser(userId);
         PlanReview review = reader.findReview(reviewId);
 
@@ -187,7 +188,7 @@ public class ReviewService {
             throw new AuthException(NOT_CREATOR);
         }
 
-        if (!Objects.equals(version, review.getVersion())) {
+        if (!Objects.equals(request.version(), review.getVersion())) {
             throw new AsyncException(REQUEST_CONFLICT);
         }
 

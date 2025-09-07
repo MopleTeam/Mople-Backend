@@ -7,6 +7,8 @@ import com.mople.dto.event.data.domain.comment.CommentCreatedEvent;
 import com.mople.dto.event.data.domain.comment.CommentMentionAddedEvent;
 import com.mople.dto.event.data.domain.comment.CommentsSoftDeletedEvent;
 import com.mople.dto.request.meet.comment.CommentCreateRequest;
+import com.mople.dto.request.meet.comment.CommentDeleteRequest;
+import com.mople.dto.request.meet.comment.CommentUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.meet.comment.CommentResponse;
 import com.mople.dto.response.meet.comment.CommentUpdateResponse;
@@ -235,11 +237,11 @@ public class CommentService {
     }
 
     @Transactional
-    public CommentClientResponse updateComment(Long userId, Long commentId, CommentCreateRequest request, Long version) {
+    public CommentClientResponse updateComment(Long userId, Long commentId, CommentUpdateRequest request) {
         PlanComment comment = reader.findComment(commentId);
         User user = reader.findUser(userId);
 
-        commentValidator.validateWriter(comment, user, version);
+        commentValidator.validateWriter(comment, user, request.version());
 
         List<Long> originMentions = mentionService.findUserIdByCommentId(comment.getId());
 
@@ -273,11 +275,11 @@ public class CommentService {
 
 
     @Transactional
-    public void deleteComment(Long userId, Long commentId, Long version) {
+    public void deleteComment(Long userId, Long commentId, CommentDeleteRequest request) {
         User user = reader.findUser(userId);
         PlanComment comment = reader.findComment(commentId);
 
-        commentValidator.validateWriter(comment, user, version);
+        commentValidator.validateWriter(comment, user, request.version());
 
         List<Long> commentIdsToDelete = new ArrayList<>();
         commentIdsToDelete.add(commentId);

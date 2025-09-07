@@ -8,6 +8,7 @@ import com.mople.dto.event.data.domain.meet.MeetJoinedEvent;
 import com.mople.dto.event.data.domain.meet.MeetLeftEvent;
 import com.mople.dto.event.data.domain.meet.MeetSoftDeletedEvent;
 import com.mople.dto.request.meet.MeetCreateRequest;
+import com.mople.dto.request.meet.MeetDeleteRequest;
 import com.mople.dto.request.meet.MeetUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.meet.*;
@@ -107,7 +108,7 @@ public class MeetService {
     }
 
     @Transactional
-    public MeetClientResponse updateMeet(Long creatorId, Long meetId, MeetUpdateRequest request, Long version) {
+    public MeetClientResponse updateMeet(Long creatorId, Long meetId, MeetUpdateRequest request) {
         reader.findUser(creatorId);
         var meet = reader.findMeet(meetId);
 
@@ -115,7 +116,7 @@ public class MeetService {
             throw new AuthException(NOT_CREATOR);
         }
 
-        if (!Objects.equals(version, meet.getVersion())) {
+        if (!Objects.equals(request.version(), meet.getVersion())) {
             throw new AsyncException(REQUEST_CONFLICT);
         }
 
@@ -259,7 +260,7 @@ public class MeetService {
     }
 
     @Transactional
-    public void removeMeet(Long userId, Long meetId, Long version) {
+    public void removeMeet(Long userId, Long meetId, MeetDeleteRequest request) {
         reader.findUser(userId);
         var meet = reader.findMeet(meetId);
 
@@ -268,7 +269,11 @@ public class MeetService {
         }
 
         if (meet.matchCreator(userId)) {
-            if (!Objects.equals(version, meet.getVersion())) {
+            if (request.version() == null) {
+                return;
+            }
+
+            if (!Objects.equals(request.version(), meet.getVersion())) {
                 throw new AsyncException(REQUEST_CONFLICT);
             }
 
@@ -297,7 +302,7 @@ public class MeetService {
         reader.findUser(userId);
         reader.findMeet(meetId);
 
-        if (!meetMemberRepository.existsByMeetIdAndUserId(userId, meetId)) {
+        if (!meetMemberRepository.existsByMeetIdAndUserId(meetId, userId)) {
             throw new BadRequestException(NOT_MEMBER);
         }
 
