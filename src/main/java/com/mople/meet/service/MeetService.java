@@ -289,6 +289,8 @@ public class MeetService {
             return;
         }
 
+        meetMemberRepository.deleteByUserId(userId);
+
         MeetLeftEvent leftEvent = MeetLeftEvent.builder()
                 .meetId(meetId)
                 .leaveMemberId(userId)
