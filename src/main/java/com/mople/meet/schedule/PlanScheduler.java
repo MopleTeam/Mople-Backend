@@ -17,7 +17,7 @@ public class PlanScheduler {
     private final PlanTransitionService transitionService;
     private final MeetPlanRepository meetPlanRepository;
 
-    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "${plan.transition.cron}", zone = "Asia/Seoul")
     public void previousPlanReviewChangeSchedule() {
         List<MeetPlan> previousPlanAll = meetPlanRepository.findPreviousPlanAll(LocalDateTime.now(), Status.ACTIVE);
 
