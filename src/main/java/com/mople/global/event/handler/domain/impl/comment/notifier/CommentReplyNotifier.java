@@ -62,7 +62,7 @@ public class CommentReplyNotifier implements DomainEventHandler<CommentCreatedEv
             }
         }
 
-        if (isPlan(event.postId())) {
+        if (planRepository.existsByIdAndStatus(event.postId(), Status.ACTIVE)) {
             MeetPlan plan = planRepository.findByIdAndStatus(event.postId(), Status.ACTIVE)
                     .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_PLAN));
 
@@ -100,19 +100,5 @@ public class CommentReplyNotifier implements DomainEventHandler<CommentCreatedEv
                 .build();
 
         sendService.sendMultiNotification(notifyEvent);
-    }
-
-    private boolean isPlan(Long postId) {
-        try {
-            planRepository.findByIdAndStatus(postId, Status.ACTIVE)
-                    .orElseThrow(() -> new ResourceNotFoundException(ExceptionReturnCode.INVALID_PLAN));
-
-            return true;
-        } catch (ResourceNotFoundException e) {
-            reviewRepository.findByPlanIdAndStatus(postId, Status.ACTIVE)
-                    .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_REVIEW));
-
-            return false;
-        }
     }
 }

@@ -29,6 +29,7 @@ import com.mople.meet.repository.comment.PlanCommentRepository;
 import com.mople.dto.request.meet.comment.CommentReportRequest;
 
 import com.mople.meet.repository.impl.comment.CommentRepositorySupport;
+import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.outbox.service.OutboxService;
 import lombok.RequiredArgsConstructor;
 
@@ -50,6 +51,7 @@ public class CommentService {
 
     private static final int COMMENT_CURSOR_FIELD_COUNT = 1;
 
+    private final MeetPlanRepository planRepository;
     private final PlanCommentRepository commentRepository;
     private final CommentRepositorySupport commentRepositorySupport;
     private final CommentReportRepository commentReportRepository;
@@ -65,7 +67,9 @@ public class CommentService {
     @Transactional(readOnly = true)
     public FlatCursorPageResponse<CommentClientResponse> getCommentList(Long userId, Long postId, CursorPageRequest request) {
         commentValidator.validatePostId(postId);
-        commentValidator.validateMember(userId, postId);
+
+        Long meetId = getMeetId(postId);
+        commentValidator.validateMember(userId, meetId);
 
         int size = request.getSafeSize();
         List<CommentResponse> commentResponses = getComments(userId, postId, request.cursor(), size);
@@ -94,7 +98,9 @@ public class CommentService {
     @Transactional(readOnly = true)
     public CursorPageResponse<CommentClientResponse> getCommentReplyList(Long userId, Long postId, Long commentId, CursorPageRequest request) {
         commentValidator.validatePostId(postId);
-        commentValidator.validateMember(userId, postId);
+
+        Long meetId = getMeetId(postId);
+        commentValidator.validateMember(userId, meetId);
         reader.findComment(commentId);
 
         int size = request.getSafeSize();
@@ -159,7 +165,8 @@ public class CommentService {
         reader.findUser(userId);
 
         commentValidator.validatePostId(postId);
-        commentValidator.validateMember(userId, postId);
+        Long meetId = getMeetId(postId);
+        commentValidator.validateMember(userId, meetId);
 
         PlanComment comment = PlanComment.ofParent(
                 request.contents(),
@@ -203,7 +210,9 @@ public class CommentService {
         reader.findUser(userId);
 
         commentValidator.validatePostId(postId);
-        commentValidator.validateMember(userId, postId);
+
+        Long meetId = getMeetId(postId);
+        commentValidator.validateMember(userId, meetId);
         commentValidator.validateParentComment(parentCommentId, postId);
 
         PlanComment parentComment = reader.findComment(parentCommentId);
@@ -338,7 +347,7 @@ public class CommentService {
 
         Long meetId = meet.getId();
         Long hostId = meet.getCreatorId();
-        Long creatorId = getHostId(postId);
+        Long creatorId = getMeetId(postId);
 
         int size = request.getSafeSize();
         List<MeetMember> meetMembers = autoCompleteService.getMeetMembers(meetId, hostId, creatorId, keyword, request.cursor(), size);
@@ -346,21 +355,17 @@ public class CommentService {
         return autoCompleteService.buildAutoCompleteCursorPage(size, meetMembers, hostId, creatorId);
     }
 
-    private Long getHostId(Long postId) {
-        try {
-            return reader.findPlan(postId).getCreatorId();
-        } catch (ResourceNotFoundException e) {
-            return reader.findReviewByPostId(postId).getCreatorId();
+    private Long getMeetId(Long postId) {
+        boolean existsInPlan = planRepository.existsByIdAndStatus(postId, Status.ACTIVE);
+
+        if (existsInPlan) {
+            return reader.findPlan(postId).getMeetId();
         }
+        return reader.findReviewByPostId(postId).getMeetId();
     }
 
     private Meet getMeet(Long postId) {
-        Long meetId;
-        try {
-            meetId = reader.findPlan(postId).getMeetId();
-        } catch (ResourceNotFoundException e) {
-            meetId = reader.findReviewByPostId(postId).getMeetId();
-        }
+        Long meetId = getMeetId(postId);
 
         return reader.findMeet(meetId);
     }

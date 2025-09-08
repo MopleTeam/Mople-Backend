@@ -42,15 +42,8 @@ public class CommentValidator {
         }
     }
 
-    public void validateMember(Long userId, Long postId) {
+    public void validateMember(Long userId, Long meetId) {
         reader.findUser(userId);
-
-        Long meetId;
-        try {
-            meetId = reader.findPlan(postId).getMeetId();
-        } catch (ResourceNotFoundException e) {
-            meetId = reader.findReviewByPostId(postId).getMeetId();
-        }
 
         if (!meetMemberRepository.existsByMeetIdAndUserId(meetId, userId)) {
             throw new ResourceNotFoundException(NOT_MEMBER);
