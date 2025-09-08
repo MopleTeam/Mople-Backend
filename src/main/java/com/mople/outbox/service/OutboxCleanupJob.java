@@ -24,6 +24,9 @@ public class OutboxCleanupJob {
     @Value("${outbox.cleanup.keep-days.published}")
     private long keepPublishedDays;
 
+    @Value("${outbox.cleanup.keep-days.canceled}")
+    private long keepCanceledDays;
+
     @Value("${outbox.cleanup.keep-days.failed}")
     private long keepFailedDays;
 
@@ -37,6 +40,9 @@ public class OutboxCleanupJob {
 
         LocalDateTime minusPublishedDays = now.minusDays(keepPublishedDays);
         job(i -> outboxEventRepository.deleteOldPublished(minusPublishedDays, batchSize));
+
+        LocalDateTime minusCanceledDays = now.minusDays(keepCanceledDays);
+        job(i -> outboxEventRepository.deleteOldCanceled(minusCanceledDays, batchSize));
 
         LocalDateTime minusFailedDays = now.minusDays(keepFailedDays);
         job(i -> outboxEventRepository.deleteOldFailed(minusFailedDays, batchSize));

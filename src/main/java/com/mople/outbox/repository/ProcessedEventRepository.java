@@ -9,11 +9,15 @@ import java.time.LocalDateTime;
 
 public interface ProcessedEventRepository extends JpaRepository<ProcessedEvent, String> {
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query(value = """
       DELETE FROM processed_event
-       WHERE processed_at < :before
-       LIMIT :limit
+            WHERE event_id IN (
+           SELECT event_id 
+             FROM processed_event
+            WHERE processed_at < :before
+         ORDER BY event_id
+            LIMIT :limit)
       """, nativeQuery = true)
     int deleteOldProcessed(LocalDateTime before, int limit);
 }

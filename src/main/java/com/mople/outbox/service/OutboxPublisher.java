@@ -1,7 +1,5 @@
 package com.mople.outbox.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.mople.core.exception.custom.NonRetryableOutboxException;
 import com.mople.entity.event.OutboxEvent;
 import com.mople.outbox.repository.OutboxEventRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,29 +22,12 @@ public class OutboxPublisher {
     @Value("${outbox.lease-sec}")
     private int leaseSec;
 
-    @Value("${outbox.retry-sec}")
-    private int retrySec;
-
-    @Value("${outbox.max-attempts}")
-    private int maxAttempts;
-
     @Scheduled(fixedDelayString = "${outbox.fixed-delay-ms}")
     public void publishBatch() {
         List<OutboxEvent> outboxEvents = outboxEventRepository.lockNextBatch(batchSize, leaseSec);
 
         for (OutboxEvent event : outboxEvents) {
-            try {
-                processor.processOne(event);
-            } catch (JsonProcessingException | NonRetryableOutboxException ex) {
-                processor.markFailed(event.getEventId(), shorten(ex.getMessage()));
-            } catch (Exception ex) {
-                processor.markRetry(event.getEventId(), shorten(ex.getMessage()), retrySec, maxAttempts);
-            }
+            processor.processOne(event);
         }
-    }
-
-    private String shorten(String s) {
-        if (s == null) return null;
-        return s.length() > 500 ? s.substring(0, 500) : s;
     }
 }

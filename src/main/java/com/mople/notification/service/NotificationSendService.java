@@ -28,7 +28,7 @@ public class NotificationSendService {
     private final NotifyHandlerRegistry registry;
     private final NotificationRepository notificationRepository;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.MANDATORY)
     public void sendMultiNotification(NotifyEvent event) {
         @SuppressWarnings("unchecked")
         NotifyEventHandler<NotifyEvent> handler = (NotifyEventHandler<NotifyEvent>) registry.getSingleHandler(event);
@@ -52,16 +52,12 @@ public class NotificationSendService {
                 })
                 .toList();
 
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    sender.sendEachAsync(messages);
-                }
-            });
-        } else {
-            sender.sendEachAsync(messages);
-        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                sender.sendEachAsync(messages);
+            }
+        });
     }
 
     private Message buildMessage(NotifyEvent event, FirebaseToken token, NotifySendRequest sendRequest, Long badgeCount) {

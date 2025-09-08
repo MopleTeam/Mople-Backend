@@ -46,7 +46,10 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
             "update OutboxEvent o " +
             "   set o.status = com.mople.global.enums.event.OutboxStatus.PUBLISHED, " +
             "       o.publishedAt = CURRENT_TIMESTAMP " +
-            " where o.eventId = :eventId"
+            " where o.eventId = :eventId " +
+            "   and exists (select 1 " +
+            "                 from ProcessedEvent p " +
+            "                where p.eventId = :eventId)"
     )
     int eventPublished(String eventId);
 
@@ -80,7 +83,7 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
                SELECT outbox_id FROM outbox_event
                 WHERE status = 'PUBLISHED'
                   AND published_at < :before
-                ORDER BY id
+                ORDER BY outbox_id
                 LIMIT :limit
              )
             """, nativeQuery = true)
@@ -91,9 +94,22 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
             DELETE FROM outbox_event
              WHERE outbox_id IN (
                SELECT outbox_id FROM outbox_event
+                WHERE status = 'CANCELED'
+                  AND created_at < :before
+                ORDER BY outbox_id
+                LIMIT :limit
+             )
+            """, nativeQuery = true)
+    int deleteOldCanceled(LocalDateTime before, int limit);
+
+    @Modifying(clearAutomatically = true)
+    @Query(value = """
+            DELETE FROM outbox_event
+             WHERE outbox_id IN (
+               SELECT outbox_id FROM outbox_event
                 WHERE status = 'FAILED'
                   AND created_at < :before
-                ORDER BY id
+                ORDER BY outbox_id
                 LIMIT :limit
              )
             """, nativeQuery = true)
