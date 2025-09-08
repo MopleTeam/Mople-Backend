@@ -11,10 +11,10 @@ public interface MeetMemberRepository extends JpaRepository<MeetMember, Long> {
 
     boolean existsByMeetIdAndUserId(Long meetId, Long userId);
 
-    @Query("select m.id from MeetMember m where m.userId = :userId")
+    @Query("select m.meetId from MeetMember m where m.userId = :userId")
     List<Long> findMeetIdsByUserId(Long userId);
 
     void deleteByMeetId(Long meetId);
 
-    void deleteByUserId(Long userId);
+    void deleteByMeetIdAndUserId(Long meetId, Long userId);
 }

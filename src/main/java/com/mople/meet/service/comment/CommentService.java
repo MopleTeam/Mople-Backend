@@ -95,6 +95,7 @@ public class CommentService {
     public CursorPageResponse<CommentClientResponse> getCommentReplyList(Long userId, Long postId, Long commentId, CursorPageRequest request) {
         commentValidator.validatePostId(postId);
         commentValidator.validateMember(userId, postId);
+        reader.findComment(commentId);
 
         int size = request.getSafeSize();
         List<CommentResponse> commentResponses = getCommentReplies(userId, postId, commentId, request.cursor(), size);
@@ -297,7 +298,7 @@ public class CommentService {
             return;
         }
 
-        List<Long> replies = commentRepository.findIdsByPostId(comment.getId());
+        List<Long> replies = commentRepository.findChildIds(comment.getId());
 
         if (!replies.isEmpty()) {
             commentIdsToDelete.addAll(replies);
