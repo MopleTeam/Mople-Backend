@@ -40,9 +40,10 @@ public class UserDeletedFanoutHandler implements DomainEventHandler<UserDeletedE
                 .filter(id -> !ownedMeetIds.contains(id))
                 .toList();
 
-        chunk(ownedMeetIds, ids -> {
-            meetRepository.softDeleteAll(DELETED, ids, event.userId(), LocalDateTime.now());
+        meetRepository.softDeleteAll(DELETED, ownedMeetIds, event.userId(), LocalDateTime.now());
+        memberRepository.deleteByMeetIdsAndUserId(memberMeetIds, event.userId());
 
+        chunk(ownedMeetIds, ids ->
             ids.forEach(id -> {
                 MeetSoftDeletedEvent deleteEvent = MeetSoftDeletedEvent.builder()
                         .meetId(id)
@@ -50,8 +51,8 @@ public class UserDeletedFanoutHandler implements DomainEventHandler<UserDeletedE
                         .build();
 
                 outboxService.save(MEET_SOFT_DELETED, MEET, id, deleteEvent);
-            });
-        });
+            })
+        );
 
         chunk(memberMeetIds, ids ->
             ids.forEach(id -> {

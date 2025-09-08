@@ -27,7 +27,7 @@ public class User {
     @Column(name = "email", unique = true, length = 50)
     private String email;
 
-    @Column(name = "nickname", unique = true, length = 20)
+    @Column(name = "nickname", length = 20)
     private String nickname;
 
     @Column(name = "profile_img")
@@ -73,15 +73,5 @@ public class User {
 
     public boolean imageValid() {
         return profileImg != null && !"null".equals(profileImg);
-    }
-
-    public void deleteUser() {
-        this.email = null;
-        this.nickname = "탈퇴한 사용자";
-        this.profileImg = null;
-        this.lastLaunchAt = null;
-        this.role = null;
-        this.status = Status.DELETED;
-        this.socialProvider = null;
     }
 }

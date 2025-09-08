@@ -5,6 +5,7 @@ import lombok.Builder;
 
 @Builder
 public record UserDeletedEvent(
-        Long userId
+        Long userId,
+        String userProfileImg
 ) implements DomainEvent {
 }

@@ -27,6 +27,8 @@ import static com.mople.global.enums.event.EventTypeNames.*;
 @RequiredArgsConstructor
 public class UserService {
 
+    private static final String DELETED_USER_NICKNAME = "탈퇴한 사용자";
+
     private final RandomNicknameRequest randomNickname = new RandomNicknameRequest();
     private final UserRepository userRepository;
     private final NotificationRepository notificationRepository;
@@ -88,11 +90,14 @@ public class UserService {
             throw new AsyncException(ExceptionReturnCode.REQUEST_CONFLICT);
         }
 
-        user.deleteUser();
-        firebaseTokenRepository.deleteByUserId(user.getId());
+        String userProfileImg = user.getProfileImg();
+
+        userRepository.removeUser(DELETED_USER_NICKNAME, id);
+        firebaseTokenRepository.deleteByUserId(id);
 
         UserDeletedEvent deletedEvent = UserDeletedEvent.builder()
                 .userId(id)
+                .userProfileImg(userProfileImg)
                 .build();
 
         outboxService.save(USER_DELETED, USER, id, deletedEvent);

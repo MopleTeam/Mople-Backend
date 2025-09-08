@@ -4,6 +4,7 @@ import com.mople.entity.user.User;
 
 import com.mople.global.enums.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -28,4 +29,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("select u from User u where u.id = :id and u.status = :status")
     Optional<User> findByIdAndStatus(Long id, Status status);
+
+    @Modifying(clearAutomatically = true)
+    @Query(
+            "update User u " +
+            "   set u.email = null, " +
+            "       u.nickname = :nickname, " +
+            "       u.profileImg = null, " +
+            "       u.lastLaunchAt = null, " +
+            "       u.status = com.mople.global.enums.Status.DELETED," +
+            "       u.socialProvider = null " +
+            " where u.id = :id "
+    )
+    void removeUser(String nickname, Long id);
 }
