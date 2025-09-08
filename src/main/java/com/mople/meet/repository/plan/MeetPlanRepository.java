@@ -59,7 +59,7 @@ public interface MeetPlanRepository extends JpaRepository<MeetPlan, Long>{
             "       p.deletedAt = :deletedAt, " +
             "       p.deletedBy = :userId " +
             " where p.id in :planIds " +
-            "   and p.status <> :status"
+            "   and p.status <> :status "
     )
     int softDeleteAll(Status status, List<Long> planIds, Long userId, LocalDateTime deletedAt);
 

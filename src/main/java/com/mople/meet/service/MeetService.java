@@ -269,11 +269,7 @@ public class MeetService {
         }
 
         if (meet.matchCreator(userId)) {
-            if (request.version() == null) {
-                return;
-            }
-
-            if (!Objects.equals(request.version(), meet.getVersion())) {
+            if (request.version() == null || !Objects.equals(request.version(), meet.getVersion())) {
                 throw new AsyncException(REQUEST_CONFLICT);
             }
 
@@ -289,7 +285,7 @@ public class MeetService {
             return;
         }
 
-        meetMemberRepository.deleteByUserId(userId);
+        meetMemberRepository.deleteByMeetIdAndUserId(meetId, userId);
 
         MeetLeftEvent leftEvent = MeetLeftEvent.builder()
                 .meetId(meetId)

@@ -48,12 +48,4 @@ public class CommentLikeService {
     public boolean likedByMe(Long userId, Long commentId) {
         return likeRepository.existsByUserIdAndCommentId(userId, commentId);
     }
-
-    public void deleteByCommentIds(List<Long> replyIds) {
-        likeRepository.deleteByCommentIdIn(replyIds);
-    }
-
-    public void deleteByCommentId(Long commentId) {
-        likeRepository.deleteByCommentId(commentId);
-    }
 }

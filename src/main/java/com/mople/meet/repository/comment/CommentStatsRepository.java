@@ -5,7 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
-import java.util.Collection;
 import java.util.List;
 
 public interface CommentStatsRepository extends JpaRepository<CommentStats, Long> {
@@ -26,5 +25,10 @@ public interface CommentStatsRepository extends JpaRepository<CommentStats, Long
     @Query("UPDATE CommentStats s SET s.replyCount = s.replyCount - 1 WHERE s.commentId = :commentId AND s.replyCount > 0")
     void decreaseReplyCount(Long commentId);
 
+    @Modifying(clearAutomatically = true)
+    @Query(
+            "delete from CommentStats cs " +
+            "      where cs.commentId in :commentIds "
+    )
     void deleteAllByCommentIdIn(List<Long> commentIds);
 }

@@ -30,11 +30,10 @@ public class ReviewDeletedFanoutHandler implements DomainEventHandler<ReviewSoft
 
     @Override
     public void handle(ReviewSoftDeletedEvent event) {
-        List<Long> commentIds = commentRepository.findIdsByPostId(event.planId());
+        List<Long> commentIds = commentRepository.findIdByPostId(event.planId());
+        commentRepository.softDeleteAll(DELETED, commentIds, event.reviewDeletedBy(), LocalDateTime.now());
 
         chunk(commentIds, ids -> {
-            commentRepository.softDeleteAll(DELETED, ids, event.reviewDeletedBy(), LocalDateTime.now());
-
             CommentsSoftDeletedEvent deleteEvent = CommentsSoftDeletedEvent.builder()
                     .postId(event.planId())
                     .commentIds(ids)

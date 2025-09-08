@@ -3,6 +3,7 @@ package com.mople.meet.repository.review;
 import com.mople.entity.meet.review.ReviewImage;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
@@ -17,5 +18,10 @@ public interface ReviewImageRepository extends JpaRepository<ReviewImage, Long> 
     @Query("select i.reviewImage from ReviewImage i where i.reviewId = :reviewId")
     List<String> findReviewImagesByReviewId(Long reviewId);
 
+    @Modifying(clearAutomatically = true)
+    @Query(
+            "delete from ReviewImage i " +
+            "      where i.reviewId = :reviewId "
+    )
     void deleteByReviewId(Long reviewId);
 }

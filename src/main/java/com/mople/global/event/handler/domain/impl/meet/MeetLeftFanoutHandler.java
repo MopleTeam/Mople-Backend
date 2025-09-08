@@ -39,9 +39,10 @@ public class MeetLeftFanoutHandler implements DomainEventHandler<MeetLeftEvent> 
         List<Long> ownedReviewIds = reviewRepository
                 .findIdsByMeetIdAndCreatorId(event.meetId(), event.leaveMemberId());
 
-        chunk(ownedPlanIds, ids -> {
-            planRepository.softDeleteAll(DELETED, ids, event.leaveMemberId(), LocalDateTime.now());
+        planRepository.softDeleteAll(DELETED, ownedPlanIds, event.leaveMemberId(), LocalDateTime.now());
+        reviewRepository.softDeleteAll(DELETED, ownedReviewIds, event.leaveMemberId(), LocalDateTime.now());
 
+        chunk(ownedPlanIds, ids ->
             ids.forEach(id -> {
                 PlanSoftDeletedEvent deleteEvent = PlanSoftDeletedEvent.builder()
                         .planId(id)
@@ -50,12 +51,10 @@ public class MeetLeftFanoutHandler implements DomainEventHandler<MeetLeftEvent> 
                         .build();
 
                 outboxService.save(PLAN_SOFT_DELETED, PLAN, id, deleteEvent);
-            });
-        });
+            })
+        );
 
-        chunk(ownedReviewIds, ids -> {
-            reviewRepository.softDeleteAll(DELETED, ids, event.leaveMemberId(), LocalDateTime.now());
-
+        chunk(ownedReviewIds, ids ->
             ids.forEach(id -> {
                 ReviewSoftDeletedEvent deleteEvent = ReviewSoftDeletedEvent.builder()
                         .planId(reviewRepository.findPlanIdById(id))
@@ -64,7 +63,7 @@ public class MeetLeftFanoutHandler implements DomainEventHandler<MeetLeftEvent> 
                         .build();
 
                 outboxService.save(REVIEW_SOFT_DELETED, REVIEW, id, deleteEvent);
-            });
-        });
+            })
+        );
     }
 }

@@ -30,11 +30,10 @@ public class PlanDeletedFanoutHandler implements DomainEventHandler<PlanSoftDele
 
     @Override
     public void handle(PlanSoftDeletedEvent event) {
-        List<Long> commentIds = commentRepository.findIdsByPostId(event.planId());
+        List<Long> commentIds = commentRepository.findIdByPostId(event.planId());
+        commentRepository.softDeleteAll(DELETED, commentIds, event.planDeletedBy(), LocalDateTime.now());
 
         chunk(commentIds, ids -> {
-            commentRepository.softDeleteAll(DELETED, ids, event.planDeletedBy(), LocalDateTime.now());
-
             CommentsSoftDeletedEvent deleteEvent = CommentsSoftDeletedEvent.builder()
                     .postId(event.planId())
                     .commentIds(ids)

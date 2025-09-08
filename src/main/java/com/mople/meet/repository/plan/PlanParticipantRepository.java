@@ -23,9 +23,25 @@ public interface PlanParticipantRepository extends JpaRepository<PlanParticipant
     )
     int updateReviewId(Long planId, Long reviewId);
 
+    @Modifying(clearAutomatically = true)
+    @Query(
+            "delete from PlanParticipant p " +
+            "      where p.planId = :planId "
+    )
     void deleteByPlanId(Long planId);
 
+    @Modifying(clearAutomatically = true)
+    @Query(
+            "delete from PlanParticipant p " +
+            "      where p.planId = :planId " +
+            "        and p.userId = :userId "
+    )
     void deleteByPlanIdAndUserId(Long planId, Long userId);
 
+    @Modifying(clearAutomatically = true)
+    @Query(
+            "delete from PlanParticipant p " +
+            "      where p.reviewId = :reviewId "
+    )
     void deleteByReviewId(Long reviewId);
 }

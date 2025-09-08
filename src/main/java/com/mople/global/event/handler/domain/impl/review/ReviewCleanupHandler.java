@@ -29,9 +29,14 @@ public class ReviewCleanupHandler implements DomainEventHandler<ReviewSoftDelete
 
     @Override
     public void handle(ReviewSoftDeletedEvent event) {
+        participantRepository.deleteByReviewId(event.reviewId());
+
         List<String> reviewImages = reviewImageRepository.findReviewImagesByReviewId(event.reviewId());
 
-        participantRepository.deleteByReviewId(event.reviewId());
+        if (reviewImages.isEmpty()) {
+            return;
+        }
+
         reviewImageRepository.deleteByReviewId(event.reviewId());
 
         reviewImages.forEach(i -> {
