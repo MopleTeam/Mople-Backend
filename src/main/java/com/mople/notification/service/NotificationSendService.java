@@ -2,7 +2,6 @@ package com.mople.notification.service;
 
 import com.google.firebase.messaging.*;
 
-import com.mople.core.exception.custom.RetryableOutboxException;
 import com.mople.dto.event.data.domain.notify.NotifyRequestedEvent;
 import com.mople.dto.response.notification.NotifySendRequest;
 import com.mople.entity.notification.FirebaseToken;
