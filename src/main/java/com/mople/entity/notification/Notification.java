@@ -1,6 +1,7 @@
 package com.mople.entity.notification;
 
 import com.mople.dto.response.notification.NotificationPayload;
+import com.mople.global.enums.Action;
 import com.mople.global.enums.event.NotifyType;
 
 import io.hypersistence.utils.hibernate.type.json.JsonType;
@@ -27,6 +28,10 @@ public class Notification {
     @Enumerated(EnumType.STRING)
     @Column(name = "type", length = 15)
     private NotifyType type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "action", length = 30)
+    private Action action = Action.PENDING;
 
     @Column(name = "meet_id", length = 30)
     private Long meetId;
@@ -64,12 +69,18 @@ public class Notification {
         this.reviewId = reviewId;
         this.userId = userId;
         this.payload = payload;
-        this.sendAt = LocalDateTime.now();
-        this.expiredAt = LocalDateTime.now().plusDays(30);
         this.scheduledAt = scheduledAt;
     }
 
     public void updateReadAt() {
         this.readAt = LocalDateTime.now();
+    }
+
+    public void publishNotification() {
+        LocalDateTime now = LocalDateTime.now();
+
+        this.sendAt = now;
+        this.expiredAt = now.plusDays(30);
+        this.action = Action.PUBLISHED;
     }
 }

@@ -5,16 +5,17 @@ import com.mople.dto.event.data.domain.notify.NotifyRequestedEvent;
 import com.mople.dto.event.data.domain.plan.PlanRemindEvent;
 import com.mople.dto.event.data.notify.plan.PlanRemindNotifyEvent;
 import com.mople.dto.request.weather.CoordinateRequest;
-import com.mople.dto.response.notification.NotificationSnapshot;
 import com.mople.dto.response.weather.OpenWeatherResponse;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.plan.MeetPlan;
+import com.mople.entity.notification.Notification;
 import com.mople.global.enums.ExceptionReturnCode;
 import com.mople.global.enums.Status;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.MeetRepository;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.notification.reader.NotificationUserReader;
+import com.mople.notification.repository.NotificationRepository;
 import com.mople.outbox.service.OutboxService;
 import com.mople.weather.service.WeatherService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class PlanRemindNotifier implements DomainEventHandler<PlanRemindEvent> {
 
     private final MeetRepository meetRepository;
     private final MeetPlanRepository planRepository;
+    private final NotificationRepository notificationRepository;
 
     private final WeatherService weatherService;
     private final NotificationUserReader userReader;
@@ -62,21 +64,27 @@ public class PlanRemindNotifier implements DomainEventHandler<PlanRemindEvent> {
                 .planName(plan.getName())
                 .build();
 
-        NotifyRequestedEvent requestedEvent = NotifyRequestedEvent.builder()
-                .notifyType(notifyEvent.notifyType())
-                .snapshot(
-                        NotificationSnapshot.builder()
-                                .payload(notifyEvent.payload())
-                                .meetId(meet.getId())
-                                .planId(plan.getId())
-                                .reviewId(null)
-                                .build()
-                )
-                .targetIds(targetIds)
-                .routing(notifyEvent.routing())
-                .build();
+        List<Long> notificationIds = notificationRepository.saveAll(
+                        targetIds.stream()
+                                .map(targetId ->
+                                        Notification.builder()
+                                                .type(notifyEvent.notifyType())
+                                                .meetId(meet.getId())
+                                                .planId(plan.getId())
+                                                .payload(notifyEvent.payload())
+                                                .userId(targetId)
+                                                .build()
+                                )
+                                .toList()
+                ).stream()
+                .map(Notification::getId).toList();
 
-        outboxService.save(NOTIFY_REQUESTED, PLAN, plan.getId(), requestedEvent);
+        outboxService.save(
+                NOTIFY_REQUESTED,
+                PLAN,
+                plan.getId(),
+                new NotifyRequestedEvent(notifyEvent, notificationIds)
+        );
     }
 
     private OpenWeatherResponse weatherInfo(BigDecimal lot, BigDecimal lat) {

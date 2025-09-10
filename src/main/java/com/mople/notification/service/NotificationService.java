@@ -12,6 +12,7 @@ import com.mople.entity.meet.review.PlanReview;
 import com.mople.entity.notification.Notification;
 import com.mople.entity.notification.Topic;
 import com.mople.entity.user.User;
+import com.mople.global.enums.Action;
 import com.mople.global.enums.PushTopic;
 import com.mople.global.enums.Status;
 import com.mople.global.utils.cursor.CursorUtils;
@@ -130,7 +131,7 @@ public class NotificationService {
         List<NotificationResponse> notificationListResponses = NotificationResponse.of(objectMapper, notifications, planMap);
 
         return FlatCursorPageResponse.of(
-                Math.toIntExact(notificationRepository.countBadgeCount(userId)),
+                Math.toIntExact(notificationRepository.countBadgeCount(userId, Action.PUBLISHED)),
                 buildNotificationCursorPage(size, notificationListResponses)
         );
     }
@@ -139,7 +140,7 @@ public class NotificationService {
         int limit = size + 1;
 
         if (encodedCursor == null || encodedCursor.isEmpty()) {
-            return notificationRepository.findNotificationFirstPage(userId, limit);
+            return notificationRepository.findNotificationFirstPage(userId, Action.PUBLISHED, limit);
         }
 
         String[] decodeParts = CursorUtils.decode(encodedCursor, NOTIFICATION_CURSOR_FIELD_COUNT);
@@ -147,7 +148,7 @@ public class NotificationService {
 
         validateCursor(cursorId);
 
-        return notificationRepository.findNotificationNextPage(userId, cursorId, limit);
+        return notificationRepository.findNotificationNextPage(userId, Action.PUBLISHED, cursorId, limit);
     }
 
     private void validateCursor(Long cursorId) {

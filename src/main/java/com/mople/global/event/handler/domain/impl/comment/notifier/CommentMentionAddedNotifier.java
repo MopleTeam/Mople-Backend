@@ -4,10 +4,10 @@ import com.mople.core.exception.custom.NonRetryableOutboxException;
 import com.mople.dto.event.data.domain.comment.CommentMentionAddedEvent;
 import com.mople.dto.event.data.domain.notify.NotifyRequestedEvent;
 import com.mople.dto.event.data.notify.comment.CommentMentionNotifyEvent;
-import com.mople.dto.response.notification.NotificationSnapshot;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.review.PlanReview;
+import com.mople.entity.notification.Notification;
 import com.mople.entity.user.User;
 import com.mople.global.enums.ExceptionReturnCode;
 import com.mople.global.enums.Status;
@@ -16,6 +16,7 @@ import com.mople.meet.repository.MeetRepository;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.meet.repository.review.PlanReviewRepository;
 import com.mople.notification.reader.NotificationUserReader;
+import com.mople.notification.repository.NotificationRepository;
 import com.mople.outbox.service.OutboxService;
 import com.mople.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ public class CommentMentionAddedNotifier implements DomainEventHandler<CommentMe
     private final MeetPlanRepository planRepository;
     private final PlanReviewRepository reviewRepository;
     private final UserRepository userRepository;
+    private final NotificationRepository notificationRepository;
 
     private final NotificationUserReader userReader;
     private final OutboxService outboxService;
@@ -69,21 +71,27 @@ public class CommentMentionAddedNotifier implements DomainEventHandler<CommentMe
                     .senderNickname(user.getNickname())
                     .build();
 
-            NotifyRequestedEvent requestedEvent = NotifyRequestedEvent.builder()
-                    .notifyType(notifyEvent.notifyType())
-                    .snapshot(
-                            NotificationSnapshot.builder()
-                                    .payload(notifyEvent.payload())
-                                    .meetId(meet.getId())
-                                    .planId(plan.getId())
-                                    .reviewId(null)
-                                    .build()
-                    )
-                    .targetIds(filteredTargetIds)
-                    .routing(notifyEvent.routing())
-                    .build();
+            List<Long> notificationIds = notificationRepository.saveAll(
+                            filteredTargetIds.stream()
+                                    .map(targetId ->
+                                            Notification.builder()
+                                                    .type(notifyEvent.notifyType())
+                                                    .meetId(meet.getId())
+                                                    .planId(plan.getId())
+                                                    .payload(notifyEvent.payload())
+                                                    .userId(targetId)
+                                                    .build()
+                                    )
+                                    .toList()
+                    ).stream()
+                    .map(Notification::getId).toList();
 
-            outboxService.save(NOTIFY_REQUESTED, POST, plan.getId(), requestedEvent);
+            outboxService.save(
+                    NOTIFY_REQUESTED,
+                    POST,
+                    plan.getId(),
+                    new NotifyRequestedEvent(notifyEvent, notificationIds)
+            );
             return;
         }
 
@@ -99,20 +107,26 @@ public class CommentMentionAddedNotifier implements DomainEventHandler<CommentMe
                 .senderNickname(user.getNickname())
                 .build();
 
-        NotifyRequestedEvent requestedEvent = NotifyRequestedEvent.builder()
-                .notifyType(notifyEvent.notifyType())
-                .snapshot(
-                        NotificationSnapshot.builder()
-                                .payload(notifyEvent.payload())
-                                .meetId(meet.getId())
-                                .planId(null)
-                                .reviewId(review.getId())
-                                .build()
-                )
-                .targetIds(filteredTargetIds)
-                .routing(notifyEvent.routing())
-                .build();
+        List<Long> notificationIds = notificationRepository.saveAll(
+                        filteredTargetIds.stream()
+                                .map(targetId ->
+                                        Notification.builder()
+                                                .type(notifyEvent.notifyType())
+                                                .meetId(meet.getId())
+                                                .reviewId(review.getId())
+                                                .payload(notifyEvent.payload())
+                                                .userId(targetId)
+                                                .build()
+                                )
+                                .toList()
+                ).stream()
+                .map(Notification::getId).toList();
 
-        outboxService.save(NOTIFY_REQUESTED, POST, review.getPlanId(), requestedEvent);
+        outboxService.save(
+                NOTIFY_REQUESTED,
+                POST,
+                review.getPlanId(),
+                new NotifyRequestedEvent(notifyEvent, notificationIds)
+        );
     }
 }

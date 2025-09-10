@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.mople.dto.response.notification.NotifySendRequest.ofRequest;
-import static com.mople.global.enums.ExceptionReturnCode.RETRIABLE;
 
 @Service
 @RequiredArgsConstructor
@@ -36,29 +35,17 @@ public class NotificationSendService {
     )
     public void sendMultiNotification(NotifyRequestedEvent event) {
         try {
-            List<Notification> notifications = event.targetIds()
-                    .stream()
-                    .map(userId ->
-                            Notification.builder()
-                                    .type(event.notifyType())
-                                    .meetId(event.snapshot().meetId())
-                                    .planId(event.snapshot().planId())
-                                    .reviewId(event.snapshot().reviewId())
-                                    .payload(event.snapshot().payload())
-                                    .userId(userId)
-                                    .build()
-                    )
-                    .toList();
+            List<Notification> notifications = notificationRepository.findAll(event.notificationIds());
+            notifications.forEach(Notification::publishNotification);
 
-            notificationRepository.saveAll(notifications);
-
-            List<FirebaseToken> tokens = tokenReader.findTokensWithPushTopic(event.targetIds(), event.notifyType().getTopic());
+            List<Long> userIds = notifications.stream().map(Notification::getUserId).toList();
+            List<FirebaseToken> tokens = tokenReader.findTokensWithPushTopic(userIds, event.notifyType().getTopic());
 
             if (tokens.isEmpty()) {
                 return;
             }
 
-            Map<Long, Long> badgeMap = tokenReader.getBadgeMap(event.targetIds());
+            Map<Long, Long> badgeMap = tokenReader.getBadgeMap(userIds);
             List<NotifySendRequest> sendRequests = ofRequest(tokens, badgeMap);
 
             List<Message> messages = sendRequests
@@ -80,8 +67,8 @@ public class NotificationSendService {
                 .setNotification(
                         com.google.firebase.messaging.Notification
                                 .builder()
-                                .setTitle(event.snapshot().payload().title())
-                                .setBody(event.snapshot().payload().message())
+                                .setTitle(event.payload().title())
+                                .setBody(event.payload().message())
                                 .build()
                 )
                 .putAllData(event.routing())
@@ -101,8 +88,8 @@ public class NotificationSendService {
                                 .setNotification(
                                         AndroidNotification
                                                 .builder()
-                                                .setTitle(event.snapshot().payload().title())
-                                                .setBody(event.snapshot().payload().message())
+                                                .setTitle(event.payload().title())
+                                                .setBody(event.payload().message())
                                                 .setDefaultSound(true)
                                                 .setNotificationCount(nextBadgeCount)
                                                 .build()

@@ -4,15 +4,16 @@ import com.mople.core.exception.custom.NonRetryableOutboxException;
 import com.mople.dto.event.data.domain.notify.NotifyRequestedEvent;
 import com.mople.dto.event.data.domain.review.ReviewRemindEvent;
 import com.mople.dto.event.data.notify.review.ReviewRemindNotifyEvent;
-import com.mople.dto.response.notification.NotificationSnapshot;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.review.PlanReview;
+import com.mople.entity.notification.Notification;
 import com.mople.global.enums.ExceptionReturnCode;
 import com.mople.global.enums.Status;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.MeetRepository;
 import com.mople.meet.repository.review.PlanReviewRepository;
 import com.mople.notification.reader.NotificationUserReader;
+import com.mople.notification.repository.NotificationRepository;
 import com.mople.outbox.service.OutboxService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -28,6 +29,7 @@ public class ReviewRemindNotifier implements DomainEventHandler<ReviewRemindEven
 
     private final MeetRepository meetRepository;
     private final PlanReviewRepository reviewRepository;
+    private final NotificationRepository notificationRepository;
 
     private final NotificationUserReader userReader;
     private final OutboxService outboxService;
@@ -61,20 +63,26 @@ public class ReviewRemindNotifier implements DomainEventHandler<ReviewRemindEven
                 .reviewName(review.getName())
                 .build();
 
-        NotifyRequestedEvent requestedEvent = NotifyRequestedEvent.builder()
-                .notifyType(notifyEvent.notifyType())
-                .snapshot(
-                        NotificationSnapshot.builder()
-                                .payload(notifyEvent.payload())
-                                .meetId(meet.getId())
-                                .planId(null)
-                                .reviewId(review.getId())
-                                .build()
-                )
-                .targetIds(targetIds)
-                .routing(notifyEvent.routing())
-                .build();
+        List<Long> notificationIds = notificationRepository.saveAll(
+                        targetIds.stream()
+                                .map(targetId ->
+                                        Notification.builder()
+                                                .type(notifyEvent.notifyType())
+                                                .meetId(meet.getId())
+                                                .reviewId(review.getId())
+                                                .payload(notifyEvent.payload())
+                                                .userId(targetId)
+                                                .build()
+                                )
+                                .toList()
+                ).stream()
+                .map(Notification::getId).toList();
 
-        outboxService.save(NOTIFY_REQUESTED, REVIEW, review.getId(), requestedEvent);
+        outboxService.save(
+                NOTIFY_REQUESTED,
+                REVIEW,
+                review.getId(),
+                new NotifyRequestedEvent(notifyEvent, notificationIds)
+        );
     }
 }

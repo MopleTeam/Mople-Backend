@@ -4,9 +4,9 @@ import com.mople.core.exception.custom.NonRetryableOutboxException;
 import com.mople.dto.event.data.domain.notify.NotifyRequestedEvent;
 import com.mople.dto.event.data.domain.plan.PlanSoftDeletedEvent;
 import com.mople.dto.event.data.notify.plan.PlanDeleteNotifyEvent;
-import com.mople.dto.response.notification.NotificationSnapshot;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.plan.MeetPlan;
+import com.mople.entity.notification.Notification;
 import com.mople.global.enums.ExceptionReturnCode;
 import com.mople.global.enums.Status;
 import com.mople.global.enums.event.DeletionCause;
@@ -14,6 +14,8 @@ import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.MeetRepository;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.notification.reader.NotificationUserReader;
+import com.mople.notification.repository.NotificationRepository;
+import com.mople.outbox.repository.OutboxEventRepository;
 import com.mople.outbox.service.OutboxService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -29,9 +31,11 @@ public class PlanDeleteNotifier implements DomainEventHandler<PlanSoftDeletedEve
 
     private final MeetRepository meetRepository;
     private final MeetPlanRepository planRepository;
+    private final NotificationRepository notificationRepository;
 
     private final NotificationUserReader userReader;
     private final OutboxService outboxService;
+    private final OutboxEventRepository outboxEventRepository;
 
     @Override
     public Class<PlanSoftDeletedEvent> getHandledType() {
@@ -62,20 +66,27 @@ public class PlanDeleteNotifier implements DomainEventHandler<PlanSoftDeletedEve
                 .planName(plan.getName())
                 .build();
 
-        NotifyRequestedEvent requestedEvent = NotifyRequestedEvent.builder()
-                .notifyType(notifyEvent.notifyType())
-                .snapshot(
-                        NotificationSnapshot.builder()
-                                .payload(notifyEvent.payload())
-                                .meetId(meet.getId())
-                                .planId(plan.getId())
-                                .reviewId(null)
-                                .build()
+        List<Long> notificationIds = notificationRepository.saveAll(
+                        targetIds.stream()
+                                .map(targetId ->
+                                        Notification.builder()
+                                                .type(notifyEvent.notifyType())
+                                                .meetId(meet.getId())
+                                                .planId(plan.getId())
+                                                .payload(notifyEvent.payload())
+                                                .userId(targetId)
+                                                .build()
+                                )
+                                .toList()
                 )
-                .targetIds(targetIds)
-                .routing(notifyEvent.routing())
-                .build();
+                .stream()
+                .map(Notification::getId).toList();
 
-        outboxService.save(NOTIFY_REQUESTED, PLAN, plan.getId(), requestedEvent);
+        outboxService.save(
+                NOTIFY_REQUESTED,
+                PLAN,
+                plan.getId(),
+                new NotifyRequestedEvent(notifyEvent, notificationIds)
+        );
     }
 }

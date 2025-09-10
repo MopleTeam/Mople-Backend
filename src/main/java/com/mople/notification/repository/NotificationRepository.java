@@ -3,6 +3,7 @@ package com.mople.notification.repository;
 import com.mople.dto.response.notification.NotificationResponse;
 import com.mople.entity.notification.Notification;
 
+import com.mople.global.enums.Action;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -29,12 +30,13 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             "  join meet m " +
             "    on m.meet_id = n.meet_id " +
             " where n.user_id = :userId " +
+            "   and n.action = :action " +
             "   and n.expired_at > now() " +
             " order by n.notification_id DESC " +
             "limit :limit",
             nativeQuery = true
     )
-    List<NotificationResponse.NotificationListInterface> findNotificationFirstPage(Long userId, int limit);
+    List<NotificationResponse.NotificationListInterface> findNotificationFirstPage(Long userId, Action action, int limit);
 
     @Query(value =
             "select n.notification_id as notificationId," +
@@ -51,13 +53,14 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             "  join meet m " +
             "    on m.meet_id = n.meet_id " +
             " where n.user_id = :userId " +
+            "   and n.action = :action " +
             "   and n.expired_at > now() " +
             "   and n.notification_id < :cursorId " +
             " order by n.notification_id DESC " +
             "limit :limit",
             nativeQuery = true
     )
-    List<NotificationResponse.NotificationListInterface> findNotificationNextPage(Long userId, Long cursorId, int limit);
+    List<NotificationResponse.NotificationListInterface> findNotificationNextPage(Long userId, Action action, Long cursorId, int limit);
 
     @Query(value = "select n from Notification n where n.userId = :userId")
     List<Notification> getUserNotificationList(Long userId);
@@ -66,11 +69,12 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
         "select count(*) " +
         "  from notification n " +
         " where n.user_id = :userId " +
+        "   and n.action = :action " +
         "   and n.expired_at > now() " +
         "   and n.read_at is null ",
             nativeQuery = true
     )
-    Long countBadgeCount(Long userId);
+    Long countBadgeCount(Long userId, Action action);
 
     @Query(value =
             "select 1 " +
@@ -84,4 +88,12 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Modifying(clearAutomatically = true)
     @Query("delete from Notification n where n.userId = :userId")
     void deleteByUserId(Long userId);
+
+    @Query(
+            "select n " +
+            "  from Notification n " +
+            " where n.id in :ids " +
+            "   and n.action = com.mople.global.enums.Action.PENDING"
+    )
+    List<Notification> findAll(List<Long> ids);
 }
