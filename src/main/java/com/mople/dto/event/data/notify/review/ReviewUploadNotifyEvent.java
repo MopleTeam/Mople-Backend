@@ -5,17 +5,13 @@ import com.mople.dto.response.notification.NotificationPayload;
 import com.mople.global.enums.event.NotifyType;
 import lombok.Builder;
 
-import java.util.List;
 import java.util.Map;
 
 @Builder
 public record ReviewUploadNotifyEvent(
-        Long meetId,
         String meetName,
         Long reviewId,
-        String reviewName,
-        Long reviewUpdatedBy,
-        List<Long> targetIds
+        String reviewName
 ) implements NotifyEvent {
 
     @Override

@@ -5,15 +5,13 @@ import com.mople.dto.response.notification.NotificationPayload;
 import com.mople.global.enums.event.NotifyType;
 import lombok.Builder;
 
-import java.util.List;
 import java.util.Map;
 
 @Builder
 public record MeetJoinNotifyEvent(
         Long meetId,
         String meetName,
-        String newMemberNickname,
-        List<Long> targetIds
+        String newMemberNickname
 ) implements NotifyEvent {
 
     @Override

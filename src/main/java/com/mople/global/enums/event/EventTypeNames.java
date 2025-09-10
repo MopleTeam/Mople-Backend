@@ -37,4 +37,6 @@ public final class EventTypeNames {
     public static final String USER_IMAGE_CHANGED = "USER_IMAGE_CHANGED";
     public static final String USER_DELETED = "USER_DELETED";
 
+    // NOTIFY
+    public static final String NOTIFY_REQUESTED = "NOTIFY_REQUESTED";
 }

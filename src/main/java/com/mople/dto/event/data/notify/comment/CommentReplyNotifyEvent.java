@@ -5,18 +5,13 @@ import com.mople.dto.response.notification.NotificationPayload;
 import com.mople.global.enums.event.NotifyType;
 import lombok.Builder;
 
-import java.util.List;
 import java.util.Map;
 
 @Builder
 public record CommentReplyNotifyEvent(
-        Long meetId,
         String meetName,
         Long postId,
-        Long planId,
-        Long reviewId,
-        String senderNickname,
-        List<Long> targetIds
+        String senderNickname
 ) implements NotifyEvent {
 
     @Override

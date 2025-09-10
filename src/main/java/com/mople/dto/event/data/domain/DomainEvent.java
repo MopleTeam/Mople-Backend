@@ -8,6 +8,7 @@ import com.mople.dto.event.data.domain.comment.CommentsPurgeEvent;
 import com.mople.dto.event.data.domain.comment.CommentsSoftDeletedEvent;
 import com.mople.dto.event.data.domain.image.ImageDeletedEvent;
 import com.mople.dto.event.data.domain.meet.*;
+import com.mople.dto.event.data.domain.notify.NotifyRequestedEvent;
 import com.mople.dto.event.data.domain.plan.*;
 import com.mople.dto.event.data.domain.review.*;
 import com.mople.dto.event.data.domain.user.UserDeletedEvent;
@@ -54,7 +55,10 @@ import static com.mople.global.enums.event.EventTypeNames.*;
         @JsonSubTypes.Type(value = CommentMentionAddedEvent.class, name = COMMENT_MENTION_ADDED),
 
         // Image
-        @JsonSubTypes.Type(value = ImageDeletedEvent.class, name = IMAGE_DELETED)
+        @JsonSubTypes.Type(value = ImageDeletedEvent.class, name = IMAGE_DELETED),
+
+        // Notify
+        @JsonSubTypes.Type(value = NotifyRequestedEvent.class, name = NOTIFY_REQUESTED)
 })
 public interface DomainEvent {
 }

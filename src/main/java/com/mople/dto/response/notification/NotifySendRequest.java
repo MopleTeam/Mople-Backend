@@ -3,20 +3,20 @@ package com.mople.dto.response.notification;
 import com.mople.entity.notification.FirebaseToken;
 
 import java.util.List;
+import java.util.Map;
 
 public record NotifySendRequest(
-        List<Long> userIds,
-        List<FirebaseToken> tokens
+        String token,
+        Long badgeCount
 ) {
-    public Long findUserByToken(FirebaseToken token) {
-        return userIds
-                .stream()
-                .filter(userId -> userId.equals(token.getUserId()))
-                .findFirst()
-                .orElse(null);
-    }
-
-    public String validToken(FirebaseToken token) {
-        return token.getToken();
+    public static List<NotifySendRequest> ofRequest(List<FirebaseToken> tokens, Map<Long, Long> badgeMap) {
+        return tokens.stream()
+                .map(t ->
+                        new NotifySendRequest(
+                                t.getToken(),
+                                badgeMap.getOrDefault(t.getUserId(), 0L)
+                        )
+                )
+                .toList();
     }
 }

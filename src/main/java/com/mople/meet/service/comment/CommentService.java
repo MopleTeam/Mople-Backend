@@ -374,7 +374,7 @@ public class CommentService {
     public void commentReport(Long userId, CommentReportRequest request) {
 
 //        같은 신고라도 사유가 다를 수 있으니 중복 신고를 허용
-//        commentReportRepository.findByReporterIdAndCommentId(userId, request.commentId()).orElseThrow(
+//        commentReportRepository.findByReporterIdAndCommentId(userId, sendRequest.commentId()).orElseThrow(
 //                () -> new ResourceNotFoundException(CURRENT_REPORT)
 //        );
 
