@@ -54,13 +54,13 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
     @Modifying(flushAutomatically = true)
     @Query(
             "update OutboxEvent o " +
-            "   set o.status = com.mople.global.enums.event.OutboxStatus.FAILED, " +
+            "   set o.status = com.mople.global.enums.event.OutboxStatus.SKIPPED, " +
             "       o.attempts = o.attempts + 1, " +
             "       o.lastError = :errorMessage " +
             " where o.eventId = :eventId " +
             "   and o.status = com.mople.global.enums.event.OutboxStatus.PENDING"
     )
-    int eventFailed(String eventId, String errorMessage);
+    int eventSkip(String eventId, String errorMessage);
 
     @Modifying(flushAutomatically = true)
     @Query(value = """
@@ -101,6 +101,19 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
              )
             """, nativeQuery = true)
     int deleteOldCanceled(LocalDateTime before, int limit);
+
+    @Modifying(flushAutomatically = true)
+    @Query(value = """
+            DELETE FROM outbox_event
+             WHERE outbox_id IN (
+               SELECT outbox_id FROM outbox_event
+                WHERE status = 'SKIPPED'
+                  AND created_at < :before
+                ORDER BY outbox_id
+                LIMIT :limit
+             )
+            """, nativeQuery = true)
+    int deleteOldSkipped(LocalDateTime before, int limit);
 
     @Modifying(flushAutomatically = true)
     @Query(value = """

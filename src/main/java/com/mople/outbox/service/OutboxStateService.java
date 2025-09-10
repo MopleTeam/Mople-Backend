@@ -39,8 +39,8 @@ public class OutboxStateService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void markFailed(String eventId, String errorMessage) {
-        int updated = outboxEventRepository.eventFailed(eventId, errorMessage);
+    public void markSkip(String eventId, String errorMessage) {
+        int updated = outboxEventRepository.eventSkip(eventId, errorMessage);
         if (updated != 1) {
             throw new IllegalStatesException(ILLEGAL_EVENT);
         }

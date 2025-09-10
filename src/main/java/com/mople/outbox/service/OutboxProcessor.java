@@ -45,9 +45,7 @@ public class OutboxProcessor {
             stateService.markPublished(event.getEventId());
 
         } catch (JsonProcessingException | NonRetryableOutboxException ex) {
-            stateService.markFailed(event.getEventId(), shorten(ex.getMessage()));
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-
+            stateService.markSkip(event.getEventId(), shorten(ex.getMessage()));
         } catch (Exception ex) {
             stateService.markRetry(event.getEventId(), shorten(ex.getMessage()));
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
