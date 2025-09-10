@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface CommentMentionRepository extends JpaRepository<CommentMention, Long> {
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(
             "delete from CommentMention cm " +
             "      where cm.commentId = :commentId "
