@@ -39,6 +39,7 @@ import static com.mople.global.enums.event.EventTypeNames.*;
         @JsonSubTypes.Type(value = PlanCreatedEvent.class, name = PLAN_CREATED),
         @JsonSubTypes.Type(value = PlanRemindEvent.class, name = PLAN_REMIND),
         @JsonSubTypes.Type(value = PlanTimeChangedEvent.class, name = PLAN_TIME_CHANGED),
+        @JsonSubTypes.Type(value = PlanTransitionRequestedEvent.class, name = PLAN_TRANSITION_REQUESTED),
         @JsonSubTypes.Type(value = PlanTransitionedEvent.class, name = PLAN_TRANSITIONED),
 
         // Review

@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.util.List;
 
@@ -45,8 +46,11 @@ public class OutboxProcessor {
 
         } catch (JsonProcessingException | NonRetryableOutboxException ex) {
             stateService.markFailed(event.getEventId(), shorten(ex.getMessage()));
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+
         } catch (Exception ex) {
             stateService.markRetry(event.getEventId(), shorten(ex.getMessage()));
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
         }
     }
 

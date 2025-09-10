@@ -33,7 +33,7 @@ public class OutboxCleanupJob {
     @Value("${outbox.cleanup.keep-days.processed}")
     private long keepProcessedDays;
 
-    @Scheduled(cron = "${outbox.cleanup.cron}", zone = "Asia/Seoul")
+    @Scheduled(cron = "${cron.outbox.cleanup}", zone = "Asia/Seoul")
     @Transactional
     public void cleanup() {
         LocalDateTime now = LocalDateTime.now();

@@ -1,10 +1,11 @@
 package com.mople.meet.schedule;
 
+import com.mople.core.exception.custom.NonRetryableOutboxException;
 import com.mople.dto.event.data.domain.plan.PlanTransitionedEvent;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.review.PlanReview;
+import com.mople.global.enums.ExceptionReturnCode;
 import com.mople.global.enums.Status;
-import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.meet.repository.plan.PlanParticipantRepository;
 import com.mople.meet.repository.review.PlanReviewRepository;
@@ -28,12 +29,12 @@ public class PlanTransitionService {
     private final MeetPlanRepository planRepository;
     private final PlanParticipantRepository participantRepository;
     private final PlanReviewRepository reviewRepository;
-    private final EntityReader reader;
     private final OutboxService outboxService;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.MANDATORY)
     public void transitionPlanByOne(Long planId) {
-        MeetPlan plan = reader.findPlan(planId);
+        MeetPlan plan = planRepository.findByIdAndStatus(planId, Status.ACTIVE)
+                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_PLAN));
 
         PlanReview review = reviewRepository.save(
                 PlanReview.builder()
@@ -52,7 +53,6 @@ public class PlanTransitionService {
                         .meetId(plan.getMeetId())
                         .build()
         );
-        reviewRepository.flush();
 
         participantRepository.updateReviewId(plan.getId(), review.getId());
 

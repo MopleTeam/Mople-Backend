@@ -13,6 +13,7 @@ public final class EventTypeNames {
     public static final String PLAN_CREATED = "PLAN_CREATED";
     public static final String PLAN_SOFT_DELETED = "PLAN_SOFT_DELETED";
     public static final String PLAN_TIME_CHANGED = "PLAN_TIME_CHANGED";
+    public static final String PLAN_TRANSITION_REQUESTED = "PLAN_TRANSITION_REQUESTED";
     public static final String PLAN_TRANSITIONED = "PLAN_TRANSITIONED";
     public static final String PLAN_REMIND = "PLAN_REMIND";
     public static final String PLAN_PURGE = "PLAN_PURGE";

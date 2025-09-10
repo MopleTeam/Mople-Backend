@@ -21,7 +21,7 @@ public class WeatherScheduler {
     private final PlanRepositorySupport support;
 
     @Async("taskSchedule")
-    @Scheduled(cron = "0 0 */6 * * *")
+    @Scheduled(cron = "${cron.weather.update}", zone = "Asia/Seoul")
     public void updateMeetingPlanWeatherInfo() {
         var plans = support.findUpdateWeatherPlan();
 

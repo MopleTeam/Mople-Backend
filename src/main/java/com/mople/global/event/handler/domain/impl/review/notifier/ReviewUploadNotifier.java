@@ -4,7 +4,6 @@ import com.mople.core.exception.custom.NonRetryableOutboxException;
 import com.mople.dto.event.data.domain.notify.NotifyRequestedEvent;
 import com.mople.dto.event.data.domain.review.ReviewUploadEvent;
 import com.mople.dto.event.data.notify.review.ReviewUploadNotifyEvent;
-import com.mople.dto.response.notification.NotificationSnapshot;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.review.PlanReview;
 import com.mople.entity.notification.Notification;
