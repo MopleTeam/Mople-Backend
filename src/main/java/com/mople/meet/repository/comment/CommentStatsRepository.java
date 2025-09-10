@@ -25,7 +25,7 @@ public interface CommentStatsRepository extends JpaRepository<CommentStats, Long
     @Query("UPDATE CommentStats s SET s.replyCount = s.replyCount - 1 WHERE s.commentId = :commentId AND s.replyCount > 0")
     void decreaseReplyCount(Long commentId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "delete from CommentStats cs " +
             "      where cs.commentId in :commentIds "

@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface PlanCommentRepository extends JpaRepository<PlanComment, Long> {
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "update PlanComment c " +
             "   set c.status = :status, " +
@@ -28,7 +28,7 @@ public interface PlanCommentRepository extends JpaRepository<PlanComment, Long> 
     @Query("select c.id from PlanComment c where c.postId = :postId and c.status = com.mople.global.enums.Status.ACTIVE")
     List<Long> findIdByPostId(Long postId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "delete " +
             "  from PlanComment c " +

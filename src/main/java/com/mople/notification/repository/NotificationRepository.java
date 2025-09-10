@@ -85,7 +85,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     )
     Optional<Integer> isCursorInvalid(Long cursorId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query("delete from Notification n where n.userId = :userId")
     void deleteByUserId(Long userId);
 

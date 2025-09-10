@@ -18,7 +18,7 @@ public interface ReviewImageRepository extends JpaRepository<ReviewImage, Long> 
     @Query("select i.reviewImage from ReviewImage i where i.reviewId = :reviewId")
     List<String> findReviewImagesByReviewId(Long reviewId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "delete from ReviewImage i " +
             "      where i.reviewId = :reviewId "

@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface CommentMentionRepository extends JpaRepository<CommentMention, Long> {
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "delete from CommentMention cm " +
             "      where cm.commentId = :commentId "
@@ -21,7 +21,7 @@ public interface CommentMentionRepository extends JpaRepository<CommentMention, 
     @Query("select cm.userId from CommentMention cm where cm.commentId = :commentId")
     List<Long> findUserIdByCommentId(Long commentId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "delete from CommentMention cm " +
             "      where cm.commentId in :commentIds "

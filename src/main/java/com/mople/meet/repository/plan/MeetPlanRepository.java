@@ -13,13 +13,13 @@ import java.util.Optional;
 
 public interface MeetPlanRepository extends JpaRepository<MeetPlan, Long>{
 
-    @Query("select p from MeetPlan p where p.planTime < :time and p.status = :status")
-    List<MeetPlan> findPreviousPlanAll(LocalDateTime time, Status status);
+    @Query("select p.id from MeetPlan p where p.planTime < :time and p.status = :status")
+    List<Long> findPreviousPlanAll(LocalDateTime time, Status status);
 
     @Query("select p from MeetPlan p where p.id in :planIds and p.status = :status")
     List<MeetPlan> findPlanAndTime(List<Long> planIds, Status status);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "update MeetPlan p " +
             "   set p.temperature = :temperature, " +
@@ -30,7 +30,7 @@ public interface MeetPlanRepository extends JpaRepository<MeetPlan, Long>{
     )
     int updateWeather(Long planId, Double temperature, Double pop, String icon);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "update MeetPlan p " +
             "   set p.temperature = null, " +
@@ -41,7 +41,7 @@ public interface MeetPlanRepository extends JpaRepository<MeetPlan, Long>{
     )
     int deleteWeather(Long planId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "update MeetPlan p " +
             "   set p.status = :status, " +
@@ -52,7 +52,7 @@ public interface MeetPlanRepository extends JpaRepository<MeetPlan, Long>{
     )
     int softDelete(Status status, Long planId, Long userId, LocalDateTime deletedAt);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "update MeetPlan p " +
             "   set p.status = :status, " +
@@ -87,7 +87,7 @@ public interface MeetPlanRepository extends JpaRepository<MeetPlan, Long>{
     )
     List<Long> findIdsByMeetId(Long meetId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "delete from MeetPlan p " +
             "      where p.id = :planId " +

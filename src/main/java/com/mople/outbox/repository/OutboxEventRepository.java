@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> {
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(value = """
               WITH picked AS (
                   SELECT outbox_id
@@ -30,7 +30,7 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
             """, nativeQuery = true)
     List<OutboxEvent> lockNextBatch(int limit, int leaseSec);
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "update OutboxEvent o " +
             "   set o.status = com.mople.global.enums.event.OutboxStatus.CANCELED " +
@@ -41,7 +41,7 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
     )
     int eventCanceled(String eventType, AggregateType aggregateType, Long aggregateId);
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "update OutboxEvent o " +
             "   set o.status = com.mople.global.enums.event.OutboxStatus.PUBLISHED, " +
@@ -51,7 +51,7 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
     )
     int eventPublished(String eventId);
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "update OutboxEvent o " +
             "   set o.status = com.mople.global.enums.event.OutboxStatus.FAILED, " +
@@ -62,7 +62,7 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
     )
     int eventFailed(String eventId, String errorMessage);
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(value = """
                UPDATE outbox_event
                   SET attempts = attempts + 1,
@@ -76,7 +76,7 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
             """, nativeQuery = true)
     int eventRetry(String eventId, String errorMessage, int retrySec, int maxAttempts);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(value = """
             DELETE FROM outbox_event
              WHERE outbox_id IN (
@@ -89,7 +89,7 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
             """, nativeQuery = true)
     int deleteOldPublished(LocalDateTime before, int limit);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(value = """
             DELETE FROM outbox_event
              WHERE outbox_id IN (
@@ -102,7 +102,7 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
             """, nativeQuery = true)
     int deleteOldCanceled(LocalDateTime before, int limit);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(value = """
             DELETE FROM outbox_event
              WHERE outbox_id IN (

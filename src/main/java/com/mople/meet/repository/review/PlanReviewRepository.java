@@ -19,7 +19,7 @@ public interface PlanReviewRepository extends JpaRepository<PlanReview, Long> {
     @Query("select r from PlanReview r where r.planId in :postIds and r.status = :status")
     List<PlanReview> findReviewsByPostIdIn(List<Long> postIds, Status status);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query("""
         update PlanReview r
            set r.upload  = true,
@@ -29,7 +29,7 @@ public interface PlanReviewRepository extends JpaRepository<PlanReview, Long> {
     """)
     int uploadedAtFirst(Long reviewId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "update PlanReview r " +
             "   set r.status = :status, " +
@@ -40,7 +40,7 @@ public interface PlanReviewRepository extends JpaRepository<PlanReview, Long> {
     )
     int softDelete(Status status, Long reviewId, Long userId, LocalDateTime deletedAt);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "update PlanReview r " +
             "   set r.status = :status, " +
@@ -81,7 +81,7 @@ public interface PlanReviewRepository extends JpaRepository<PlanReview, Long> {
     )
     List<Long> findIdsByMeetId(Long meetId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "delete " +
               "from PlanReview r " +

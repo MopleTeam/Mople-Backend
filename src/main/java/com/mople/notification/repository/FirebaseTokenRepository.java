@@ -15,7 +15,7 @@ public interface FirebaseTokenRepository extends JpaRepository<FirebaseToken, Lo
     @Query("select t.token from FirebaseToken t where t.userId in :memberIds")
     List<String> findMemberTokens(List<Long> memberIds);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query("delete from FirebaseToken t where t.userId = :userId")
     void deleteByUserId(Long userId);
 }

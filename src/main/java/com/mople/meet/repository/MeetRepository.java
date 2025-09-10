@@ -13,7 +13,7 @@ import java.util.Optional;
 
 public interface MeetRepository extends JpaRepository<Meet, Long> {
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query("update Meet m " +
             "  set m.status = :status, " +
             "      m.deletedAt = :deletedAt, " +
@@ -23,7 +23,7 @@ public interface MeetRepository extends JpaRepository<Meet, Long> {
     )
     int softDelete(Status status, Long meetId, Long userId, LocalDateTime deletedAt);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query("update Meet m " +
             "  set m.status = :status, " +
             "      m.deletedAt = :deletedAt, " +
@@ -44,7 +44,7 @@ public interface MeetRepository extends JpaRepository<Meet, Long> {
     )
     List<Long> findIdsByCreatorId(Long creatorId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "delete from Meet m " +
             "      where m.id = :meetId " +

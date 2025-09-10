@@ -16,7 +16,7 @@ public interface TopicRepository extends JpaRepository<Topic, Long> {
     @Query("select t from Topic t where t.userId = :userId and t.topic in :topic")
     List<Topic> findAllUserTopic(Long userId, List<PushTopic> topic);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "delete from Topic t " +
             "      where t.userId = :userId "

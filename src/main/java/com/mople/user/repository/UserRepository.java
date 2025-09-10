@@ -30,7 +30,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select u from User u where u.id = :id and u.status = :status")
     Optional<User> findByIdAndStatus(Long id, Status status);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "update User u " +
             "   set u.email = null, " +

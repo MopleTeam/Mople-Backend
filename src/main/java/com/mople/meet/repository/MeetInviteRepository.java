@@ -14,7 +14,7 @@ public interface MeetInviteRepository extends JpaRepository<MeetInvite, UUID> {
     @Query("SELECT i FROM MeetInvite i where i.inviteCode = :code")
     Optional<MeetInvite> findByInviteCodeMeet(String code);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "delete from MeetInvite i " +
             "      where i.meetId = :meetId "

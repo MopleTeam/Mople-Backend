@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 public interface ProcessedEventRepository extends JpaRepository<ProcessedEvent, String> {
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(value = """
       DELETE FROM processed_event
             WHERE event_id IN (

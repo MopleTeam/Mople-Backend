@@ -15,14 +15,14 @@ public interface MeetMemberRepository extends JpaRepository<MeetMember, Long> {
     @Query("select m.meetId from MeetMember m where m.userId = :userId")
     List<Long> findMeetIdsByUserId(Long userId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "delete from MeetMember m " +
             "      where m.meetId = :meetId "
     )
     void deleteByMeetId(Long meetId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "delete from MeetMember m " +
             "      where m.meetId in :meetIds " +
@@ -30,7 +30,7 @@ public interface MeetMemberRepository extends JpaRepository<MeetMember, Long> {
     )
     void deleteByMeetIdsAndUserId(List<Long> meetIds, Long userId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
             "delete from MeetMember m " +
             "      where m.meetId = :meetId " +
