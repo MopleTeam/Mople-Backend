@@ -29,34 +29,27 @@ public class NotificationSendService {
     private final NotificationRepository notificationRepository;
     private final NotificationTokenReader tokenReader;
 
-    @Transactional(
-            propagation = Propagation.MANDATORY,
-            noRollbackFor = RetryableOutboxException.class
-    )
+    @Transactional(propagation = Propagation.MANDATORY)
     public void sendMultiNotification(NotifyRequestedEvent event) {
-        try {
-            List<Notification> notifications = notificationRepository.findAll(event.notificationIds());
-            notifications.forEach(Notification::publishNotification);
+        List<Notification> notifications = notificationRepository.findAll(event.notificationIds());
+        notifications.forEach(Notification::publishNotification);
 
-            List<Long> userIds = notifications.stream().map(Notification::getUserId).toList();
-            List<FirebaseToken> tokens = tokenReader.findTokensWithPushTopic(userIds, event.notifyType().getTopic());
+        List<Long> userIds = notifications.stream().map(Notification::getUserId).toList();
+        List<FirebaseToken> tokens = tokenReader.findTokensWithPushTopic(userIds, event.notifyType().getTopic());
 
-            if (tokens.isEmpty()) {
-                return;
-            }
-
-            Map<Long, Long> badgeMap = tokenReader.getBadgeMap(userIds);
-            List<NotifySendRequest> sendRequests = ofRequest(tokens, badgeMap);
-
-            List<Message> messages = sendRequests
-                    .stream()
-                    .map(request -> buildMessage(event, request))
-                    .toList();
-
-            sender.sendEachAsync(messages);
-        } catch (Exception e) {
-            throw new RetryableOutboxException(RETRIABLE);
+        if (tokens.isEmpty()) {
+            return;
         }
+
+        Map<Long, Long> badgeMap = tokenReader.getBadgeMap(userIds);
+        List<NotifySendRequest> sendRequests = ofRequest(tokens, badgeMap);
+
+        List<Message> messages = sendRequests
+                .stream()
+                .map(request -> buildMessage(event, request))
+                .toList();
+
+        sender.sendEachAsync(messages);
     }
 
     private Message buildMessage(NotifyRequestedEvent event, NotifySendRequest request) {

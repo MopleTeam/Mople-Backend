@@ -30,7 +30,7 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
             """, nativeQuery = true)
     List<OutboxEvent> lockNextBatch(int limit, int leaseSec);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(
             "update OutboxEvent o " +
             "   set o.status = com.mople.global.enums.event.OutboxStatus.CANCELED " +
@@ -41,29 +41,28 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
     )
     int eventCanceled(String eventType, AggregateType aggregateType, Long aggregateId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(
             "update OutboxEvent o " +
             "   set o.status = com.mople.global.enums.event.OutboxStatus.PUBLISHED, " +
             "       o.publishedAt = CURRENT_TIMESTAMP " +
             " where o.eventId = :eventId " +
-            "   and exists (select 1 " +
-            "                 from ProcessedEvent p " +
-            "                where p.eventId = :eventId)"
+            "   and o.status = com.mople.global.enums.event.OutboxStatus.PENDING"
     )
     int eventPublished(String eventId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(
             "update OutboxEvent o " +
             "   set o.status = com.mople.global.enums.event.OutboxStatus.FAILED, " +
             "       o.attempts = o.attempts + 1, " +
             "       o.lastError = :errorMessage " +
-            " where o.eventId = :eventId"
+            " where o.eventId = :eventId " +
+            "   and o.status = com.mople.global.enums.event.OutboxStatus.PENDING"
     )
     int eventFailed(String eventId, String errorMessage);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
                UPDATE outbox_event
                   SET attempts = attempts + 1,
@@ -73,6 +72,7 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
                       available_at = CASE WHEN attempts + 1 >= :maxAttempts
                                      THEN available_at ELSE now() + make_interval(secs => :retrySec) END
                 WHERE event_id = :eventId
+                  AND status = 'PENDING'
             """, nativeQuery = true)
     int eventRetry(String eventId, String errorMessage, int retrySec, int maxAttempts);
 

@@ -91,8 +91,7 @@ public enum ExceptionReturnCode {
     INTERNAL_SERVER_ERROR("500", "내부 서버 에러 입니다."),
     EXTERNAL_SERVER_ERROR("500", "외부 서버 에러 입니다."),
     ILLEGAL_HANDLER_TYPE("500", "핸들러를 처리할 수 없습니다."),
-    ILLEGAL_PROCESS_ORDER("500", "처리 순서가 올바르지 않습니다."),
-    RETRIABLE("503", "다시 시도해 보겠습니다.");
+    ILLEGAL_EVENT("500", "이벤트를 처리할 수 없습니다.");
 
     private final String code;
     private final String message;

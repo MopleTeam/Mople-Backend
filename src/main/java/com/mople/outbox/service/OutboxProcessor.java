@@ -2,25 +2,19 @@ package com.mople.outbox.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mople.core.exception.custom.IllegalStatesException;
 import com.mople.core.exception.custom.NonRetryableOutboxException;
 import com.mople.dto.event.data.domain.DomainEvent;
 import com.mople.entity.event.OutboxEvent;
 import com.mople.entity.event.ProcessedEvent;
-import com.mople.global.enums.ExceptionReturnCode;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.global.event.handler.domain.DomainHandlerRegistry;
-import com.mople.outbox.repository.OutboxEventRepository;
 import com.mople.outbox.repository.ProcessedEventRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-
-import static com.mople.global.enums.ExceptionReturnCode.ILLEGAL_PROCESS_ORDER;
 
 @Service
 @RequiredArgsConstructor
@@ -28,20 +22,14 @@ public class OutboxProcessor {
 
     private final DomainHandlerRegistry registry;
     private final ProcessedEventRepository processedEventRepository;
-    private final OutboxEventRepository outboxEventRepository;
     private final ObjectMapper mapper;
-
-    @Value("${outbox.retry-sec}")
-    private int retrySec;
-
-    @Value("${outbox.max-attempts}")
-    private int maxAttempts;
+    private final OutboxStateService stateService;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void processOne(OutboxEvent event) {
         try {
             if (processedEventRepository.existsById(event.getEventId())) {
-                outboxEventRepository.eventPublished(event.getEventId());
+                stateService.markPublished(event.getEventId());
                 return;
             }
 
@@ -53,16 +41,12 @@ public class OutboxProcessor {
             }
 
             processedEventRepository.save(new ProcessedEvent(event.getEventId()));
-
-            int updated = outboxEventRepository.eventPublished(event.getEventId());
-            if (updated != 1) {
-                throw new IllegalStatesException(ILLEGAL_PROCESS_ORDER);
-            }
+            stateService.markPublished(event.getEventId());
 
         } catch (JsonProcessingException | NonRetryableOutboxException ex) {
-            outboxEventRepository.eventFailed(event.getEventId(), shorten(ex.getMessage()));
+            stateService.markFailed(event.getEventId(), shorten(ex.getMessage()));
         } catch (Exception ex) {
-            outboxEventRepository.eventRetry(event.getEventId(), shorten(ex.getMessage()), retrySec, maxAttempts);
+            stateService.markRetry(event.getEventId(), shorten(ex.getMessage()));
         }
     }
 
