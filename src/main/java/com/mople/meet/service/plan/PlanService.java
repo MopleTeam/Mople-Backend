@@ -1,15 +1,15 @@
-package com.mople.meet.service;
+package com.mople.meet.service.plan;
 
 import com.mople.core.exception.custom.*;
 import com.mople.dto.client.PlanClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
+import com.mople.dto.event.data.domain.global.WeatherRefreshRequestedEvent;
 import com.mople.dto.event.data.domain.plan.PlanCreatedEvent;
 import com.mople.dto.event.data.domain.plan.PlanSoftDeletedEvent;
 import com.mople.dto.event.data.domain.plan.PlanTimeChangedEvent;
 import com.mople.dto.request.meet.plan.PlanDeleteRequest;
 import com.mople.dto.request.meet.plan.PlanReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
-import com.mople.dto.request.weather.CoordinateRequest;
 import com.mople.dto.response.meet.UserAllDateResponse;
 import com.mople.dto.response.meet.UserPageResponse;
 import com.mople.dto.response.meet.plan.*;
@@ -19,7 +19,6 @@ import com.mople.dto.response.user.UserInfo;
 import com.mople.global.enums.Status;
 import com.mople.global.enums.event.DeletionCause;
 import com.mople.global.utils.cursor.MemberCursor;
-import com.mople.dto.response.weather.WeatherInfoResponse;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.plan.PlanParticipant;
@@ -39,14 +38,12 @@ import com.mople.dto.request.meet.plan.PlanUpdateRequest;
 import com.mople.meet.repository.plan.PlanReportRepository;
 import com.mople.outbox.service.OutboxService;
 import com.mople.user.repository.UserRepository;
-import com.mople.weather.service.WeatherService;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
@@ -70,7 +67,6 @@ public class PlanService {
     private static final int PLAN_CURSOR_FIELD_COUNT = 1;
     private static final int PLAN_PARTICIPANT_CURSOR_FIELD_COUNT = 2;
 
-    private final WeatherService weatherService;
     private final MeetPlanRepository meetPlanRepository;
     private final MeetMemberRepository memberRepository;
     private final PlanReportRepository planReportRepository;
@@ -79,11 +75,10 @@ public class PlanService {
     private final PlanRepositorySupport planRepositorySupport;
     private final CommentRepositorySupport commentRepositorySupport;
     private final MeetRepositorySupport meetRepositorySupport;
+    private final UserRepository userRepository;
 
     private final EntityReader reader;
-
     private final OutboxService outboxService;
-    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public PlanHomeViewResponse getPlanView(Long userId) {
@@ -105,28 +100,31 @@ public class PlanService {
         var user = reader.findUser(creatorId);
         var meet = reader.findMeet(request.meetId());
 
-        if (!meet.matchCreator(creatorId)) {
+        if (!memberRepository.existsByMeetIdAndUserId(request.meetId(), creatorId)) {
             throw new AuthException(NOT_CREATOR);
         }
 
-        MeetPlan plan = MeetPlan.builder()
-                .name(request.name())
-                .planTime(request.planTime())
-                .address(request.planAddress())
-                .title(request.title())
-                .longitude(request.lot())
-                .latitude(request.lat())
-                .weatherAddress(request.weatherAddress())
-                .creatorId(user.getId())
-                .meetId(meet.getId())
-                .build();
+        MeetPlan plan = meetPlanRepository.save(
+                MeetPlan.builder()
+                        .name(request.name())
+                        .planTime(request.planTime())
+                        .address(request.planAddress())
+                        .title(request.title())
+                        .longitude(request.lot())
+                        .latitude(request.lat())
+                        .weatherAddress(request.weatherAddress())
+                        .creatorId(user.getId())
+                        .meetId(meet.getId())
+                        .build()
+        );
 
         if (request.planTime().isBefore(LocalDateTime.now().plusDays(5))) {
-            WeatherInfoResponse weather = getPlanWeather(request.lot(), request.lat(), request.planTime());
-            meetPlanRepository.updateWeather(plan.getId(), weather.temperature(), weather.pop(), weather.weatherIcon());
-        }
+            WeatherRefreshRequestedEvent requestedEvent = WeatherRefreshRequestedEvent.builder()
+                    .planId(plan.getId())
+                    .build();
 
-        meetPlanRepository.save(plan);
+            outboxService.save(WEATHER_REFRESH_REQUESTED, PLAN, plan.getId(), requestedEvent);
+        }
 
         planParticipantRepository.save(
                 PlanParticipant.builder()
@@ -172,9 +170,12 @@ public class PlanService {
         LocalDateTime newTime = request.planTime();
         LocalDateTime oldTime = plan.getPlanTime();
 
-        if (plan.updatePlan(request) || newTime.isBefore(LocalDateTime.now().plusDays(5))) {
-            WeatherInfoResponse weather = getPlanWeather(request.lot(), request.lat(), request.planTime());
-            meetPlanRepository.updateWeather(plan.getId(), weather.temperature(), weather.pop(), weather.weatherIcon());
+        if (newTime.isBefore(LocalDateTime.now().plusDays(5))) {
+            WeatherRefreshRequestedEvent requestedEvent = WeatherRefreshRequestedEvent.builder()
+                    .planId(plan.getId())
+                    .build();
+
+            outboxService.save(WEATHER_REFRESH_REQUESTED, PLAN, plan.getId(), requestedEvent);
         }
 
         if (newTime.isAfter(LocalDateTime.now().plusDays(5))) {
@@ -413,16 +414,5 @@ public class PlanService {
         }
 
         planParticipantRepository.deleteByPlanIdAndUserId(planId, userId);
-    }
-
-    private WeatherInfoResponse getPlanWeather(BigDecimal lot, BigDecimal lat, LocalDateTime planTime) {
-        return weatherService
-                .getClosestWeatherInfoFromDateTime(
-                        new CoordinateRequest(lot, lat),
-                        planTime
-                )
-                .exceptionally(t -> null)
-                .thenApply(weatherInfo -> weatherInfo)
-                .join();
     }
 }
