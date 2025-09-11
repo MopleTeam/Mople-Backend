@@ -17,6 +17,8 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.util.List;
 
+import static com.mople.global.utils.transaction.AfterCommit.afterCommit;
+
 @Service
 @RequiredArgsConstructor
 public class OutboxProcessor {
@@ -30,7 +32,7 @@ public class OutboxProcessor {
     public void processOne(OutboxEvent event) {
         try {
             if (processedEventRepository.existsById(event.getEventId())) {
-                stateService.markPublished(event.getEventId());
+                afterCommit(() -> stateService.markPublished(event.getEventId()));
                 return;
             }
 
@@ -42,13 +44,16 @@ public class OutboxProcessor {
             }
 
             processedEventRepository.save(new ProcessedEvent(event.getEventId()));
-            stateService.markPublished(event.getEventId());
+            afterCommit(() -> stateService.markPublished(event.getEventId()));
 
         } catch (JsonProcessingException | NonRetryableOutboxException ex) {
-            stateService.markSkip(event.getEventId(), shorten(ex.getMessage()));
+            afterCommit(() -> stateService.markSkip(event.getEventId(), shorten(ex.getMessage())));
         } catch (Exception ex) {
-            stateService.markRetry(event.getEventId(), shorten(ex.getMessage()));
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            try {
+                stateService.markRetry(event.getEventId(), shorten(ex.getMessage()));
+            } finally {
+                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            }
         }
     }
 

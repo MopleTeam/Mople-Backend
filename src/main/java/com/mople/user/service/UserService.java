@@ -8,6 +8,7 @@ import com.mople.dto.request.user.RandomNicknameRequest;
 import com.mople.dto.request.user.UserDeleteRequest;
 import com.mople.dto.request.user.UserInfoRequest;
 import com.mople.entity.user.User;
+import com.mople.global.enums.Action;
 import com.mople.global.enums.ExceptionReturnCode;
 import com.mople.meet.reader.EntityReader;
 import com.mople.notification.repository.FirebaseTokenRepository;
@@ -40,7 +41,7 @@ public class UserService {
     public UserClientResponse getInfo(Long id) {
         User user = reader.findUser(id);
 
-        boolean isExistBadgeCount = notificationRepository.countBadgeCount(user.getId()) > 0;
+        boolean isExistBadgeCount = notificationRepository.countBadgeCount(user.getId(), Action.PUBLISHED) > 0;
 
         return UserClientResponse.builder()
                 .userId(user.getId())
@@ -71,7 +72,7 @@ public class UserService {
 
         user.updateImageAndNickname(updateInfo.image(), updateInfo.nickname());
 
-        boolean isExistBadgeCount = notificationRepository.countBadgeCount(user.getId()) > 0;
+        boolean isExistBadgeCount = notificationRepository.countBadgeCount(user.getId(), Action.PUBLISHED) > 0;
 
         return UserClientResponse.builder()
                 .userId(user.getId())

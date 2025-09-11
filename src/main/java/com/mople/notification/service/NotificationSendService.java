@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.mople.dto.response.notification.NotifySendRequest.ofRequest;
+import static com.mople.global.utils.transaction.AfterCommit.afterCommit;
 
 @Service
 @RequiredArgsConstructor
@@ -48,7 +49,7 @@ public class NotificationSendService {
                 .map(request -> buildMessage(event, request))
                 .toList();
 
-        sender.sendEachAsync(messages);
+        afterCommit(() -> sender.sendEachAsync(messages));
     }
 
     private Message buildMessage(NotifyRequestedEvent event, NotifySendRequest request) {
