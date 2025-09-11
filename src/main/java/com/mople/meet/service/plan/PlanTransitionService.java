@@ -24,8 +24,6 @@ import static com.mople.global.enums.event.EventTypeNames.*;
 @RequiredArgsConstructor
 public class PlanTransitionService {
 
-    private static final long SYSTEM_USER_ID = 0L;
-
     private final MeetPlanRepository planRepository;
     private final PlanParticipantRepository participantRepository;
     private final PlanReviewRepository reviewRepository;
@@ -56,7 +54,7 @@ public class PlanTransitionService {
 
         participantRepository.updateReviewId(plan.getId(), review.getId());
 
-        planRepository.softDelete(Status.DELETED, plan.getId(), SYSTEM_USER_ID, LocalDateTime.now());
+        planRepository.softDeleteByTransition(Status.DELETED, plan.getId(), LocalDateTime.now());
 
         PlanTransitionedEvent transitionedEvent = PlanTransitionedEvent.builder()
                 .planId(review.getPlanId())

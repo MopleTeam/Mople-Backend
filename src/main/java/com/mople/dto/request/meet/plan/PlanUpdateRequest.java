@@ -6,7 +6,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record PlanUpdateRequest(
-        @NotNull Long version,
         Long planId,
         String name,
         @NotNull LocalDateTime planTime,

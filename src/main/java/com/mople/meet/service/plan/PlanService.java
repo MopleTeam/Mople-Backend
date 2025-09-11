@@ -7,7 +7,6 @@ import com.mople.dto.event.data.domain.global.WeatherRefreshRequestedEvent;
 import com.mople.dto.event.data.domain.plan.PlanCreatedEvent;
 import com.mople.dto.event.data.domain.plan.PlanSoftDeletedEvent;
 import com.mople.dto.event.data.domain.plan.PlanTimeChangedEvent;
-import com.mople.dto.request.meet.plan.PlanDeleteRequest;
 import com.mople.dto.request.meet.plan.PlanReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.meet.UserAllDateResponse;
@@ -39,8 +38,10 @@ import com.mople.meet.repository.plan.PlanReportRepository;
 import com.mople.outbox.service.OutboxService;
 import com.mople.user.repository.UserRepository;
 
+import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -155,7 +156,7 @@ public class PlanService {
     }
 
     @Transactional
-    public PlanClientResponse updatePlan(Long userId, PlanUpdateRequest request) {
+    public PlanClientResponse updatePlan(Long userId, long baseVersion, PlanUpdateRequest request) {
         MeetPlan plan = reader.findPlan(request.planId());
         Meet meet = reader.findMeet(plan.getMeetId());
 
@@ -163,14 +164,23 @@ public class PlanService {
             throw new AuthException(NOT_CREATOR);
         }
 
-        if (!Objects.equals(request.version(), plan.getVersion())) {
-            throw new AsyncException(REQUEST_CONFLICT);
+        if (!Objects.equals(baseVersion, plan.getVersion())) {
+            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(plan.getId()));
         }
 
         LocalDateTime newTime = request.planTime();
         LocalDateTime oldTime = plan.getPlanTime();
 
-        if (newTime.isBefore(LocalDateTime.now().plusDays(5))) {
+        boolean changedPlace = plan.updatePlan(request);
+
+        try {
+            meetPlanRepository.flush();
+
+        } catch (OptimisticLockException | OptimisticLockingFailureException e) {
+            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(plan.getId()));
+        }
+
+        if (changedPlace || newTime.isBefore(LocalDateTime.now().plusDays(5))) {
             WeatherRefreshRequestedEvent requestedEvent = WeatherRefreshRequestedEvent.builder()
                     .planId(plan.getId())
                     .build();
@@ -206,7 +216,7 @@ public class PlanService {
     }
 
     @Transactional
-    public void deletePlan(Long userId, Long planId, PlanDeleteRequest request) {
+    public void deletePlan(Long userId, Long planId, long baseVersion) {
         reader.findUser(userId);
         var plan = reader.findPlan(planId);
 
@@ -214,11 +224,14 @@ public class PlanService {
             throw new AuthException(NOT_CREATOR);
         }
 
-        if (!Objects.equals(request.version(), plan.getVersion())) {
-            throw new AsyncException(REQUEST_CONFLICT);
+        if (!Objects.equals(baseVersion, plan.getVersion())) {
+            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(plan.getId()));
         }
 
-        meetPlanRepository.softDelete(Status.DELETED, planId, userId, LocalDateTime.now());
+        int updated = meetPlanRepository.softDelete(Status.DELETED, planId, userId, baseVersion, LocalDateTime.now());
+        if (updated == 0) {
+            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(plan.getId()));
+        }
 
         PlanSoftDeletedEvent deleteEvent = PlanSoftDeletedEvent.builder()
                 .planId(plan.getId())
@@ -414,5 +427,9 @@ public class PlanService {
         }
 
         planParticipantRepository.deleteByPlanIdAndUserId(planId, userId);
+    }
+
+    private long getVersion(Long planId) {
+        return meetPlanRepository.findVersionById(planId);
     }
 }

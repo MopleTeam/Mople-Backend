@@ -48,9 +48,21 @@ public interface MeetPlanRepository extends JpaRepository<MeetPlan, Long>{
             "       p.deletedAt = :deletedAt, " +
             "       p.deletedBy = :userId " +
             " where p.id = :planId " +
+            "   and p.version = :baseVersion" +
             "   and p.status <> :status"
     )
-    int softDelete(Status status, Long planId, Long userId, LocalDateTime deletedAt);
+    int softDelete(Status status, Long planId, Long userId, long baseVersion, LocalDateTime deletedAt);
+
+    @Modifying(flushAutomatically = true)
+    @Query(
+            "update MeetPlan p " +
+            "   set p.status = :status, " +
+            "       p.deletedAt = :deletedAt, " +
+            "       p.deletedBy = 0 " +
+            " where p.id = :planId " +
+            "   and p.status <> :status"
+    )
+    int softDeleteByTransition(Status status, Long planId, LocalDateTime deletedAt);
 
     @Modifying(flushAutomatically = true)
     @Query(
@@ -94,4 +106,7 @@ public interface MeetPlanRepository extends JpaRepository<MeetPlan, Long>{
             "        and p.status = com.mople.global.enums.Status.DELETED"
     )
     void hardDeleteById(Long planId);
+
+    @Query("select p.version from MeetPlan p where p.id = :planId")
+    long findVersionById(Long planId);
 }

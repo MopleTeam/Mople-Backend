@@ -4,7 +4,6 @@ import com.mople.core.annotation.auth.SignUser;
 import com.mople.core.annotation.log.BusinessLogicLogging;
 import com.mople.dto.client.PlanClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
-import com.mople.dto.request.meet.plan.PlanDeleteRequest;
 import com.mople.dto.request.meet.plan.PlanReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
@@ -12,7 +11,7 @@ import com.mople.dto.response.meet.UserAllDateResponse;
 import com.mople.dto.response.meet.UserPageResponse;
 import com.mople.dto.response.meet.plan.*;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
-import com.mople.meet.service.PlanService;
+import com.mople.meet.service.plan.PlanService;
 import com.mople.dto.request.meet.plan.PlanCreateRequest;
 import com.mople.dto.request.meet.plan.PlanUpdateRequest;
 
@@ -57,7 +56,11 @@ public class PlanController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @RequestBody PlanCreateRequest planCreateRequest
     ) {
-        return ResponseEntity.ok(planService.createPlan(user.id(), planCreateRequest));
+        var body = planService.createPlan(user.id(), planCreateRequest);
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.getVersion() + "\"")
+                .body(body);
     }
 
     @Operation(
@@ -68,9 +71,15 @@ public class PlanController {
     @PatchMapping("/update")
     public ResponseEntity<PlanClientResponse> updatePlan(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @RequestHeader("If-Match") String ifMatch,
             @RequestBody @Valid PlanUpdateRequest planUpdateRequest
     ) {
-        return ResponseEntity.ok(planService.updatePlan(user.id(), planUpdateRequest));
+        long baseVersion = Long.parseLong(ifMatch.replace("\"",""));
+        var body = planService.updatePlan(user.id(), baseVersion, planUpdateRequest);
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.getVersion() + "\"")
+                .body(body);
     }
 
     @Operation(
@@ -81,9 +90,11 @@ public class PlanController {
     public ResponseEntity<Void> deletePlan(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long planId,
-            @RequestBody @Valid PlanDeleteRequest planDeleteRequest
+            @RequestHeader("If-Match") String ifMatch
     ) {
-        planService.deletePlan(user.id(), planId, planDeleteRequest);
+        long baseVersion = Long.parseLong(ifMatch.replace("\"",""));
+        planService.deletePlan(user.id(), planId, baseVersion);
+
         return ResponseEntity.ok().build();
     }
 
@@ -96,7 +107,11 @@ public class PlanController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long planId
     ) {
-        return ResponseEntity.ok(planService.getPlanDetail(user.id(), planId));
+        var body = planService.getPlanDetail(user.id(), planId);
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.getVersion() + "\"")
+                .body(body);
     }
 
     @Operation(
