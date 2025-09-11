@@ -8,11 +8,12 @@ import com.mople.dto.event.data.domain.comment.CommentsPurgeEvent;
 import com.mople.dto.event.data.domain.comment.CommentsSoftDeletedEvent;
 import com.mople.dto.event.data.domain.image.ImageDeletedEvent;
 import com.mople.dto.event.data.domain.meet.*;
-import com.mople.dto.event.data.domain.notify.NotifyRequestedEvent;
+import com.mople.dto.event.data.domain.global.NotifyRequestedEvent;
 import com.mople.dto.event.data.domain.plan.*;
 import com.mople.dto.event.data.domain.review.*;
 import com.mople.dto.event.data.domain.user.UserDeletedEvent;
 import com.mople.dto.event.data.domain.user.UserImageChangedEvent;
+import com.mople.dto.event.data.domain.global.WeatherRefreshRequestedEvent;
 
 import static com.mople.global.enums.event.EventTypeNames.*;
 
@@ -59,7 +60,10 @@ import static com.mople.global.enums.event.EventTypeNames.*;
         @JsonSubTypes.Type(value = ImageDeletedEvent.class, name = IMAGE_DELETED),
 
         // Notify
-        @JsonSubTypes.Type(value = NotifyRequestedEvent.class, name = NOTIFY_REQUESTED)
+        @JsonSubTypes.Type(value = NotifyRequestedEvent.class, name = NOTIFY_REQUESTED),
+
+        // Weather
+        @JsonSubTypes.Type(value = WeatherRefreshRequestedEvent.class, name = WEATHER_REFRESH_REQUESTED)
 })
 public interface DomainEvent {
 }

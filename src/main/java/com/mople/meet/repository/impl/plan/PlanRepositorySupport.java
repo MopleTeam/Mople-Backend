@@ -318,12 +318,13 @@ public class PlanRepositorySupport {
         return planTime.between(start, end);
     }
 
-    public List<MeetPlan> findUpdateWeatherPlan() {
+    public List<Long> findUpdateWeatherPlan() {
         QMeetPlan plan = QMeetPlan.meetPlan;
         var now = LocalDateTime.now();
 
         return queryFactory
-                .selectFrom(plan)
+                .select(plan.id)
+                .from(plan)
                 .where(
                         plan.status.eq(Status.ACTIVE),
                         plan.planTime.before(now.plusDays(5))

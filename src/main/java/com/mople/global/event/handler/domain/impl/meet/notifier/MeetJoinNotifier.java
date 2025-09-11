@@ -2,7 +2,7 @@ package com.mople.global.event.handler.domain.impl.meet.notifier;
 
 import com.mople.core.exception.custom.NonRetryableOutboxException;
 import com.mople.dto.event.data.domain.meet.MeetJoinedEvent;
-import com.mople.dto.event.data.domain.notify.NotifyRequestedEvent;
+import com.mople.dto.event.data.domain.global.NotifyRequestedEvent;
 import com.mople.dto.event.data.notify.meet.MeetJoinNotifyEvent;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.notification.Notification;

@@ -1,7 +1,7 @@
 package com.mople.global.event.handler.domain.impl.plan.notifier;
 
 import com.mople.core.exception.custom.NonRetryableOutboxException;
-import com.mople.dto.event.data.domain.notify.NotifyRequestedEvent;
+import com.mople.dto.event.data.domain.global.NotifyRequestedEvent;
 import com.mople.dto.event.data.domain.plan.PlanSoftDeletedEvent;
 import com.mople.dto.event.data.notify.plan.PlanDeleteNotifyEvent;
 import com.mople.entity.meet.Meet;

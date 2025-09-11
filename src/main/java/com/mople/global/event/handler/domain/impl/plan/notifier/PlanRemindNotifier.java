@@ -1,11 +1,9 @@
 package com.mople.global.event.handler.domain.impl.plan.notifier;
 
 import com.mople.core.exception.custom.NonRetryableOutboxException;
-import com.mople.dto.event.data.domain.notify.NotifyRequestedEvent;
+import com.mople.dto.event.data.domain.global.NotifyRequestedEvent;
 import com.mople.dto.event.data.domain.plan.PlanRemindEvent;
 import com.mople.dto.event.data.notify.plan.PlanRemindNotifyEvent;
-import com.mople.dto.request.weather.CoordinateRequest;
-import com.mople.dto.response.weather.OpenWeatherResponse;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.notification.Notification;
@@ -21,7 +19,6 @@ import com.mople.weather.service.WeatherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 import static com.mople.global.enums.event.AggregateType.PLAN;
@@ -85,9 +82,5 @@ public class PlanRemindNotifier implements DomainEventHandler<PlanRemindEvent> {
                 plan.getId(),
                 new NotifyRequestedEvent(notifyEvent, notificationIds)
         );
-    }
-
-    private OpenWeatherResponse weatherInfo(BigDecimal lot, BigDecimal lat) {
-        return weatherService.getWeatherInfoByLocation(new CoordinateRequest(lot, lat)).join();
     }
 }

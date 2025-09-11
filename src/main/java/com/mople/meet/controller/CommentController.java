@@ -65,11 +65,11 @@ public class CommentController {
     )
     @PostMapping("/{postId}")
     public ResponseEntity<CommentClientResponse> createComment(
-            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+//            @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
             @RequestBody @Valid CommentCreateRequest commentCreateRequest
     ) {
-        return ResponseEntity.ok(commentService.createComment(user.id(), postId, commentCreateRequest));
+        return ResponseEntity.ok(commentService.createComment(4L, postId, commentCreateRequest));
     }
 
     @Operation(
@@ -78,12 +78,12 @@ public class CommentController {
     )
     @PostMapping("/{postId}/{commentId}")
     public ResponseEntity<CommentClientResponse> createCommentReply(
-            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+//            @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
             @PathVariable Long commentId,
             @RequestBody @Valid CommentCreateRequest commentCreateRequest
     ) {
-        return ResponseEntity.ok(commentService.createCommentReply(user.id(), postId, commentId, commentCreateRequest));
+        return ResponseEntity.ok(commentService.createCommentReply(5L, postId, commentId, commentCreateRequest));
     }
 
     @Operation(
@@ -92,11 +92,11 @@ public class CommentController {
     )
     @PatchMapping("/{commentId}")
     public ResponseEntity<CommentClientResponse> updateComment(
-            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+//            @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long commentId,
             @RequestBody @Valid CommentUpdateRequest commentUpdateRequest
     ) {
-        return ResponseEntity.ok(commentService.updateComment(user.id(), commentId, commentUpdateRequest));
+        return ResponseEntity.ok(commentService.updateComment(4L, commentId, commentUpdateRequest));
     }
 
     @Operation(
@@ -105,11 +105,11 @@ public class CommentController {
     )
     @DeleteMapping("/{commentId}")
     public ResponseEntity<Void> deleteReviewComment(
-            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+//            @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long commentId,
             @RequestBody @Valid CommentDeleteRequest commentDeleteRequest
     ) {
-        commentService.deleteComment(user.id(), commentId, commentDeleteRequest);
+        commentService.deleteComment(4L, commentId, commentDeleteRequest);
         return ResponseEntity.ok().build();
     }
 
@@ -119,10 +119,10 @@ public class CommentController {
     )
     @PostMapping("/{commentId}/likes")
     public ResponseEntity<CommentClientResponse> toggleCommentLike(
-            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+//            @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long commentId
     ) {
-        return ResponseEntity.ok(commentService.toggleLike(user.id(), commentId));
+        return ResponseEntity.ok(commentService.toggleLike(3L, commentId));
     }
 
     @Operation(

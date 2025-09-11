@@ -1,4 +1,4 @@
-package com.mople.meet.schedule;
+package com.mople.meet.service.plan;
 
 import com.mople.core.exception.custom.NonRetryableOutboxException;
 import com.mople.dto.event.data.domain.plan.PlanTransitionedEvent;

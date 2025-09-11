@@ -40,4 +40,7 @@ public final class EventTypeNames {
 
     // NOTIFY
     public static final String NOTIFY_REQUESTED = "NOTIFY_REQUESTED";
+
+    // WEATHER
+    public static final String WEATHER_REFRESH_REQUESTED = "WEATHER_REFRESH_REQUESTED";
 }

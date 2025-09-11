@@ -1,6 +1,6 @@
 package com.mople.global.event.handler.domain.impl.global;
 
-import com.mople.dto.event.data.domain.notify.NotifyRequestedEvent;
+import com.mople.dto.event.data.domain.global.NotifyRequestedEvent;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.notification.service.NotificationSendService;
 import lombok.RequiredArgsConstructor;

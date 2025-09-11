@@ -1,4 +1,4 @@
-package com.mople.dto.event.data.domain.notify;
+package com.mople.dto.event.data.domain.global;
 
 import com.mople.dto.event.data.domain.DomainEvent;
 import com.mople.dto.event.data.notify.NotifyEvent;

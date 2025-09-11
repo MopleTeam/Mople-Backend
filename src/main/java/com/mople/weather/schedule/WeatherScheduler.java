@@ -1,9 +1,8 @@
 package com.mople.weather.schedule;
 
-import com.mople.dto.request.weather.CoordinateRequest;
+import com.mople.dto.event.data.domain.global.WeatherRefreshRequestedEvent;
 import com.mople.meet.repository.impl.plan.PlanRepositorySupport;
-import com.mople.meet.repository.plan.MeetPlanRepository;
-import com.mople.weather.service.WeatherService;
+import com.mople.outbox.service.OutboxService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -11,34 +10,32 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import static java.util.Objects.isNull;
+import java.util.List;
+
+import static com.mople.global.enums.event.AggregateType.PLAN;
+import static com.mople.global.enums.event.EventTypeNames.WEATHER_REFRESH_REQUESTED;
+import static com.mople.global.utils.batch.Batching.chunk;
 
 @Component
 @RequiredArgsConstructor
 public class WeatherScheduler {
-    private final WeatherService openWeatherService;
-    private final MeetPlanRepository planRepository;
+
     private final PlanRepositorySupport support;
+    private final OutboxService outboxService;
 
     @Async("taskSchedule")
     @Scheduled(cron = "${cron.weather.update}", zone = "Asia/Seoul")
     public void updateMeetingPlanWeatherInfo() {
-        var plans = support.findUpdateWeatherPlan();
+        List<Long> updateWeatherPlanIds = support.findUpdateWeatherPlan();
 
-        plans.forEach(meetingPlan -> {
-            openWeatherService.getClosestWeatherInfoFromDateTime(
-                    new CoordinateRequest(meetingPlan.getLongitude(), meetingPlan.getLatitude()),
-                    meetingPlan.getPlanTime()
-            ).thenAccept(weatherInfo -> {
-                if (isNull(weatherInfo)) return;
+        chunk(updateWeatherPlanIds, ids ->
+                ids.forEach((id) -> {
+                    WeatherRefreshRequestedEvent requestedEvent = WeatherRefreshRequestedEvent.builder()
+                            .planId(id)
+                            .build();
 
-                planRepository.updateWeather(
-                        meetingPlan.getId(),
-                        weatherInfo.temperature(),
-                        weatherInfo.pop(),
-                        weatherInfo.weatherIcon()
-                );
-            });
-        });
+                    outboxService.save(WEATHER_REFRESH_REQUESTED, PLAN, id, requestedEvent);
+                })
+        );
     }
 }
