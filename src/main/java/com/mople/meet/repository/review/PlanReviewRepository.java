@@ -22,12 +22,19 @@ public interface PlanReviewRepository extends JpaRepository<PlanReview, Long> {
     @Modifying(flushAutomatically = true)
     @Query("""
         update PlanReview r
-           set r.upload  = true,
-               r.version = r.version + 1
+           set r.upload  = true
          where r.id = :reviewId
            and r.upload = false
     """)
-    int uploadedAtFirst(Long reviewId);
+    int markUploaded(Long reviewId);
+
+    @Modifying(flushAutomatically = true)
+    @Query("""
+        update PlanReview r
+           set r.version = r.version + 1
+         where r.id = :reviewId
+    """)
+    int upVersion(Long reviewId);
 
     @Modifying(flushAutomatically = true)
     @Query(
@@ -36,9 +43,10 @@ public interface PlanReviewRepository extends JpaRepository<PlanReview, Long> {
             "       r.deletedAt = :deletedAt, " +
             "       r.deletedBy = :userId " +
             " where r.id = :reviewId " +
+            "   and r.version = :baseVersion" +
             "   and r.status <> :status"
     )
-    int softDelete(Status status, Long reviewId, Long userId, LocalDateTime deletedAt);
+    int softDelete(Status status, Long reviewId, Long userId, long baseVersion, LocalDateTime deletedAt);
 
     @Modifying(flushAutomatically = true)
     @Query(
@@ -89,4 +97,7 @@ public interface PlanReviewRepository extends JpaRepository<PlanReview, Long> {
             "   and r.status = com.mople.global.enums.Status.DELETED"
     )
     void hardDeleteById(Long reviewId);
+
+    @Query("select r.version from PlanReview r where r.id = :reviewId")
+    Long findVersionById(Long reviewId);
 }

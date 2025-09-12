@@ -3,7 +3,6 @@ package com.mople.meet.controller;
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.ReviewClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
-import com.mople.dto.request.meet.review.ReviewDeleteRequest;
 import com.mople.dto.request.meet.review.ReviewImageDeleteRequest;
 import com.mople.dto.request.meet.review.ReviewReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
@@ -53,7 +52,11 @@ public class ReviewController {
     public ResponseEntity<ReviewClientResponse> getReviewDetail(
             @PathVariable Long reviewId
     ) {
-        return ResponseEntity.ok(reviewService.getReviewDetail(reviewId));
+        var body = reviewService.getReviewDetail(reviewId);
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.getVersion() + "\"")
+                .body(body);
     }
 
     @Operation(
@@ -64,7 +67,11 @@ public class ReviewController {
     public ResponseEntity<ReviewClientResponse> getReviewDetailByPostId(
             @PathVariable Long postId
     ) {
-        return ResponseEntity.ok(reviewService.getReviewDetailByPost(postId));
+        var body = reviewService.getReviewDetailByPost(postId);
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.getVersion() + "\"")
+                .body(body);
     }
 
     @Operation(
@@ -75,9 +82,11 @@ public class ReviewController {
     public ResponseEntity<Void> removeReview(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long reviewId,
-            @RequestBody @Valid ReviewDeleteRequest deleteRequest
+            @RequestHeader("If-Match") String ifMatch
     ) {
-        reviewService.removeReview(user.id(), reviewId, deleteRequest);
+        long baseVersion = Long.parseLong(ifMatch.replace("\"",""));
+        reviewService.removeReview(user.id(), reviewId, baseVersion);
+
         return ResponseEntity.ok().build();
     }
 
@@ -115,7 +124,15 @@ public class ReviewController {
             @PathVariable Long reviewId,
             @RequestBody ReviewImageDeleteRequest reviewImageDeleteRequest
     ) {
-        return ResponseEntity.ok(reviewService.removeReviewImages(user.id(), reviewId, reviewImageDeleteRequest));
+        var body = reviewService.removeReviewImages(
+                user.id(),
+                reviewId,
+                reviewImageDeleteRequest
+        );
+
+        return ResponseEntity.ok()
+                .eTag("\"" + reviewService.getVersion(reviewId) + "\"")
+                .body(body);
     }
 
     @Operation(

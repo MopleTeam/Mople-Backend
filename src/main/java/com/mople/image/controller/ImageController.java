@@ -47,14 +47,16 @@ public class ImageController {
     public ResponseEntity<List<String>> reviewImageUpload(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable String folder,
-            ReviewImageRequest reviewImageRequest
+            ReviewImageRequest request
     ) {
-        return ResponseEntity.ok(
-                reviewService.storeReviewImages(
-                        user.id(),
-                        imageService.uploadImages(folder, reviewImageRequest),
-                        reviewImageRequest.reviewId()
-                )
+        var body = reviewService.storeReviewImages(
+                user.id(),
+                imageService.uploadImages(folder, request),
+                request.reviewId()
         );
+
+        return ResponseEntity.ok()
+                .eTag("\"" + reviewService.getVersion(request.reviewId()) + "\"")
+                .body(body);
     }
 }

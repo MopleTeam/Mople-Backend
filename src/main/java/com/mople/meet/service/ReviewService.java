@@ -6,7 +6,6 @@ import com.mople.dto.client.UserRoleClientResponse;
 import com.mople.dto.event.data.domain.review.ReviewImageRemoveEvent;
 import com.mople.dto.event.data.domain.review.ReviewSoftDeletedEvent;
 import com.mople.dto.event.data.domain.review.ReviewUploadEvent;
-import com.mople.dto.request.meet.review.ReviewDeleteRequest;
 import com.mople.dto.request.meet.review.ReviewImageDeleteRequest;
 import com.mople.dto.request.meet.review.ReviewReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
@@ -180,7 +179,7 @@ public class ReviewService {
     }
 
     @Transactional
-    public void removeReview(Long userId, Long reviewId, ReviewDeleteRequest request) {
+    public void removeReview(Long userId, Long reviewId, long baseVersion) {
         reader.findUser(userId);
         PlanReview review = reader.findReview(reviewId);
 
@@ -188,11 +187,14 @@ public class ReviewService {
             throw new AuthException(NOT_CREATOR);
         }
 
-        if (!Objects.equals(request.version(), review.getVersion())) {
-            throw new AsyncException(REQUEST_CONFLICT);
+        if (!Objects.equals(baseVersion, review.getVersion())) {
+            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(review.getId()));
         }
 
-        planReviewRepository.softDelete(Status.DELETED, reviewId, userId, LocalDateTime.now());
+        int updated = planReviewRepository.softDelete(Status.DELETED, reviewId, userId, baseVersion, LocalDateTime.now());
+        if (updated == 0) {
+            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(review.getId()));
+        }
 
         ReviewSoftDeletedEvent deletedEvent = ReviewSoftDeletedEvent.builder()
                 .planId(review.getPlanId())
@@ -282,7 +284,11 @@ public class ReviewService {
     }
 
     @Transactional
-    public List<ReviewImageListResponse> removeReviewImages(Long userId, Long reviewId, ReviewImageDeleteRequest request) {
+    public List<ReviewImageListResponse> removeReviewImages(
+            Long userId,
+            Long reviewId,
+            ReviewImageDeleteRequest request
+    ) {
         reader.findUser(userId);
         PlanReview review = reader.findReview(reviewId);
 
@@ -290,10 +296,15 @@ public class ReviewService {
             throw new AuthException(NOT_CREATOR);
         }
 
+        if (request.reviewImages() == null || request.reviewImages().isEmpty()) {
+            return List.of();
+        }
+
         List<ReviewImage> reviewImages = reviewImageRepository.getReviewImages(request.reviewImages(), reviewId);
 
-        if (request.reviewImages().isEmpty()) {
-            return List.of();
+        if (reviewImages.isEmpty()) {
+            List<ReviewImage> images = reviewImageRepository.findByReviewId(reviewImages.get(0).getReviewId());
+            return ofReviewImageResponses(images);
         }
 
         reviewImageRepository.deleteAll(reviewImages);
@@ -308,18 +319,27 @@ public class ReviewService {
             outboxService.save(REVIEW_IMAGE_REMOVE, REVIEW, reviewId, removeEvent);
         });
 
-        List<ReviewImage> images = reviewImageRepository.findByReviewId(reviewImages.get(0).getReviewId());
+        planReviewRepository.upVersion(review.getId());
 
+        List<ReviewImage> images = reviewImageRepository.findByReviewId(reviewImages.get(0).getReviewId());
         return ofReviewImageResponses(images);
     }
 
     @Transactional
-    public List<String> storeReviewImages(Long userId, List<String> images, Long reviewId) {
+    public List<String> storeReviewImages(
+            Long userId,
+            List<String> images,
+            Long reviewId
+    ) {
         reader.findUser(userId);
         PlanReview review = reader.findReview(reviewId);
 
         if (review.isCreator(userId)) {
             throw new AuthException(NOT_CREATOR);
+        }
+
+        if (images == null || images.isEmpty()) {
+            return images;
         }
 
         reviewImageRepository.saveAll(
@@ -342,7 +362,8 @@ public class ReviewService {
             outboxService.save(REVIEW_UPLOAD, REVIEW, review.getId(), uploadEvent);
         }
 
-        planReviewRepository.uploadedAtFirst(review.getId());
+        planReviewRepository.markUploaded(review.getId());
+        planReviewRepository.upVersion(review.getId());
 
         return images;
     }
@@ -355,5 +376,9 @@ public class ReviewService {
                         .reporterId(userId)
                         .build()
         );
+    }
+
+    public long getVersion(Long reviewId) {
+        return planReviewRepository.findVersionById(reviewId);
     }
 }
