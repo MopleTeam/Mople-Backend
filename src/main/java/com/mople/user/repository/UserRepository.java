@@ -37,9 +37,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "       u.nickname = :nickname, " +
             "       u.profileImg = null, " +
             "       u.lastLaunchAt = null, " +
-            "       u.status = com.mople.global.enums.Status.DELETED," +
+            "       u.status = :status," +
             "       u.socialProvider = null " +
-            " where u.id = :id "
+            " where u.id = :id " +
+            "   and u.version = :baseVersion" +
+             "  and u.status <> :status"
     )
-    void removeUser(String nickname, Long id);
+    int removeUser(Status status, String nickname, Long id, long baseVersion);
+
+    @Query("select u.version from User u where u.id = :userId")
+    long findVersion(Long userId);
 }

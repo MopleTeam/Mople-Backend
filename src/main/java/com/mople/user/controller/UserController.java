@@ -3,7 +3,6 @@ package com.mople.user.controller;
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.UserClientResponse;
 import com.mople.dto.request.user.AuthUserRequest;
-import com.mople.dto.request.user.UserDeleteRequest;
 import com.mople.dto.request.user.UserInfoRequest;
 import com.mople.user.service.UserService;
 
@@ -33,7 +32,11 @@ public class UserController {
     public ResponseEntity<UserClientResponse> getMyInfo(
             @Parameter(hidden = true) @SignUser AuthUserRequest user
     ) {
-        return ResponseEntity.ok(userService.getInfo(user.id()));
+        var body = userService.getInfo(user.id());
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.version() + "\"")
+                .body(body);
     }
 
     @Operation(
@@ -43,10 +46,15 @@ public class UserController {
     @PatchMapping("/info")
     public ResponseEntity<UserClientResponse> updateInfo(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @RequestHeader("If-Match") String ifMatch,
             @Valid @RequestBody UserInfoRequest userInfoRequest
     ) {
-        var updateUserInfo = userService.updateInfo(user.id(), userInfoRequest);
-        return ResponseEntity.ok(updateUserInfo);
+        long baseVersion = Long.parseLong(ifMatch.replace("\"",""));
+        var body = userService.updateInfo(user.id(), userInfoRequest, baseVersion);
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.version() + "\"")
+                .body(body);
     }
 
     @Operation(
@@ -56,9 +64,11 @@ public class UserController {
     @DeleteMapping("/remove")
     public ResponseEntity<Void> removeUser(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
-            @Valid @RequestBody UserDeleteRequest userDeleteRequest
+            @RequestHeader("If-Match") String ifMatch
     ) {
-        userService.removeUser(user.id(), userDeleteRequest);
+        long baseVersion = Long.parseLong(ifMatch.replace("\"",""));
+        userService.removeUser(user.id(), baseVersion);
+
         return ResponseEntity.ok().build();
     }
 
