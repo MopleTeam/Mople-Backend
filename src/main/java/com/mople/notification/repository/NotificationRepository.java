@@ -36,7 +36,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             "limit :limit",
             nativeQuery = true
     )
-    List<NotificationResponse.NotificationListInterface> findNotificationFirstPage(Long userId, Action action, int limit);
+    List<NotificationResponse.NotificationListInterface> findNotificationFirstPage(Long userId, String action, int limit);
 
     @Query(value =
             "select n.notification_id as notificationId," +
@@ -60,7 +60,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             "limit :limit",
             nativeQuery = true
     )
-    List<NotificationResponse.NotificationListInterface> findNotificationNextPage(Long userId, Action action, Long cursorId, int limit);
+    List<NotificationResponse.NotificationListInterface> findNotificationNextPage(Long userId, String action, Long cursorId, int limit);
 
     @Query(value = "select n from Notification n where n.userId = :userId")
     List<Notification> getUserNotificationList(Long userId);
@@ -74,16 +74,15 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
         "   and n.read_at is null ",
             nativeQuery = true
     )
-    Long countBadgeCount(Long userId, Action action);
+    Long countBadgeCount(Long userId, String action);
 
-    @Query(value =
-            "select 1 " +
-            "  from notification " +
-            " where notification_id = :cursorId " +
-            " limit 1 ",
-            nativeQuery = true
+    @Query(
+            "select n " +
+            "  from Notification n" +
+            " where n.id = :cursorId " +
+            "   and n.action = :action"
     )
-    Optional<Integer> isCursorInvalid(Long cursorId);
+    Optional<Notification> isCursorInvalid(Long cursorId, Action action);
 
     @Modifying(flushAutomatically = true)
     @Query("delete from Notification n where n.userId = :userId")

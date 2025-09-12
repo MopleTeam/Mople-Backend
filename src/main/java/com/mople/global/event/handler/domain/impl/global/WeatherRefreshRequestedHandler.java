@@ -33,9 +33,6 @@ public class WeatherRefreshRequestedHandler implements DomainEventHandler<Weathe
         CoordinateRequest coordinate = new CoordinateRequest(plan.getLongitude(), plan.getLatitude());
         WeatherInfoResponse weatherInfo = weatherUpdateService.fetch(coordinate, plan.getPlanTime());
 
-        System.out.println(weatherInfo.temperature());
-        System.out.println(weatherInfo.pop());
-
         weatherUpdateService.apply(plan.getId(), weatherInfo);
     }
 }

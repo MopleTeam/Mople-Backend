@@ -131,7 +131,7 @@ public class NotificationService {
         List<NotificationResponse> notificationListResponses = NotificationResponse.of(objectMapper, notifications, planMap);
 
         return FlatCursorPageResponse.of(
-                Math.toIntExact(notificationRepository.countBadgeCount(userId, Action.PUBLISHED)),
+                Math.toIntExact(notificationRepository.countBadgeCount(userId, Action.PUBLISHED.name())),
                 buildNotificationCursorPage(size, notificationListResponses)
         );
     }
@@ -140,7 +140,7 @@ public class NotificationService {
         int limit = size + 1;
 
         if (encodedCursor == null || encodedCursor.isEmpty()) {
-            return notificationRepository.findNotificationFirstPage(userId, Action.PUBLISHED, limit);
+            return notificationRepository.findNotificationFirstPage(userId, Action.PUBLISHED.name(), limit);
         }
 
         String[] decodeParts = CursorUtils.decode(encodedCursor, NOTIFICATION_CURSOR_FIELD_COUNT);
@@ -148,11 +148,11 @@ public class NotificationService {
 
         validateCursor(cursorId);
 
-        return notificationRepository.findNotificationNextPage(userId, Action.PUBLISHED, cursorId, limit);
+        return notificationRepository.findNotificationNextPage(userId, Action.PUBLISHED.name(), cursorId, limit);
     }
 
     private void validateCursor(Long cursorId) {
-        if (notificationRepository.isCursorInvalid(cursorId).isEmpty()) {
+        if (notificationRepository.isCursorInvalid(cursorId, Action.PUBLISHED).isEmpty()) {
             throw new CursorException(INVALID_CURSOR);
         }
     }
