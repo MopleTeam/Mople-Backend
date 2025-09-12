@@ -1,6 +1,5 @@
 package com.mople.meet.service.comment;
 
-import com.mople.core.exception.custom.AsyncException;
 import com.mople.core.exception.custom.CursorException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.entity.meet.comment.PlanComment;
@@ -62,13 +61,9 @@ public class CommentValidator {
         }
     }
 
-    public void validateWriter(PlanComment comment, User user, Long version) {
+    public void validateWriter(PlanComment comment, User user) {
         if (comment.matchWriter(user.getId())) {
             throw new ResourceNotFoundException(NOT_CREATOR);
-        }
-
-        if (!comment.getVersion().equals(version)) {
-            throw new AsyncException(REQUEST_CONFLICT);
         }
     }
 }

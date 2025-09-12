@@ -3,7 +3,6 @@ package com.mople.meet.controller;
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.CommentClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
-import com.mople.dto.request.meet.comment.CommentDeleteRequest;
 import com.mople.dto.request.meet.comment.CommentUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
@@ -65,11 +64,15 @@ public class CommentController {
     )
     @PostMapping("/{postId}")
     public ResponseEntity<CommentClientResponse> createComment(
-//            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
             @RequestBody @Valid CommentCreateRequest commentCreateRequest
     ) {
-        return ResponseEntity.ok(commentService.createComment(4L, postId, commentCreateRequest));
+        var body = commentService.createComment(user.id(), postId, commentCreateRequest);
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.getVersion() + "\"")
+                .body(body);
     }
 
     @Operation(
@@ -78,12 +81,16 @@ public class CommentController {
     )
     @PostMapping("/{postId}/{commentId}")
     public ResponseEntity<CommentClientResponse> createCommentReply(
-//            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
             @PathVariable Long commentId,
             @RequestBody @Valid CommentCreateRequest commentCreateRequest
     ) {
-        return ResponseEntity.ok(commentService.createCommentReply(5L, postId, commentId, commentCreateRequest));
+        var body = commentService.createCommentReply(user.id(), postId, commentId, commentCreateRequest);
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.getVersion() + "\"")
+                .body(body);
     }
 
     @Operation(
@@ -92,11 +99,17 @@ public class CommentController {
     )
     @PatchMapping("/{commentId}")
     public ResponseEntity<CommentClientResponse> updateComment(
-//            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long commentId,
+            @RequestHeader("If-Match") String ifMatch,
             @RequestBody @Valid CommentUpdateRequest commentUpdateRequest
     ) {
-        return ResponseEntity.ok(commentService.updateComment(4L, commentId, commentUpdateRequest));
+        long baseVersion = Long.parseLong(ifMatch.replace("\"",""));
+        var body = commentService.updateComment(user.id(), commentId, commentUpdateRequest, baseVersion);
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.getVersion() + "\"")
+                .body(body);
     }
 
     @Operation(
@@ -105,11 +118,13 @@ public class CommentController {
     )
     @DeleteMapping("/{commentId}")
     public ResponseEntity<Void> deleteReviewComment(
-//            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long commentId,
-            @RequestBody @Valid CommentDeleteRequest commentDeleteRequest
+            @RequestHeader("If-Match") String ifMatch
     ) {
-        commentService.deleteComment(4L, commentId, commentDeleteRequest);
+        long baseVersion = Long.parseLong(ifMatch.replace("\"",""));
+        commentService.deleteComment(user.id(), commentId, baseVersion);
+
         return ResponseEntity.ok().build();
     }
 
@@ -119,10 +134,10 @@ public class CommentController {
     )
     @PostMapping("/{commentId}/likes")
     public ResponseEntity<CommentClientResponse> toggleCommentLike(
-//            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long commentId
     ) {
-        return ResponseEntity.ok(commentService.toggleLike(3L, commentId));
+        return ResponseEntity.ok(commentService.toggleLike(user.id(), commentId));
     }
 
     @Operation(

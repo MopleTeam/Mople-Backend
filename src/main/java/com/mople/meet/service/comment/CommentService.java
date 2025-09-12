@@ -1,5 +1,6 @@
 package com.mople.meet.service.comment;
 
+import com.mople.core.exception.custom.ConcurrencyConflictException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.CommentClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
@@ -7,7 +8,6 @@ import com.mople.dto.event.data.domain.comment.CommentCreatedEvent;
 import com.mople.dto.event.data.domain.comment.CommentMentionAddedEvent;
 import com.mople.dto.event.data.domain.comment.CommentsSoftDeletedEvent;
 import com.mople.dto.request.meet.comment.CommentCreateRequest;
-import com.mople.dto.request.meet.comment.CommentDeleteRequest;
 import com.mople.dto.request.meet.comment.CommentUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.meet.comment.CommentResponse;
@@ -31,8 +31,10 @@ import com.mople.dto.request.meet.comment.CommentReportRequest;
 import com.mople.meet.repository.impl.comment.CommentRepositorySupport;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.outbox.service.OutboxService;
+import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +43,7 @@ import java.util.*;
 
 import static com.mople.dto.client.CommentClientResponse.*;
 import static com.mople.global.enums.ExceptionReturnCode.NOT_FOUND_COMMENT_STATS;
+import static com.mople.global.enums.ExceptionReturnCode.REQUEST_CONFLICT;
 import static com.mople.global.enums.event.AggregateType.*;
 import static com.mople.global.enums.event.EventTypeNames.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
@@ -247,15 +250,31 @@ public class CommentService {
     }
 
     @Transactional
-    public CommentClientResponse updateComment(Long userId, Long commentId, CommentUpdateRequest request) {
+    public CommentClientResponse updateComment(
+            Long userId,
+            Long commentId,
+            CommentUpdateRequest request,
+            long baseVersion
+    ) {
         PlanComment comment = reader.findComment(commentId);
         User user = reader.findUser(userId);
 
-        commentValidator.validateWriter(comment, user, request.version());
+        commentValidator.validateWriter(comment, user);
 
-        List<Long> originMentions = mentionService.findUserIdByCommentId(comment.getId());
+        if (!Objects.equals(baseVersion, comment.getVersion())) {
+            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(comment.getId()));
+        }
 
         comment.updateContent(request.contents());
+
+        try {
+            commentRepository.flush();
+
+        } catch (OptimisticLockException | OptimisticLockingFailureException e) {
+            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(comment.getId()));
+        }
+
+        List<Long> originMentions = mentionService.findUserIdByCommentId(comment.getId());
         mentionService.updateMentions(request.mentions(), comment.getId());
 
         if (request.mentions() != null && !request.mentions().isEmpty()) {
@@ -285,11 +304,20 @@ public class CommentService {
 
 
     @Transactional
-    public void deleteComment(Long userId, Long commentId, CommentDeleteRequest request) {
+    public void deleteComment(Long userId, Long commentId, long baseVersion) {
         User user = reader.findUser(userId);
         PlanComment comment = reader.findComment(commentId);
 
-        commentValidator.validateWriter(comment, user, request.version());
+        commentValidator.validateWriter(comment, user);
+
+        if (!Objects.equals(baseVersion, comment.getVersion())) {
+            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(comment.getId()));
+        }
+
+        int updated = commentRepository.softDelete(Status.DELETED, commentId, userId, baseVersion, LocalDateTime.now());
+        if (updated == 0) {
+            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(comment.getId()));
+        }
 
         List<Long> commentIdsToDelete = new ArrayList<>();
         commentIdsToDelete.add(commentId);
@@ -302,7 +330,7 @@ public class CommentService {
             if (stats.canDecreaseReplyCount()){
                 statsRepository.decreaseReplyCount(parentComment.getId());
                 commentRepository.softDeleteAll(Status.DELETED, commentIdsToDelete, userId, LocalDateTime.now());
-                deleteComments(commentIdsToDelete, comment.getPostId(), userId);
+                generateCommentsDeletedEvent(commentIdsToDelete, comment.getPostId(), userId);
             }
             return;
         }
@@ -314,10 +342,10 @@ public class CommentService {
         }
 
         commentRepository.softDeleteAll(Status.DELETED, commentIdsToDelete, userId, LocalDateTime.now());
-        deleteComments(commentIdsToDelete, comment.getPostId(), userId);
+        generateCommentsDeletedEvent(commentIdsToDelete, comment.getPostId(), userId);
     }
 
-    private void deleteComments(List<Long> commentIds, Long postId, Long writerId) {
+    private void generateCommentsDeletedEvent(List<Long> commentIds, Long postId, Long writerId) {
         CommentsSoftDeletedEvent deletedEvent = CommentsSoftDeletedEvent.builder()
                 .postId(postId)
                 .commentIds(commentIds)
@@ -384,5 +412,9 @@ public class CommentService {
                 .reporterId(userId)
                 .build()
         );
+    }
+
+    private long getVersion(Long commentId) {
+        return commentRepository.findVersion(commentId);
     }
 }

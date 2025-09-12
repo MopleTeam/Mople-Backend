@@ -17,6 +17,18 @@ public interface PlanCommentRepository extends JpaRepository<PlanComment, Long> 
             "   set c.status = :status, " +
             "       c.deletedAt = :deletedAt, " +
             "       c.deletedBy = :userId " +
+            " where c.id = :commentId " +
+            "   and c.version = :baseVersion" +
+            "   and c.status <> :status"
+    )
+    int softDelete(Status status, Long commentId, Long userId, long baseVersion, LocalDateTime deletedAt);
+
+    @Modifying(flushAutomatically = true)
+    @Query(
+            "update PlanComment c " +
+            "   set c.status = :status, " +
+            "       c.deletedAt = :deletedAt, " +
+            "       c.deletedBy = :userId " +
             " where c.id in :commentIds " +
             "   and c.status <> :status"
     )
@@ -36,4 +48,7 @@ public interface PlanCommentRepository extends JpaRepository<PlanComment, Long> 
             "   and c.status = com.mople.global.enums.Status.DELETED"
     )
     void hardDeleteById(List<Long> commentIds);
+
+    @Query("select c.version from PlanComment c where c.id = :commentId")
+    long findVersion(Long commentId);
 }
