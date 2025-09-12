@@ -8,7 +8,6 @@ import com.mople.dto.event.data.domain.meet.MeetJoinedEvent;
 import com.mople.dto.event.data.domain.meet.MeetLeftEvent;
 import com.mople.dto.event.data.domain.meet.MeetSoftDeletedEvent;
 import com.mople.dto.request.meet.MeetCreateRequest;
-import com.mople.dto.request.meet.MeetDeleteRequest;
 import com.mople.dto.request.meet.MeetUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.meet.*;
@@ -27,7 +26,9 @@ import com.mople.meet.repository.*;
 
 import com.mople.outbox.service.OutboxService;
 import com.mople.user.repository.UserRepository;
+import jakarta.persistence.OptimisticLockException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
@@ -108,7 +109,7 @@ public class MeetService {
     }
 
     @Transactional
-    public MeetClientResponse updateMeet(Long creatorId, Long meetId, MeetUpdateRequest request) {
+    public MeetClientResponse updateMeet(Long creatorId, Long meetId, MeetUpdateRequest request, long baseVersion) {
         reader.findUser(creatorId);
         var meet = reader.findMeet(meetId);
 
@@ -116,12 +117,19 @@ public class MeetService {
             throw new AuthException(NOT_CREATOR);
         }
 
-        if (!Objects.equals(request.version(), meet.getVersion())) {
-            throw new AsyncException(REQUEST_CONFLICT);
+        if (!Objects.equals(baseVersion, meet.getVersion())) {
+            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(meet.getId()));
         }
 
         String oldImage = meet.getMeetImage();
         meet.updateMeetInfo(request.name(), request.image());
+
+        try {
+            meetRepository.flush();
+
+        } catch (OptimisticLockException | OptimisticLockingFailureException e) {
+            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(meet.getId()));
+        }
 
         if (!Objects.equals(oldImage, request.image())) {
             MeetImageChangedEvent changedEvent = MeetImageChangedEvent.builder()
@@ -260,7 +268,7 @@ public class MeetService {
     }
 
     @Transactional
-    public void removeMeet(Long userId, Long meetId, MeetDeleteRequest request) {
+    public void removeMeet(Long userId, Long meetId, Long baseVersion) {
         reader.findUser(userId);
         var meet = reader.findMeet(meetId);
 
@@ -269,11 +277,14 @@ public class MeetService {
         }
 
         if (meet.matchCreator(userId)) {
-            if (request.version() == null || !Objects.equals(request.version(), meet.getVersion())) {
-                throw new AsyncException(REQUEST_CONFLICT);
+            if (baseVersion == null || !Objects.equals(baseVersion, meet.getVersion())) {
+                throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(meet.getId()));
             }
 
-            meetRepository.softDelete(Status.DELETED, meetId, userId, LocalDateTime.now());
+            int updated = meetRepository.softDelete(Status.DELETED, meetId, userId, baseVersion, LocalDateTime.now());
+            if (updated == 0) {
+                throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(meet.getId()));
+            }
 
             MeetSoftDeletedEvent deletedEvent = MeetSoftDeletedEvent.builder()
                     .meetId(meetId)
@@ -364,5 +375,9 @@ public class MeetService {
         model.addAttribute("meetId", inviteMeet.getInviteCode());
         model.addAttribute("meetName", meet.get().getName());
         model.addAttribute("meetImage", meet.get().getMeetImage());
+    }
+
+    private long getVersion(Long meetId) {
+        return meetRepository.findVersion(meetId);
     }
 }

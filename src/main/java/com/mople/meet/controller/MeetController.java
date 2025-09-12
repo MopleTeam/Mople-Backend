@@ -4,7 +4,6 @@ import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.MeetClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
 import com.mople.dto.request.meet.MeetCreateRequest;
-import com.mople.dto.request.meet.MeetDeleteRequest;
 import com.mople.dto.request.meet.MeetUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
@@ -39,7 +38,11 @@ public class MeetController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @RequestBody MeetCreateRequest create
     ) {
-        return ResponseEntity.ok(meetService.createMeet(user.id(), create));
+        var body = meetService.createMeet(user.id(), create);
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.getVersion() + "\"")
+                .body(body);
     }
 
     @Operation(
@@ -50,9 +53,15 @@ public class MeetController {
     public ResponseEntity<MeetClientResponse> update(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long meetId,
-            @RequestBody @Valid MeetUpdateRequest updateRequest
+            @RequestHeader("If-Match") String ifMatch,
+            @RequestBody MeetUpdateRequest updateRequest
     ) {
-        return ResponseEntity.ok(meetService.updateMeet(user.id(), meetId, updateRequest));
+        long baseVersion = Long.parseLong(ifMatch.replace("\"",""));
+        var body = meetService.updateMeet(user.id(), meetId, updateRequest, baseVersion);
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.getVersion() + "\"")
+                .body(body);
     }
 
     @Operation(
@@ -76,7 +85,11 @@ public class MeetController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long meetId
     ) {
-        return ResponseEntity.ok(meetService.getMeetDetail(user.id(), meetId));
+        var body = meetService.getMeetDetail(user.id(), meetId);
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.getVersion() + "\"")
+                .body(body);
     }
 
     @Operation(
@@ -100,9 +113,11 @@ public class MeetController {
     public ResponseEntity<Void> deleteMeet(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long meetId,
-            @RequestBody MeetDeleteRequest deleteRequest
+            @RequestHeader(value = "If-Match", required = false) String ifMatch
     ) {
-        meetService.removeMeet(user.id(), meetId, deleteRequest);
+        Long baseVersion = ifMatch != null ? Long.parseLong(ifMatch.replace("\"","")) : null;
+        meetService.removeMeet(user.id(), meetId, baseVersion);
+
         return ResponseEntity.ok().build();
     }
 
