@@ -58,4 +58,14 @@ public class Meet extends BaseTimeEntity {
     public boolean matchCreator(Long userId){
         return creatorId.equals(userId);
     }
+
+    public void softDelete(Long deletedBy) {
+        if (status == Status.DELETED) {
+            return;
+        }
+
+        this.status = Status.DELETED;
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
+    }
 }

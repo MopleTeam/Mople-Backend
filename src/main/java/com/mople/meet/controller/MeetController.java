@@ -53,11 +53,9 @@ public class MeetController {
     public ResponseEntity<MeetClientResponse> update(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long meetId,
-            @RequestHeader("If-Match") String ifMatch,
             @RequestBody MeetUpdateRequest updateRequest
     ) {
-        long baseVersion = Long.parseLong(ifMatch.replace("\"",""));
-        var body = meetService.updateMeet(user.id(), meetId, updateRequest, baseVersion);
+        var body = meetService.updateMeet(user.id(), meetId, updateRequest);
 
         return ResponseEntity.ok()
                 .eTag("\"" + body.getVersion() + "\"")
@@ -112,12 +110,9 @@ public class MeetController {
     @DeleteMapping("/{meetId}")
     public ResponseEntity<Void> deleteMeet(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
-            @PathVariable Long meetId,
-            @RequestHeader(value = "If-Match", required = false) String ifMatch
+            @PathVariable Long meetId
     ) {
-        Long baseVersion = ifMatch != null ? Long.parseLong(ifMatch.replace("\"","")) : null;
-        meetService.removeMeet(user.id(), meetId, baseVersion);
-
+        meetService.removeMeet(user.id(), meetId);
         return ResponseEntity.ok().build();
     }
 

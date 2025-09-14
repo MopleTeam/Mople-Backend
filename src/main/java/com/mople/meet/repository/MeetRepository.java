@@ -6,23 +6,14 @@ import com.mople.global.enums.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 public interface MeetRepository extends JpaRepository<Meet, Long> {
-
-    @Modifying(flushAutomatically = true)
-    @Query("update Meet m " +
-            "  set m.status = :status, " +
-            "      m.deletedAt = :deletedAt, " +
-            "      m.deletedBy = :userId " +
-            "where m.id = :meetId " +
-            "  and m.version = :baseVersion" +
-            "  and m.status <> :status"
-    )
-    int softDelete(Status status, Long meetId, Long userId, long baseVersion, LocalDateTime deletedAt);
 
     @Modifying(flushAutomatically = true)
     @Query("update Meet m " +
@@ -53,6 +44,7 @@ public interface MeetRepository extends JpaRepository<Meet, Long> {
     )
     void hardDeleteById(Long meetId);
 
-    @Query("select m.version from Meet m where m.id = :meetId")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
+    @Query(value = "select version from meet where meet_id = :meetId", nativeQuery = true)
     long findVersion(Long meetId);
 }
