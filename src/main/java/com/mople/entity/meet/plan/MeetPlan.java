@@ -105,4 +105,14 @@ public class MeetPlan extends BaseTimeEntity {
 
         return !flag;
     }
+
+    public void softDelete(Long deletedBy) {
+        if (status == Status.DELETED) {
+            return;
+        }
+
+        this.status = Status.DELETED;
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
+    }
 }

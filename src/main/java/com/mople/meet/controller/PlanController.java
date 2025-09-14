@@ -71,11 +71,9 @@ public class PlanController {
     @PatchMapping("/update")
     public ResponseEntity<PlanClientResponse> updatePlan(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
-            @RequestHeader("If-Match") String ifMatch,
             @RequestBody @Valid PlanUpdateRequest planUpdateRequest
     ) {
-        long baseVersion = Long.parseLong(ifMatch.replace("\"",""));
-        var body = planService.updatePlan(user.id(), baseVersion, planUpdateRequest);
+        var body = planService.updatePlan(user.id(), planUpdateRequest);
 
         return ResponseEntity.ok()
                 .eTag("\"" + body.getVersion() + "\"")
@@ -89,12 +87,9 @@ public class PlanController {
     @DeleteMapping("/{planId}")
     public ResponseEntity<Void> deletePlan(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
-            @PathVariable Long planId,
-            @RequestHeader("If-Match") String ifMatch
+            @PathVariable Long planId
     ) {
-        long baseVersion = Long.parseLong(ifMatch.replace("\"",""));
-        planService.deletePlan(user.id(), planId, baseVersion);
-
+        planService.deletePlan(user.id(), planId);
         return ResponseEntity.ok().build();
     }
 

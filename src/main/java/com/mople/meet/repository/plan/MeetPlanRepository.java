@@ -6,6 +6,8 @@ import com.mople.global.enums.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -40,18 +42,6 @@ public interface MeetPlanRepository extends JpaRepository<MeetPlan, Long>{
             " where p.id = :planId "
     )
     int deleteWeather(Long planId);
-
-    @Modifying(flushAutomatically = true)
-    @Query(
-            "update MeetPlan p " +
-            "   set p.status = :status, " +
-            "       p.deletedAt = :deletedAt, " +
-            "       p.deletedBy = :userId " +
-            " where p.id = :planId " +
-            "   and p.version = :baseVersion" +
-            "   and p.status <> :status"
-    )
-    int softDelete(Status status, Long planId, Long userId, long baseVersion, LocalDateTime deletedAt);
 
     @Modifying(flushAutomatically = true)
     @Query(
@@ -107,6 +97,7 @@ public interface MeetPlanRepository extends JpaRepository<MeetPlan, Long>{
     )
     void hardDeleteById(Long planId);
 
-    @Query("select p.version from MeetPlan p where p.id = :planId")
-    long findVersionById(Long planId);
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
+    @Query(value = "select version from meet_plan where plan_id = :planId", nativeQuery = true)
+    long findVersion(Long planId);
 }
