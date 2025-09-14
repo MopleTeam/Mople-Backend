@@ -5,23 +5,13 @@ import com.mople.global.enums.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 public interface PlanCommentRepository extends JpaRepository<PlanComment, Long> {
-
-    @Modifying(flushAutomatically = true)
-    @Query(
-            "update PlanComment c " +
-            "   set c.status = :status, " +
-            "       c.deletedAt = :deletedAt, " +
-            "       c.deletedBy = :userId " +
-            " where c.id = :commentId " +
-            "   and c.version = :baseVersion" +
-            "   and c.status <> :status"
-    )
-    int softDelete(Status status, Long commentId, Long userId, long baseVersion, LocalDateTime deletedAt);
 
     @Modifying(flushAutomatically = true)
     @Query(
@@ -49,6 +39,7 @@ public interface PlanCommentRepository extends JpaRepository<PlanComment, Long> 
     )
     void hardDeleteById(List<Long> commentIds);
 
-    @Query("select c.version from PlanComment c where c.id = :commentId")
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
+    @Query(value = "select version from plan_comment where comment_id = :commentId", nativeQuery = true)
     long findVersion(Long commentId);
 }

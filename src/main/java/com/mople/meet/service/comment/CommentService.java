@@ -34,6 +34,7 @@ import com.mople.outbox.service.OutboxService;
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 
+import org.hibernate.StaleObjectStateException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -253,25 +254,25 @@ public class CommentService {
     public CommentClientResponse updateComment(
             Long userId,
             Long commentId,
-            CommentUpdateRequest request,
-            long baseVersion
+            CommentUpdateRequest request
     ) {
         PlanComment comment = reader.findComment(commentId);
         User user = reader.findUser(userId);
 
         commentValidator.validateWriter(comment, user);
 
-        if (!Objects.equals(baseVersion, comment.getVersion())) {
-            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(comment.getId()));
-        }
-
         comment.updateContent(request.contents());
 
         try {
             commentRepository.flush();
 
-        } catch (OptimisticLockException | OptimisticLockingFailureException e) {
-            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(comment.getId()));
+        } catch (
+                OptimisticLockException
+                | OptimisticLockingFailureException
+                | StaleObjectStateException e
+        ) {
+            long currentVersion = commentRepository.findVersion(comment.getId());
+            throw new ConcurrencyConflictException(REQUEST_CONFLICT, currentVersion);
         }
 
         List<Long> originMentions = mentionService.findUserIdByCommentId(comment.getId());
@@ -304,19 +305,24 @@ public class CommentService {
 
 
     @Transactional
-    public void deleteComment(Long userId, Long commentId, long baseVersion) {
+    public void deleteComment(Long userId, Long commentId) {
         User user = reader.findUser(userId);
         PlanComment comment = reader.findComment(commentId);
 
         commentValidator.validateWriter(comment, user);
 
-        if (!Objects.equals(baseVersion, comment.getVersion())) {
-            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(comment.getId()));
-        }
+        comment.softDelete(userId);
 
-        int updated = commentRepository.softDelete(Status.DELETED, commentId, userId, baseVersion, LocalDateTime.now());
-        if (updated == 0) {
-            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(comment.getId()));
+        try {
+            commentRepository.flush();
+
+        } catch (
+                OptimisticLockException
+                | OptimisticLockingFailureException
+                | StaleObjectStateException e
+        ) {
+            long currentVersion = commentRepository.findVersion(comment.getId());
+            throw new ConcurrencyConflictException(REQUEST_CONFLICT, currentVersion);
         }
 
         List<Long> commentIdsToDelete = new ArrayList<>();
@@ -412,9 +418,5 @@ public class CommentService {
                 .reporterId(userId)
                 .build()
         );
-    }
-
-    private long getVersion(Long commentId) {
-        return commentRepository.findVersion(commentId);
     }
 }

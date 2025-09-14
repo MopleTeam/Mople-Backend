@@ -88,4 +88,14 @@ public class PlanComment {
     public boolean isChildComment() {
         return parentId != null;
     }
+
+    public void softDelete(Long deletedBy) {
+        if (status == Status.DELETED) {
+            return;
+        }
+
+        this.status = Status.DELETED;
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
+    }
 }

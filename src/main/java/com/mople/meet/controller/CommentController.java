@@ -101,11 +101,9 @@ public class CommentController {
     public ResponseEntity<CommentClientResponse> updateComment(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long commentId,
-            @RequestHeader("If-Match") String ifMatch,
             @RequestBody @Valid CommentUpdateRequest commentUpdateRequest
     ) {
-        long baseVersion = Long.parseLong(ifMatch.replace("\"",""));
-        var body = commentService.updateComment(user.id(), commentId, commentUpdateRequest, baseVersion);
+        var body = commentService.updateComment(user.id(), commentId, commentUpdateRequest);
 
         return ResponseEntity.ok()
                 .eTag("\"" + body.getVersion() + "\"")
@@ -119,12 +117,9 @@ public class CommentController {
     @DeleteMapping("/{commentId}")
     public ResponseEntity<Void> deleteReviewComment(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
-            @PathVariable Long commentId,
-            @RequestHeader("If-Match") String ifMatch
+            @PathVariable Long commentId
     ) {
-        long baseVersion = Long.parseLong(ifMatch.replace("\"",""));
-        commentService.deleteComment(user.id(), commentId, baseVersion);
-
+        commentService.deleteComment(user.id(), commentId);
         return ResponseEntity.ok().build();
     }
 
