@@ -36,17 +36,18 @@ import com.mople.meet.repository.review.ReviewReportRepository;
 
 import com.mople.outbox.service.OutboxService;
 import com.mople.user.repository.UserRepository;
+import jakarta.persistence.OptimisticLockException;
 import jakarta.validation.constraints.NotNull;
 
 import lombok.RequiredArgsConstructor;
 
+import org.hibernate.StaleObjectStateException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import static com.mople.dto.client.ReviewClientResponse.*;
 import static com.mople.dto.client.UserRoleClientResponse.ofParticipants;
@@ -179,7 +180,7 @@ public class ReviewService {
     }
 
     @Transactional
-    public void removeReview(Long userId, Long reviewId, long baseVersion) {
+    public void removeReview(Long userId, Long reviewId) {
         reader.findUser(userId);
         PlanReview review = reader.findReview(reviewId);
 
@@ -187,12 +188,16 @@ public class ReviewService {
             throw new AuthException(NOT_CREATOR);
         }
 
-        if (!Objects.equals(baseVersion, review.getVersion())) {
-            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(review.getId()));
-        }
+        review.softDelete(userId);
 
-        int updated = planReviewRepository.softDelete(Status.DELETED, reviewId, userId, baseVersion, LocalDateTime.now());
-        if (updated == 0) {
+        try {
+            planReviewRepository.flush();
+
+        } catch (
+                OptimisticLockException
+                | OptimisticLockingFailureException
+                | StaleObjectStateException e
+        ) {
             throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(review.getId()));
         }
 
@@ -379,6 +384,6 @@ public class ReviewService {
     }
 
     public long getVersion(Long reviewId) {
-        return planReviewRepository.findVersionById(reviewId);
+        return planReviewRepository.findVersion(reviewId);
     }
 }

@@ -6,6 +6,8 @@ import com.mople.global.enums.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,18 +37,6 @@ public interface PlanReviewRepository extends JpaRepository<PlanReview, Long> {
          where r.id = :reviewId
     """)
     int upVersion(Long reviewId);
-
-    @Modifying(flushAutomatically = true)
-    @Query(
-            "update PlanReview r " +
-            "   set r.status = :status, " +
-            "       r.deletedAt = :deletedAt, " +
-            "       r.deletedBy = :userId " +
-            " where r.id = :reviewId " +
-            "   and r.version = :baseVersion" +
-            "   and r.status <> :status"
-    )
-    int softDelete(Status status, Long reviewId, Long userId, long baseVersion, LocalDateTime deletedAt);
 
     @Modifying(flushAutomatically = true)
     @Query(
@@ -98,6 +88,7 @@ public interface PlanReviewRepository extends JpaRepository<PlanReview, Long> {
     )
     void hardDeleteById(Long reviewId);
 
-    @Query("select r.version from PlanReview r where r.id = :reviewId")
-    Long findVersionById(Long reviewId);
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
+    @Query(value = "select version from plan_review where review_id = :reviewId", nativeQuery = true)
+    Long findVersion(Long reviewId);
 }

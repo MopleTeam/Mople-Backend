@@ -98,4 +98,14 @@ public class PlanReview extends BaseTimeEntity {
     public boolean isCreator(Long userId) {
         return !creatorId.equals(userId);
     }
+
+    public void softDelete(Long deletedBy) {
+        if (status == Status.DELETED) {
+            return;
+        }
+
+        this.status = Status.DELETED;
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
+    }
 }
