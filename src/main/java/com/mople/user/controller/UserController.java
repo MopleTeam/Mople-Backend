@@ -46,11 +46,9 @@ public class UserController {
     @PatchMapping("/info")
     public ResponseEntity<UserClientResponse> updateInfo(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
-            @RequestHeader("If-Match") String ifMatch,
             @Valid @RequestBody UserInfoRequest userInfoRequest
     ) {
-        long baseVersion = Long.parseLong(ifMatch.replace("\"",""));
-        var body = userService.updateInfo(user.id(), userInfoRequest, baseVersion);
+        var body = userService.updateInfo(user.id(), userInfoRequest);
 
         return ResponseEntity.ok()
                 .eTag("\"" + body.version() + "\"")
@@ -63,12 +61,9 @@ public class UserController {
     )
     @DeleteMapping("/remove")
     public ResponseEntity<Void> removeUser(
-            @Parameter(hidden = true) @SignUser AuthUserRequest user,
-            @RequestHeader("If-Match") String ifMatch
+            @Parameter(hidden = true) @SignUser AuthUserRequest user
     ) {
-        long baseVersion = Long.parseLong(ifMatch.replace("\"",""));
-        userService.removeUser(user.id(), baseVersion);
-
+        userService.removeUser(user.id());
         return ResponseEntity.ok().build();
     }
 

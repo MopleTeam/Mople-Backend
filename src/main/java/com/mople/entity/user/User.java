@@ -7,6 +7,8 @@ import com.mople.global.enums.Status;
 import jakarta.persistence.*;
 
 import lombok.*;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
 
@@ -73,5 +75,18 @@ public class User {
 
     public boolean imageValid() {
         return profileImg != null && !"null".equals(profileImg);
+    }
+
+    public void deleteUser() {
+        if (status == Status.DELETED) {
+            return;
+        }
+
+        this.email = null;
+        this.nickname = "탈퇴한 사용자";
+        this.profileImg = null;
+        this.lastLaunchAt = null;
+        this.status = Status.DELETED;
+        this.socialProvider = null;
     }
 }

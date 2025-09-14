@@ -8,7 +8,6 @@ import com.mople.dto.request.user.RandomNicknameRequest;
 import com.mople.dto.request.user.UserInfoRequest;
 import com.mople.entity.user.User;
 import com.mople.global.enums.Action;
-import com.mople.global.enums.Status;
 import com.mople.meet.reader.EntityReader;
 import com.mople.notification.repository.FirebaseTokenRepository;
 import com.mople.notification.repository.NotificationRepository;
@@ -18,11 +17,10 @@ import com.mople.user.repository.UserRepository;
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 
+import org.hibernate.StaleObjectStateException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Objects;
 
 import static com.mople.global.enums.ExceptionReturnCode.REQUEST_CONFLICT;
 import static com.mople.global.enums.event.AggregateType.USER;
@@ -31,8 +29,6 @@ import static com.mople.global.enums.event.EventTypeNames.*;
 @Service
 @RequiredArgsConstructor
 public class UserService {
-
-    private static final String DELETED_USER_NICKNAME = "탈퇴한 사용자";
 
     private final RandomNicknameRequest randomNickname = new RandomNicknameRequest();
     private final UserRepository userRepository;
@@ -57,12 +53,8 @@ public class UserService {
     }
 
     @Transactional
-    public UserClientResponse updateInfo(Long id, UserInfoRequest updateInfo, long baseVersion) {
+    public UserClientResponse updateInfo(Long id, UserInfoRequest updateInfo) {
         User user = reader.findUser(id);
-
-        if (!Objects.equals(baseVersion, user.getVersion())) {
-            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(user.getId()));
-        }
 
         if (user.imageValid() && !user.getProfileImg().equals(updateInfo.image())) {
             UserImageChangedEvent changedEvent = UserImageChangedEvent.builder()
@@ -79,8 +71,13 @@ public class UserService {
         try {
             userRepository.flush();
 
-        } catch (OptimisticLockException | OptimisticLockingFailureException e) {
-            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(user.getId()));
+        } catch (
+                OptimisticLockException
+                | OptimisticLockingFailureException
+                | StaleObjectStateException e
+        ) {
+            long currentVersion = userRepository.findVersion(user.getId());
+            throw new ConcurrencyConflictException(REQUEST_CONFLICT, currentVersion);
         }
 
         boolean isExistBadgeCount = notificationRepository.countBadgeCount(user.getId(), Action.PUBLISHED.name()) > 0;
@@ -95,18 +92,22 @@ public class UserService {
     }
 
     @Transactional
-    public void removeUser(final Long id, long baseVersion) {
+    public void removeUser(final Long id) {
         User user = reader.findUser(id);
-
-        if (!Objects.equals(baseVersion, user.getVersion())) {
-            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(user.getId()));
-        }
-
         String oldProfileImg = user.getProfileImg();
 
-        int updated = userRepository.removeUser(Status.DELETED, DELETED_USER_NICKNAME, id, baseVersion);
-        if (updated == 0) {
-            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(user.getId()));
+        user.deleteUser();
+
+        try {
+            userRepository.flush();
+
+        } catch (
+                OptimisticLockException
+                | OptimisticLockingFailureException
+                | StaleObjectStateException e
+        ) {
+            long currentVersion = userRepository.findVersion(user.getId());
+            throw new ConcurrencyConflictException(REQUEST_CONFLICT, currentVersion);
         }
 
         firebaseTokenRepository.deleteByUserId(id);
@@ -133,9 +134,5 @@ public class UserService {
     @Transactional(readOnly = true)
     public Boolean duplicateNickname(String nickname) {
         return userRepository.existsByNickname(nickname);
-    }
-
-    private long getVersion(Long userId) {
-        return userRepository.findVersion(userId);
     }
 }
