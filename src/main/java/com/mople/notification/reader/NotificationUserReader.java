@@ -5,8 +5,6 @@ import com.mople.entity.meet.comment.QCommentMention;
 import com.mople.entity.meet.comment.QPlanComment;
 import com.mople.entity.meet.plan.QPlanParticipant;
 import com.mople.entity.user.QUser;
-import com.mople.entity.user.User;
-import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -18,112 +16,88 @@ import java.util.List;
 public class NotificationUserReader {
     private final JPAQueryFactory queryFactory;
 
-    public List<User> findMeetAllUser(Long triggeredBy, Long meetId) {
-
+    public List<Long> findMeetUsersNoTriggers(Long triggeredBy, Long meetId) {
         QMeetMember meetMember = QMeetMember.meetMember;
 
         return queryFactory
-                .select(meetMember.user)
+                .select(meetMember.userId)
                 .from(meetMember)
-                .where(meetMember.joinMeet.id.eq(meetId), meetMember.user.id.ne(triggeredBy))
+                .where(meetMember.meetId.eq(meetId), meetMember.userId.ne(triggeredBy))
                 .fetch();
     }
 
-    public List<User> findPlanUsers(Long triggeredBy, Long planId) {
-
+    public List<Long> findPlanUsersNoTriggers(Long triggeredBy, Long planId) {
         QPlanParticipant participant = QPlanParticipant.planParticipant;
 
         return queryFactory
-                .select(participant.user)
+                .select(participant.userId)
                 .from(participant)
-                .where(participant.plan.id.eq(planId), participant.user.id.ne(triggeredBy))
+                .where(participant.planId.eq(planId), participant.userId.ne(triggeredBy))
                 .fetch();
     }
 
-    public List<User> findAllPlanUser(Long planId) {
-
+    public List<Long> findPlanUsersAll(Long planId) {
         QPlanParticipant participant = QPlanParticipant.planParticipant;
 
         return queryFactory
-                .select(participant.user)
+                .select(participant.userId)
                 .from(participant)
-                .where(participant.plan.id.eq(planId))
+                .where(participant.planId.eq(planId))
                 .fetch();
     }
 
-    public List<User> findAllReviewUser(Long creatorId, Long reviewId) {
-
+    public List<Long> findReviewUsersNoTriggers(Long triggeredBy, Long reviewId) {
         QPlanParticipant participant = QPlanParticipant.planParticipant;
 
         return queryFactory
-                .select(participant.user)
+                .select(participant.userId)
                 .from(participant)
-                .where(participant.review.id.eq(reviewId), participant.user.id.ne(creatorId))
+                .where(participant.reviewId.eq(reviewId), participant.userId.ne(triggeredBy))
                 .fetch();
     }
 
-    public List<User> findAllReviewCreatorUser(Long creatorId) {
-
+    public List<Long> findReviewCreator(Long creatorId) {
         QUser user = QUser.user;
 
         return queryFactory
-                .selectFrom(user)
+                .select(user.id)
+                .from(user)
                 .where(user.id.eq(creatorId))
                 .fetch();
     }
 
-    public List<User> findParentCommentUser(Long senderId, Long parentCommentId) {
-
+    public Long findCommentRepliedUserNoWriter(Long senderId, Long parentCommentId) {
         QPlanComment planComment = QPlanComment.planComment;
 
         return queryFactory
-                .select(planComment.writer)
+                .select(planComment.writerId)
                 .from(planComment)
-                .where(planComment.id.eq(parentCommentId), planComment.writer.id.ne(senderId))
-                .fetch();
+                .where(planComment.id.eq(parentCommentId), planComment.writerId.ne(senderId))
+                .fetchOne();
     }
 
-    public List<User> findMentionedUsers(Long senderId, Long commentId) {
-
+    private List<Long> findCommentMentionedUsersNoWriter(Long senderId, Long commentId) {
         QCommentMention mention = QCommentMention.commentMention;
-        QUser user = QUser.user;
 
         return queryFactory
-                .select(user)
-                .distinct()
-                .from(user)
+                .select(mention.userId)
+                .from(mention)
                 .where(
-                        user.id.in(
-                                JPAExpressions
-                                        .select(mention.userId)
-                                        .from(mention)
-                                        .where(mention.commentId.eq(commentId))
-                        ),
-                        user.id.ne(senderId)
+                        mention.commentId.eq(commentId),
+                        mention.userId.ne(senderId)
                 )
                 .fetch();
     }
 
-    public List<User> filterNewMentionedUsers(List<Long> originMentions, Long senderId, Long commentId) {
-        List<User> mentionedUsers = findMentionedUsers(senderId, commentId);
-
-        if (originMentions == null || originMentions.isEmpty()) return mentionedUsers;
-
-        return mentionedUsers.stream()
-                .filter(mentionUser -> !originMentions.contains(mentionUser.getId()))
-                .toList();
+    public List<Long> findCreatedMentionedUsers(Long senderId, Long commentId) {
+        return findCommentMentionedUsersNoWriter(senderId, commentId);
     }
 
-    public List<Long> findAllUserId(List<User> users) {
+    public List<Long> findUpdatedMentionedUsers(List<Long> originMentions, Long senderId, Long commentId) {
+        List<Long> targetIds = findCommentMentionedUsersNoWriter(senderId, commentId);
 
-        return users.stream().map(User::getId).toList();
-    }
-
-    public List<Long> findUserIds(Long triggeredBy, List<User> users) {
-
-        return users.stream()
-                .map(User::getId)
-                .filter(id -> !id.equals(triggeredBy))
+        return targetIds.stream()
+                .filter(targetId -> !originMentions.contains(targetId))
                 .toList();
     }
 }

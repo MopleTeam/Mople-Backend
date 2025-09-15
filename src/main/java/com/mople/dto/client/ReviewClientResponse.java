@@ -13,6 +13,7 @@ import java.util.List;
 @Getter
 @Builder
 public class ReviewClientResponse {
+    private final Long version;
     private final Long meetId;
     private final Long reviewId;
     private final Long postId;
@@ -37,6 +38,7 @@ public class ReviewClientResponse {
     private static ReviewClientResponse ofInfo(PlanReviewInfoResponse infoResponse){
         return ReviewClientResponse.builder()
                 .reviewId(infoResponse.reviewId())
+                .version(infoResponse.version())
                 .reviewName(infoResponse.reviewName())
                 .reviewTime(infoResponse.reviewDateTime())
                 .creatorId(infoResponse.creatorId())
@@ -47,6 +49,7 @@ public class ReviewClientResponse {
 
     public static ReviewClientResponse ofDetail(PlanReviewDetailResponse detailResponse, Integer commentCount){
         return ReviewClientResponse.builder()
+                .version(detailResponse.version())
                 .meetId(detailResponse.meetId())
                 .meetName(detailResponse.meetName())
                 .meetImg(detailResponse.meetImage())

@@ -1,5 +1,6 @@
 package com.mople.meet.repository.impl;
 
+import com.mople.entity.user.QUser;
 import com.mople.global.utils.cursor.AutoCompleteCursor;
 import com.mople.global.utils.cursor.MemberCursor;
 import com.mople.entity.meet.MeetMember;
@@ -21,13 +22,14 @@ public class MeetMemberRepositorySupport {
 
     public List<MeetMember> findMemberPage(Long meetId, Long hostId, MemberCursor cursor, int size) {
         QMeetMember member = QMeetMember.meetMember;
+        QUser user = QUser.user;
 
-        NumberExpression<Integer> roleOrder = MemberSortExpressions.roleOrder(member.user, hostId);
-        NumberExpression<Integer> nicknameTypeOrder = MemberSortExpressions.nicknameTypeOrder(member.user);
-        StringExpression nicknameLower = MemberSortExpressions.nicknameLower(member.user);
+        NumberExpression<Integer> roleOrder = MemberSortExpressions.roleOrder(user, hostId);
+        NumberExpression<Integer> nicknameTypeOrder = MemberSortExpressions.nicknameTypeOrder(user);
+        StringExpression nicknameLower = MemberSortExpressions.nicknameLower(user);
 
         BooleanBuilder whereCondition = new BooleanBuilder()
-                .and(member.joinMeet.id.eq(meetId));
+                .and(member.meetId.eq(meetId));
 
         if (cursor != null) {
             whereCondition.and(
@@ -44,6 +46,7 @@ public class MeetMemberRepositorySupport {
         return queryFactory
                 .selectFrom(member)
                 .where(whereCondition)
+                .join(user).on(user.id.eq(member.userId))
                 .orderBy(
                         roleOrder.asc(),
                         nicknameTypeOrder.asc().nullsLast(),
@@ -52,18 +55,6 @@ public class MeetMemberRepositorySupport {
                 )
                 .limit(size + 1)
                 .fetch();
-    }
-
-    public Long countMeetMembers(Long meetId) {
-        QMeetMember member = QMeetMember.meetMember;
-
-        Long count = queryFactory
-                .select(member.count())
-                .from(member)
-                .where(member.joinMeet.id.eq(meetId))
-                .fetchOne();
-
-        return count != null ? count : 0L;
     }
 
     public List<MeetMember> findMemberAutoCompletePage(
@@ -75,14 +66,15 @@ public class MeetMemberRepositorySupport {
             int size
     ) {
         QMeetMember member = QMeetMember.meetMember;
+        QUser user = QUser.user;
 
-        NumberExpression<Integer> startsWithOrder = MemberSortExpressions.startsWithOrder(member.user, keyword);
-        NumberExpression<Integer> roleOrder = MemberSortExpressions.roleOrder(member.user, hostId, creatorId);
-        StringExpression nicknameLower = MemberSortExpressions.nicknameLower(member.user);
+        NumberExpression<Integer> startsWithOrder = MemberSortExpressions.startsWithOrder(user, keyword);
+        NumberExpression<Integer> roleOrder = MemberSortExpressions.roleOrder(user, hostId, creatorId);
+        StringExpression nicknameLower = MemberSortExpressions.nicknameLower(user);
 
         BooleanBuilder whereCondition = new BooleanBuilder()
-                .and(member.joinMeet.id.eq(meetId))
-                .and(member.user.nickname.containsIgnoreCase(keyword));
+                .and(member.meetId.eq(meetId))
+                .and(user.nickname.containsIgnoreCase(keyword));
 
         if (cursor != null) {
             whereCondition.and(
@@ -98,6 +90,7 @@ public class MeetMemberRepositorySupport {
 
         return queryFactory
                 .selectFrom(member)
+                .join(user).on(user.id.eq(member.userId))
                 .where(whereCondition)
                 .orderBy(
                         startsWithOrder.asc(),
@@ -111,11 +104,13 @@ public class MeetMemberRepositorySupport {
 
     public boolean isCursorInvalid(String cursorNickname, Long cursorId) {
         QMeetMember member = QMeetMember.meetMember;
+        QUser user = QUser.user;
 
         return queryFactory
                 .selectOne()
                 .from(member)
-                .where(member.user.nickname.eq(cursorNickname), member.id.eq(cursorId))
+                .join(user).on(user.id.eq(member.userId))
+                .where(user.nickname.eq(cursorNickname), member.id.eq(cursorId))
                 .fetchFirst() == null;
     }
 }

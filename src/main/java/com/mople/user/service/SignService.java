@@ -13,7 +13,6 @@ import com.mople.entity.notification.FirebaseToken;
 import com.mople.entity.user.User;
 import com.mople.global.enums.ExceptionReturnCode;
 import com.mople.global.enums.Role;
-import com.mople.global.enums.Status;
 import com.mople.notification.repository.FirebaseTokenRepository;
 import com.mople.user.repository.UserRepository;
 
@@ -47,7 +46,6 @@ public class SignService {
                 .socialProvider(sign.socialProvider())
                 .lastLaunchAt(LocalDateTime.now())
                 .role(Role.USER)
-                .status(Status.ACTIVE)
                 .build();
 
         User createUser = userRepository.save(user);

@@ -11,7 +11,7 @@ import com.mople.dto.response.meet.UserAllDateResponse;
 import com.mople.dto.response.meet.UserPageResponse;
 import com.mople.dto.response.meet.plan.*;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
-import com.mople.meet.service.PlanService;
+import com.mople.meet.service.plan.PlanService;
 import com.mople.dto.request.meet.plan.PlanCreateRequest;
 import com.mople.dto.request.meet.plan.PlanUpdateRequest;
 
@@ -56,7 +56,11 @@ public class PlanController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @RequestBody PlanCreateRequest planCreateRequest
     ) {
-        return ResponseEntity.ok(planService.createPlan(user.id(), planCreateRequest));
+        var body = planService.createPlan(user.id(), planCreateRequest);
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.getVersion() + "\"")
+                .body(body);
     }
 
     @Operation(
@@ -69,7 +73,11 @@ public class PlanController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @RequestBody @Valid PlanUpdateRequest planUpdateRequest
     ) {
-        return ResponseEntity.ok(planService.updatePlan(user.id(), planUpdateRequest));
+        var body = planService.updatePlan(user.id(), planUpdateRequest);
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.getVersion() + "\"")
+                .body(body);
     }
 
     @Operation(
@@ -77,7 +85,7 @@ public class PlanController {
             description = "일정 생성자는 일정을 삭제할 수 있습니다."
     )
     @DeleteMapping("/{planId}")
-    public ResponseEntity<PlanViewResponse> deletePlan(
+    public ResponseEntity<Void> deletePlan(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long planId
     ) {
@@ -94,7 +102,11 @@ public class PlanController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long planId
     ) {
-        return ResponseEntity.ok(planService.getPlanDetail(user.id(), planId));
+        var body = planService.getPlanDetail(user.id(), planId);
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.getVersion() + "\"")
+                .body(body);
     }
 
     @Operation(
