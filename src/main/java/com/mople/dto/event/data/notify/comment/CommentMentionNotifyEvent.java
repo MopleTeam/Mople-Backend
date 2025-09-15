@@ -10,7 +10,8 @@ import java.util.Map;
 @Builder
 public record CommentMentionNotifyEvent(
         String meetName,
-        Long postId,
+        Long planId,
+        Long reviewId,
         String senderNickname
 ) implements NotifyEvent {
 
@@ -24,7 +25,10 @@ public record CommentMentionNotifyEvent(
 
     @Override
     public Map<String, String> routing() {
-        return Map.of("postId", postId.toString());
+        if (planId != null && reviewId == null) {
+            return Map.of("planId", planId.toString());
+        }
+        return Map.of("reviewId", reviewId.toString());
     }
 
     @Override

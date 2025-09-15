@@ -69,7 +69,7 @@ public class CommentMentionNotifier implements DomainEventHandler<CommentCreated
 
             CommentMentionNotifyEvent notifyEvent = CommentMentionNotifyEvent.builder()
                     .meetName(meet.getName())
-                    .postId(event.postId())
+                    .planId(plan.getId())
                     .senderNickname(user.getNickname())
                     .build();
 
@@ -105,7 +105,7 @@ public class CommentMentionNotifier implements DomainEventHandler<CommentCreated
 
         CommentMentionNotifyEvent notifyEvent = CommentMentionNotifyEvent.builder()
                 .meetName(meet.getName())
-                .postId(event.postId())
+                .reviewId(review.getId())
                 .senderNickname(user.getNickname())
                 .build();
 
