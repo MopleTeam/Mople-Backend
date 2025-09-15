@@ -17,9 +17,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Optional;
 
 import static com.mople.global.enums.Action.COMPLETE;
+import static com.mople.global.enums.ExceptionReturnCode.NOT_FOUND_PLAN;
 import static com.mople.global.enums.ExceptionReturnCode.NOT_FOUND_REVIEW;
 import static com.mople.global.enums.NotifyType.COMMENT_MENTION;
 
@@ -48,16 +48,17 @@ public class CommentMentionNotifyHandler implements NotifyHandler<CommentMention
 
     @Override
     public List<Notification> getNotifications(CommentMentionEventData data, NotificationEvent notify, List<User> users) {
-        Optional<MeetPlan> plan = planRepository.findById(data.getPostId());
+        if (data.getPlanId() != null && data.getReviewId() == null) {
+            MeetPlan plan = planRepository.findById(data.getPlanId())
+                    .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_PLAN));
 
-        if (plan.isPresent()) {
             return users.stream()
                     .map(u ->
                             Notification.builder()
                                     .type(getType())
                                     .action(COMPLETE)
-                                    .meetId(plan.get().getMeet().getId())
-                                    .planId(plan.get().getId())
+                                    .meetId(plan.getMeet().getId())
+                                    .planId(plan.getId())
                                     .payload(notify.payload())
                                     .user(u)
                                     .build()
@@ -65,7 +66,7 @@ public class CommentMentionNotifyHandler implements NotifyHandler<CommentMention
                     .toList();
         }
 
-        PlanReview review = reviewRepository.findReviewByPostId(data.getPostId())
+        PlanReview review = reviewRepository.findReview(data.getReviewId())
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_REVIEW));
 
         return users.stream()

@@ -5,6 +5,8 @@ import com.mople.dto.event.data.comment.CommentReplyEventData;
 import com.mople.entity.meet.comment.PlanComment;
 import com.mople.entity.user.User;
 import com.mople.global.event.data.notify.NotifyEventPublisher;
+import com.mople.meet.repository.plan.MeetPlanRepository;
+import com.mople.meet.repository.review.PlanReviewRepository;
 import com.mople.notification.reader.NotificationUserReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -18,6 +20,8 @@ public class CommentEventPublisher {
 
     private final ApplicationEventPublisher publisher;
     private final NotificationUserReader userReader;
+    private final MeetPlanRepository planRepository;
+    private final PlanReviewRepository reviewRepository;
 
     public void publishMentionEvent(List<Long> originMentions, List<Long> newMentions, PlanComment comment, String meetName) {
         if (newMentions == null || newMentions.isEmpty()) return;
@@ -25,8 +29,8 @@ public class CommentEventPublisher {
         publisher.publishEvent(
                 NotifyEventPublisher.commentMention(
                         CommentMentionEventData.builder()
-                                .postId(comment.getPostId())
-                                .meetName(meetName)
+                                .planId(getPlanId(comment.getPostId()))
+                                .reviewId(getReviewId(comment.getPostId()))                                .meetName(meetName)
                                 .commentId(comment.getId())
                                 .commentContent(comment.getContent())
                                 .senderId(comment.getWriter().getId())
@@ -51,7 +55,8 @@ public class CommentEventPublisher {
             publisher.publishEvent(
                     NotifyEventPublisher.commentReply(
                             CommentReplyEventData.builder()
-                                    .postId(comment.getPostId())
+                                    .planId(getPlanId(comment.getPostId()))
+                                    .reviewId(getReviewId(comment.getPostId()))
                                     .meetName(meetName)
                                     .commentId(comment.getId())
                                     .commentContent(comment.getContent())
@@ -62,5 +67,19 @@ public class CommentEventPublisher {
                     )
             );
         }
+    }
+
+    private Long getPlanId(Long postId) {
+        if (planRepository.existsById(postId)) {
+            return postId;
+        }
+        return null;
+    }
+
+    private Long getReviewId(Long postId) {
+        if (reviewRepository.existsByPlanId(postId)) {
+            return postId;
+        }
+        return null;
     }
 }
