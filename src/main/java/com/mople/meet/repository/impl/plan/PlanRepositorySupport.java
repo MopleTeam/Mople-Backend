@@ -327,6 +327,7 @@ public class PlanRepositorySupport {
                 .from(plan)
                 .where(
                         plan.status.eq(Status.ACTIVE),
+                        plan.planTime.after(now),
                         plan.planTime.before(now.plusDays(5))
                 )
                 .orderBy(
