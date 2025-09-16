@@ -15,7 +15,6 @@ import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.notification.reader.NotificationUserReader;
 import com.mople.notification.repository.NotificationRepository;
 import com.mople.outbox.service.OutboxService;
-import com.mople.weather.service.WeatherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -32,7 +31,6 @@ public class PlanRemindNotifier implements DomainEventHandler<PlanRemindEvent> {
     private final MeetPlanRepository planRepository;
     private final NotificationRepository notificationRepository;
 
-    private final WeatherService weatherService;
     private final NotificationUserReader userReader;
     private final OutboxService outboxService;
 

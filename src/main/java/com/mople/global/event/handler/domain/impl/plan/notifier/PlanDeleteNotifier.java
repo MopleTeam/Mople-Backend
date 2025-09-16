@@ -15,7 +15,6 @@ import com.mople.meet.repository.MeetRepository;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.notification.reader.NotificationUserReader;
 import com.mople.notification.repository.NotificationRepository;
-import com.mople.outbox.repository.OutboxEventRepository;
 import com.mople.outbox.service.OutboxService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -35,7 +34,6 @@ public class PlanDeleteNotifier implements DomainEventHandler<PlanSoftDeletedEve
 
     private final NotificationUserReader userReader;
     private final OutboxService outboxService;
-    private final OutboxEventRepository outboxEventRepository;
 
     @Override
     public Class<PlanSoftDeletedEvent> getHandledType() {
