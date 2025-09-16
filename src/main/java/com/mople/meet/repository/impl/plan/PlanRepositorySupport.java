@@ -200,7 +200,7 @@ public class PlanRepositorySupport {
                                 plan.pop
                         )
                 )
-                .from(meet)
+                .from(plan)
                 .join(meet).on(meet.id.eq(plan.meetId))
                 .join(meetMember).on(
                         meetMember.meetId.eq(meet.id)
@@ -237,7 +237,7 @@ public class PlanRepositorySupport {
                                 review.pop
                         )
                 )
-                .from(meet)
+                .from(review)
                 .join(meet).on(meet.id.eq(review.meetId))
                 .join(meetMember).on(
                         meetMember.meetId.eq(meet.id)
