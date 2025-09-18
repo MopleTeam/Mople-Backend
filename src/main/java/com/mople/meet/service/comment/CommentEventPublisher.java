@@ -3,6 +3,7 @@ package com.mople.meet.service.comment;
 import com.mople.dto.event.data.comment.CommentMentionEventData;
 import com.mople.dto.event.data.comment.CommentReplyEventData;
 import com.mople.entity.meet.comment.PlanComment;
+import com.mople.entity.meet.review.PlanReview;
 import com.mople.entity.user.User;
 import com.mople.global.event.data.notify.NotifyEventPublisher;
 import com.mople.meet.repository.plan.MeetPlanRepository;
@@ -13,6 +14,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -77,9 +79,7 @@ public class CommentEventPublisher {
     }
 
     private Long getReviewId(Long postId) {
-        if (reviewRepository.existsByPlanId(postId)) {
-            return postId;
-        }
-        return null;
+        Optional<PlanReview> review = reviewRepository.findReviewByPostId(postId);
+        return review.map(PlanReview::getId).orElse(null);
     }
 }

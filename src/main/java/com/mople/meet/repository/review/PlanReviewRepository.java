@@ -20,6 +20,4 @@ public interface PlanReviewRepository extends JpaRepository<PlanReview, Long> {
 
     @Query("select r from PlanReview r where r.planId in :postIds")
     List<PlanReview> findReviewsByPostId(List<Long> postIds);
-
-    boolean existsByPlanId(Long planId);
 }

@@ -66,7 +66,7 @@ public class CommentReplyNotifyHandler implements NotifyHandler<CommentReplyEven
                     .toList();
         }
 
-        PlanReview review = reviewRepository.findReviewByPostId(data.getReviewId())
+        PlanReview review = reviewRepository.findReview(data.getReviewId())
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_REVIEW));
 
         return users.stream()
