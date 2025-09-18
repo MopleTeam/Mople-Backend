@@ -132,7 +132,9 @@ public class MeetService {
             throw new ConcurrencyConflictException(REQUEST_CONFLICT, currentVersion);
         }
 
-        if (!Objects.equals(oldImage, request.image())) {
+        if ((oldImage != null && !oldImage.isBlank())
+                && !Objects.equals(oldImage, request.image())) {
+
             MeetImageChangedEvent changedEvent = MeetImageChangedEvent.builder()
                     .meetId(meetId)
                     .imageUrl(oldImage)

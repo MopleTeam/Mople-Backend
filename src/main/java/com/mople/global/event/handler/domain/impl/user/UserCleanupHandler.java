@@ -30,6 +30,10 @@ public class UserCleanupHandler implements DomainEventHandler<UserDeletedEvent> 
         notificationRepository.deleteByUserId(event.userId());
         topicRepository.deleteByUserId(event.userId());
 
+        if (event.userProfileImg() == null || event.userProfileImg().isBlank()) {
+            return;
+        }
+
         ImageDeletedEvent deletedEvent = ImageDeletedEvent.builder()
                 .aggregateType(USER)
                 .aggregateId(event.userId())

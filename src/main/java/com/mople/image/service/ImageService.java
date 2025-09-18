@@ -1,8 +1,10 @@
 package com.mople.image.service;
 
 import com.mople.core.exception.custom.FileHandleException;
+import com.mople.dto.event.data.domain.image.ImageDeletedEvent;
 import com.mople.dto.request.meet.review.ReviewImageRequest;
 import com.mople.global.enums.ExceptionReturnCode;
+import com.oracle.bmc.model.BmcException;
 import com.oracle.bmc.objectstorage.ObjectStorageClient;
 import com.oracle.bmc.objectstorage.model.CreatePreauthenticatedRequestDetails;
 import com.oracle.bmc.objectstorage.requests.CreatePreauthenticatedRequestRequest;
@@ -11,16 +13,22 @@ import com.oracle.cloud.spring.storage.Storage;
 import com.oracle.cloud.spring.storage.StorageObjectMetadata;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -134,5 +142,65 @@ public class ImageService {
 
     private String createName(String folder, String type) {
         return String.format("%s/%s.%s", folder, UUID.randomUUID(), type);
+    }
+
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void deleteImage(String imageUrl) {
+        String objectName = extractObjectName(imageUrl);
+        if (objectName == null || !deleteValid(imageUrl) || !hasAllowedExtension(objectName)) {
+            return;
+        }
+
+        try {
+            storage.deleteObject(bucketName, objectName);
+        } catch (BmcException e) {
+            int status = e.getStatusCode();
+            if (status == 404) {
+                return;
+            }
+            throw e;
+        }
+    }
+
+    private boolean deleteValid(String url) {
+        try {
+            URI uri = URI.create(url);
+
+            String host = uri.getHost();
+            if (host == null || !host.contains("objectstorage") || !host.endsWith("oraclecloud.com")) {
+                return false;
+            }
+
+            String rawPath = uri.getRawPath();
+            String mustPrefix = "/n/" + namespace + "/b/" + bucketName + "/o/";
+
+            return rawPath != null && rawPath.startsWith(mustPrefix);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private String extractObjectName(String url) {
+        try {
+            URI uri = URI.create(url);
+            String rawPath = uri.getRawPath();
+
+            // URL : .../o/folder/image.png
+            int index = rawPath.indexOf("/o/");
+            if (index < 0) {
+                return null;
+            }
+
+            String encoded = rawPath.substring(index + 3);
+
+            return URLDecoder.decode(encoded, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private boolean hasAllowedExtension(String objectName) {
+        String lower = objectName.toLowerCase(Locale.ROOT);
+        return lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png");
     }
 }
