@@ -3,7 +3,6 @@ package com.mople.meet.controller;
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.CommentClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
-import com.mople.dto.request.meet.comment.CommentUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.response.pagination.CursorPageResponse;
@@ -66,13 +65,9 @@ public class CommentController {
     public ResponseEntity<CommentClientResponse> createComment(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
-            @RequestBody @Valid CommentCreateRequest commentCreateRequest
+            @Valid @RequestBody CommentCreateRequest commentCreateRequest
     ) {
-        var body = commentService.createComment(user.id(), postId, commentCreateRequest);
-
-        return ResponseEntity.ok()
-                .eTag("\"" + body.getVersion() + "\"")
-                .body(body);
+        return ResponseEntity.ok(commentService.createComment(user.id(), postId, commentCreateRequest));
     }
 
     @Operation(
@@ -84,13 +79,9 @@ public class CommentController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
             @PathVariable Long commentId,
-            @RequestBody @Valid CommentCreateRequest commentCreateRequest
+            @Valid @RequestBody CommentCreateRequest commentCreateRequest
     ) {
-        var body = commentService.createCommentReply(user.id(), postId, commentId, commentCreateRequest);
-
-        return ResponseEntity.ok()
-                .eTag("\"" + body.getVersion() + "\"")
-                .body(body);
+        return ResponseEntity.ok(commentService.createCommentReply(user.id(), postId, commentId, commentCreateRequest));
     }
 
     @Operation(
@@ -101,13 +92,9 @@ public class CommentController {
     public ResponseEntity<CommentClientResponse> updateComment(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long commentId,
-            @RequestBody @Valid CommentUpdateRequest commentUpdateRequest
+            @RequestBody CommentCreateRequest commentCreateRequest
     ) {
-        var body = commentService.updateComment(user.id(), commentId, commentUpdateRequest);
-
-        return ResponseEntity.ok()
-                .eTag("\"" + body.getVersion() + "\"")
-                .body(body);
+        return ResponseEntity.ok(commentService.updateComment(user.id(), commentId, commentCreateRequest));
     }
 
     @Operation(

@@ -25,9 +25,6 @@ import static java.util.Objects.isNull;
 
 @Service
 public class WeatherService {
-
-    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
-
     private final OkHttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final String ID;
@@ -61,7 +58,7 @@ public class WeatherService {
                     double pop = weatherList.get(0).pop();
                     String weatherIcon = weatherList.get(0).weather().get(0).icon();
 
-                    var time = planTime.atZone(KST).toEpochSecond();
+                    var time = planTime.atZone(ZoneId.systemDefault()).toEpochSecond();
 
                     for (var i = 0; i < weatherList.size() - 1; i++) {
                         var before = weatherList.get(i);

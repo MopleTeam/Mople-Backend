@@ -1,6 +1,9 @@
 package com.mople.entity.meet.plan;
 
+import com.mople.dto.response.weather.WeatherInfoResponse;
 import com.mople.entity.common.BaseTimeEntity;
+import com.mople.entity.meet.Meet;
+import com.mople.entity.user.User;
 import com.mople.global.enums.Status;
 import com.mople.dto.request.meet.plan.PlanUpdateRequest;
 
@@ -10,20 +13,19 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Entity
 @Table(name = "meet_plan")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MeetPlan extends BaseTimeEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "plan_id")
     private Long id;
-
-    @Version
-    private Long version;
 
     @Column(name = "name", nullable = false)
     private String name;
@@ -62,20 +64,19 @@ public class MeetPlan extends BaseTimeEntity {
     @Column(name = "status", length = 15)
     private Status status;
 
-    @Column(name = "creator_id", nullable = false)
-    private Long creatorId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "creator_id")
+    private User creator;
 
-    @Column(name = "meet_id", nullable = false)
-    private Long meetId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "meet_id")
+    private Meet meet;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    @Column(name = "deleted_by")
-    private Long deletedBy;
+    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PlanParticipant> participants = new ArrayList<>();
 
     @Builder
-    public MeetPlan(String name, LocalDateTime planTime, String address, String title, BigDecimal latitude, BigDecimal longitude, String weatherAddress, Long creatorId, Long meetId) {
+    public MeetPlan(String name, LocalDateTime planTime, String address, String title, BigDecimal latitude, BigDecimal longitude, String weatherAddress, User creator, Meet meet, Status status) {
         this.name = name;
         this.planTime = planTime;
         this.address = address;
@@ -83,13 +84,46 @@ public class MeetPlan extends BaseTimeEntity {
         this.latitude = latitude;
         this.longitude = longitude;
         this.weatherAddress = weatherAddress;
-        this.creatorId = creatorId;
-        this.meetId = meetId;
-        this.status = Status.ACTIVE;
+        this.creator = creator;
+        this.meet = meet;
+        this.status = status;
+    }
+
+    public void updateWeather(WeatherInfoResponse response) {
+        if (response != null) {
+            this.weatherIcon = response.weatherIcon();
+            this.temperature = response.temperature();
+            this.pop = response.pop();
+            this.weatherUpdatedAt = LocalDateTime.now();
+        }
+    }
+
+    public void deleteWeatherInfo() {
+        this.weatherIcon = null;
+        this.temperature = null;
+        this.pop = null;
+        this.weatherUpdatedAt = LocalDateTime.now();
+    }
+
+    public void updateMeet(Meet meet) {
+        this.meet = meet;
+    }
+
+    public void removeMeet() {
+        this.meet = null;
+    }
+
+    public void addParticipant(PlanParticipant participant) {
+        participant.updatePlan(this);
+        participants.add(participant);
+    }
+
+    public void removeParticipant(Long userId) {
+        participants.removeIf(participant -> !creator.getId().equals(userId) && participant.getUser().getId().equals(userId));
     }
 
     public boolean isCreator(Long userId) {
-        return !creatorId.equals(userId);
+        return !creator.getId().equals(userId);
     }
 
     public boolean updatePlan(PlanUpdateRequest request) {
@@ -106,13 +140,20 @@ public class MeetPlan extends BaseTimeEntity {
         return !flag;
     }
 
-    public void softDelete(Long deletedBy) {
-        if (status == Status.DELETED) {
-            return;
-        }
+    public boolean findParticipantInUser(Long userId) {
+        return participants
+                .stream()
+                .noneMatch(participant -> participant.getUser().getId().equals(userId));
+    }
 
-        this.status = Status.DELETED;
-        this.deletedAt = LocalDateTime.now();
-        this.deletedBy = deletedBy;
+    public Optional<PlanParticipant> getParticipantById(Long userId) {
+        return participants
+                .stream()
+                .filter(participant -> participant.getUser().getId().equals(userId))
+                .findFirst();
+    }
+
+    public boolean equalTime(LocalDateTime time) {
+        return planTime.equals(time);
     }
 }

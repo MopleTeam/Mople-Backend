@@ -2,14 +2,12 @@ package com.mople.dto.response.meet.review;
 
 import com.mople.entity.meet.review.PlanReview;
 import com.mople.entity.meet.review.ReviewImage;
-import lombok.Builder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 public record PlanReviewDetailResponse(
-        Long version,
         Long meetId,
         Long postId,
         Long reviewId,
@@ -26,20 +24,13 @@ public record PlanReviewDetailResponse(
         boolean register,
         List<ReviewImageResponse> images
 ) {
-    public PlanReviewDetailResponse(
-            PlanReview review,
-            String meetName,
-            String meetImage,
-            int participantsCount,
-            List<ReviewImage> images
-    ) {
+    public PlanReviewDetailResponse(PlanReview review) {
         this(
-                review.getVersion(),
-                review.getMeetId(),
+                review.getMeet().getId(),
                 review.getPlanId(),
                 review.getId(),
-                meetName,
-                meetImage,
+                review.getMeet().getName(),
+                review.getMeet().getMeetImage(),
                 review.getCreatorId(),
                 review.getName(),
                 review.getAddress(),
@@ -47,25 +38,18 @@ public record PlanReviewDetailResponse(
                 review.getLatitude(),
                 review.getLongitude(),
                 review.getPlanTime(),
-                participantsCount,
+                review.getParticipants().size(),
                 review.getUpload(),
-                ReviewImageResponse.ofImageResponses(images)
+                review.getImages().stream().map(ReviewImageResponse::new).toList()
         );
     }
 
-    @Builder
     public record ReviewImageResponse(
             Long imageId,
             String reviewImg
     ) {
-        public static List<ReviewImageResponse> ofImageResponses(List<ReviewImage> images) {
-            return images.stream()
-                    .map(
-                    i -> ReviewImageResponse.builder()
-                            .imageId(i.getId())
-                            .reviewImg(i.getReviewImage())
-                            .build()
-                    ).toList();
+        public ReviewImageResponse(ReviewImage reviewImage) {
+            this(reviewImage.getId(), reviewImage.getReviewImage());
         }
     }
 }

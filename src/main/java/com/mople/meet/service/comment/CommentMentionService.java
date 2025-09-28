@@ -54,4 +54,12 @@ public class CommentMentionService {
     public List<Long> findUserIdByCommentId(Long commentId) {
         return mentionRepository.findUserIdByCommentId(commentId);
     }
+
+    public void deleteByCommentIds(List<Long> replyIds) {
+        mentionRepository.deleteByCommentIdIn(replyIds);
+    }
+
+    public void deleteByCommentId(Long commentId) {
+        mentionRepository.deleteByCommentId(commentId);
+    }
 }

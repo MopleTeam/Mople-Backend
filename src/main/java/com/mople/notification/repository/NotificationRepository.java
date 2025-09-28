@@ -2,10 +2,9 @@ package com.mople.notification.repository;
 
 import com.mople.dto.response.notification.NotificationResponse;
 import com.mople.entity.notification.Notification;
-
 import com.mople.global.enums.Action;
+
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -14,6 +13,8 @@ import java.util.Optional;
 
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
+    @Query("select n from Notification n where n.planId = :planId and n.action = :action")
+    List<Notification> findPlanRemindNotification(Long planId, Action action);
 
     @Query(value =
             "select n.notification_id as notificationId," +
@@ -62,8 +63,11 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     )
     List<NotificationResponse.NotificationListInterface> findNotificationNextPage(Long userId, String action, Long cursorId, int limit);
 
-    @Query(value = "select n from Notification n where n.userId = :userId")
-    List<Notification> getUserNotificationList(Long userId);
+    @Query(value = "select n from Notification n join fetch n.user where n.user.id = :userId and n.action = :action")
+    List<Notification> getUserNotificationList(Long userId, Action action);
+
+    @Query("select n from Notification n join fetch n.user where n.user.id = :userId")
+    List<Notification> findAllNotificationByUser(Long userId);
 
     @Query(value =
         "select count(*) " +
@@ -76,23 +80,12 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     )
     Long countBadgeCount(Long userId, String action);
 
-    @Query(
-            "select n " +
-            "  from Notification n" +
-            " where n.id = :cursorId " +
-            "   and n.action = :action"
+    @Query(value =
+            "select 1 " +
+            "  from notification " +
+            " where notification_id = :cursorId " +
+            " limit 1 ",
+            nativeQuery = true
     )
-    Optional<Notification> isCursorInvalid(Long cursorId, Action action);
-
-    @Modifying(flushAutomatically = true)
-    @Query("delete from Notification n where n.userId = :userId")
-    void deleteByUserId(Long userId);
-
-    @Query(
-            "select n " +
-            "  from Notification n " +
-            " where n.id in :ids " +
-            "   and n.action = com.mople.global.enums.Action.PENDING"
-    )
-    List<Notification> findAll(List<Long> ids);
+    Optional<Integer> isCursorInvalid(Long cursorId);
 }

@@ -1,7 +1,6 @@
 package com.mople.image.service;
 
 import com.mople.core.exception.custom.FileHandleException;
-import com.mople.dto.event.data.domain.image.ImageDeletedEvent;
 import com.mople.dto.request.meet.review.ReviewImageRequest;
 import com.mople.global.enums.ExceptionReturnCode;
 import com.oracle.bmc.model.BmcException;
@@ -13,8 +12,6 @@ import com.oracle.cloud.spring.storage.Storage;
 import com.oracle.cloud.spring.storage.StorageObjectMetadata;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -144,7 +141,6 @@ public class ImageService {
         return String.format("%s/%s.%s", folder, UUID.randomUUID(), type);
     }
 
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void deleteImage(String imageUrl) {
         String objectName = extractObjectName(imageUrl);
         if (objectName == null || !deleteValid(imageUrl) || !hasAllowedExtension(objectName)) {

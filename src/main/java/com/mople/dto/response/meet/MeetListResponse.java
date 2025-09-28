@@ -4,9 +4,8 @@ import java.time.LocalDateTime;
 
 public record MeetListResponse(
         Long meetId,
-        Long version,
         String meetName,
         String meetImage,
-        Integer memberCount,
+        int memberCount,
         LocalDateTime lastPlanDays
 ) {}

@@ -1,12 +1,9 @@
 package com.mople.meet.service.comment;
 
-import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.entity.meet.comment.CommentLike;
-import com.mople.entity.meet.comment.CommentStats;
 import com.mople.entity.meet.comment.PlanComment;
-import com.mople.global.enums.ExceptionReturnCode;
 import com.mople.meet.repository.comment.CommentLikeRepository;
-import com.mople.meet.repository.comment.CommentStatsRepository;
+import com.mople.meet.repository.comment.PlanCommentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,23 +16,19 @@ import java.util.Optional;
 public class CommentLikeService {
 
     private final CommentLikeRepository likeRepository;
-    private final CommentStatsRepository statsRepository;
+    private final PlanCommentRepository commentRepository;
 
     @Transactional
     public boolean toggleLike(Long userId, PlanComment comment) {
-        CommentStats stats = statsRepository.findById(comment.getId())
-                .orElseThrow(() -> new ResourceNotFoundException(ExceptionReturnCode.NOT_FOUND_COMMENT_STATS));
-
         Optional<CommentLike> existingLike = likeRepository.findByUserIdAndCommentId(userId, comment.getId());
 
-        if (existingLike.isPresent() && stats.canDecreaseLikeCount()) {
-
-            statsRepository.decreaseLikeCount(comment.getId());
+        if (existingLike.isPresent() && comment.canDecreaseLikeCount()) {
+            commentRepository.decreaseLikeCount(comment.getId());
             likeRepository.delete(existingLike.get());
             return false;
         }
 
-        statsRepository.increaseLikeCount(comment.getId());
+        commentRepository.increaseLikeCount(comment.getId());
         likeRepository.insertIfNotExists(comment.getId(), userId);
 
         return true;
@@ -47,5 +40,13 @@ public class CommentLikeService {
 
     public boolean likedByMe(Long userId, Long commentId) {
         return likeRepository.existsByUserIdAndCommentId(userId, commentId);
+    }
+
+    public void deleteByCommentIds(List<Long> replyIds) {
+        likeRepository.deleteByCommentIdIn(replyIds);
+    }
+
+    public void deleteByCommentId(Long commentId) {
+        likeRepository.deleteByCommentId(commentId);
     }
 }

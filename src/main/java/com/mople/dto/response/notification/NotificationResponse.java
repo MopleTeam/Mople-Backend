@@ -2,7 +2,7 @@ package com.mople.dto.response.notification;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mople.global.enums.event.NotifyType;
+import com.mople.global.enums.NotifyType;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

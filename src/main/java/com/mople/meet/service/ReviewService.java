@@ -1,11 +1,11 @@
 package com.mople.meet.service;
 
-import com.mople.core.exception.custom.*;
+import com.mople.core.exception.custom.BadRequestException;
+import com.mople.core.exception.custom.CursorException;
+import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.ReviewClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
-import com.mople.dto.event.data.domain.review.ReviewImageRemoveEvent;
-import com.mople.dto.event.data.domain.review.ReviewSoftDeletedEvent;
-import com.mople.dto.event.data.domain.review.ReviewUploadEvent;
+import com.mople.dto.event.data.review.ReviewUpdateEventData;
 import com.mople.dto.request.meet.review.ReviewImageDeleteRequest;
 import com.mople.dto.request.meet.review.ReviewReportRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
@@ -13,8 +13,6 @@ import com.mople.dto.response.meet.review.PlanReviewDetailResponse;
 import com.mople.dto.response.meet.review.ReviewImageListResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
-import com.mople.dto.response.user.UserInfo;
-import com.mople.global.enums.Status;
 import com.mople.global.utils.cursor.MemberCursor;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.plan.PlanParticipant;
@@ -22,39 +20,32 @@ import com.mople.entity.meet.review.PlanReview;
 import com.mople.entity.meet.review.ReviewImage;
 import com.mople.entity.meet.review.ReviewReport;
 import com.mople.entity.user.User;
+import com.mople.global.enums.ExceptionReturnCode;
+import com.mople.global.event.data.notify.NotifyEventPublisher;
 import com.mople.global.utils.cursor.CursorUtils;
+import com.mople.image.service.ImageService;
+import com.mople.meet.mapper.ReviewMapper;
 import com.mople.meet.reader.EntityReader;
-import com.mople.meet.repository.MeetMemberRepository;
 import com.mople.meet.repository.impl.comment.CommentRepositorySupport;
 import com.mople.meet.repository.impl.plan.ParticipantRepositorySupport;
 import com.mople.meet.repository.impl.review.ReviewRepositorySupport;
-import com.mople.meet.repository.plan.PlanParticipantRepository;
 import com.mople.meet.repository.review.PlanReviewRepository;
 import com.mople.meet.repository.review.ReviewImageRepository;
 import com.mople.dto.response.meet.review.PlanReviewInfoResponse;
 import com.mople.meet.repository.review.ReviewReportRepository;
 
-import com.mople.outbox.service.OutboxService;
-import com.mople.user.repository.UserRepository;
-import jakarta.persistence.OptimisticLockException;
 import jakarta.validation.constraints.NotNull;
 
 import lombok.RequiredArgsConstructor;
 
-import org.hibernate.StaleObjectStateException;
-import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 
 import static com.mople.dto.client.ReviewClientResponse.*;
 import static com.mople.dto.client.UserRoleClientResponse.ofParticipants;
-import static com.mople.dto.response.meet.review.ReviewImageListResponse.ofReviewImageResponses;
-import static com.mople.dto.response.user.UserInfo.ofMap;
-import static com.mople.global.enums.event.AggregateType.REVIEW;
-import static com.mople.global.enums.event.EventTypeNames.*;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
@@ -66,40 +57,29 @@ public class ReviewService {
     private static final int REVIEW_PARTICIPANT_CURSOR_FIELD_COUNT = 2;
 
     private final PlanReviewRepository planReviewRepository;
-    private final PlanParticipantRepository participantRepository;
     private final ReviewImageRepository reviewImageRepository;
     private final ReviewReportRepository reviewReportRepository;
     private final CommentRepositorySupport commentRepositorySupport;
     private final ReviewRepositorySupport reviewRepositorySupport;
-    private final MeetMemberRepository memberRepository;
     private final ParticipantRepositorySupport participantRepositorySupport;
-    private final UserRepository userRepository;
 
+    private final ImageService imageService;
+    private final ReviewMapper mapper;
     private final EntityReader reader;
-    private final OutboxService outboxService;
+    private final ApplicationEventPublisher publisher;
 
     @Transactional(readOnly = true)
-    public FlatCursorPageResponse<ReviewClientResponse> getReviewList(Long userId, Long meetId, CursorPageRequest request) {
-        reader.findUser(userId);
-        reader.findMeet(meetId);
-
-        if (!memberRepository.existsByMeetIdAndUserId(meetId, userId)) {
-            throw new AuthException(NOT_MEMBER);
-        }
+    public FlatCursorPageResponse<ReviewClientResponse> getAllMeetReviews(Long userId, Long meetId, CursorPageRequest request) {
+        validateMemberByMeetId(userId, meetId);
 
         int size = request.getSafeSize();
         List<PlanReview> reviews = getReviews(meetId, request.cursor(), size);
         List<PlanReviewInfoResponse> reviewInfoResponses = reviews.stream()
-                .map((r) -> {
-                    Integer participantCount = participantRepository.countByReviewId(r.getId());
-                    List<ReviewImage> images = reviewImageRepository.findByReviewId(r.getId());
-
-                    return new PlanReviewInfoResponse(r, participantCount, images);
-                })
+                .map(PlanReviewInfoResponse::new)
                 .toList();
 
         return FlatCursorPageResponse.of(
-                planReviewRepository.countByMeetIdAndStatus(meetId, Status.ACTIVE),
+                reviewRepositorySupport.countReviews(meetId),
                 buildReviewCursorPage(size, reviewInfoResponses)
         );
     }
@@ -128,106 +108,61 @@ public class ReviewService {
         return buildCursorPage(
                 reviewInfoResponses,
                 size,
-                r -> new String[]{
-                        r.reviewId().toString()
+                c -> new String[]{
+                        c.reviewId().toString()
                 },
                 ReviewClientResponse::ofInfos
         );
     }
 
+    private void validateMemberByMeetId(Long userId, Long meetId) {
+        User user = reader.findUser(userId);
+        Meet meet = reader.findMeet(meetId);
+
+        if (meet.matchMember(user.getId())) {
+            throw new BadRequestException(NOT_MEMBER);
+        }
+    }
+
     @Transactional(readOnly = true)
     public ReviewClientResponse getReviewDetail(Long reviewId) {
-        PlanReview review = reader.findReview(reviewId);
-        Meet meet = reader.findMeet(review.getMeetId());
-
-        Integer participantCount = participantRepository.countByReviewId(reviewId);
-        List<ReviewImage> images = reviewImageRepository.findByReviewId(reviewId);
-
-        Integer commentCount = commentRepositorySupport.countComment(review.getPlanId());
+        PlanReview review = planReviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_REVIEW));
 
         return ofDetail(
-                new PlanReviewDetailResponse(
-                        review,
-                        meet.getName(),
-                        meet.getMeetImage(),
-                        participantCount,
-                        images
-                ),
-                commentCount
+                new PlanReviewDetailResponse(review),
+                commentRepositorySupport.countComment(review.getPlanId())
         );
     }
 
     @Transactional(readOnly = true)
     public ReviewClientResponse getReviewDetailByPost(Long postId) {
-        PlanReview review = reader.findReviewByPostId(postId);
-        Meet meet = reader.findMeet(review.getMeetId());
-
-        Integer participantCount = participantRepository.countByReviewId(review.getId());
-        List<ReviewImage> images = reviewImageRepository.findByReviewId(review.getId());
-
-        Integer commentCount = commentRepositorySupport.countComment(review.getPlanId());
+        PlanReview review = planReviewRepository.findById(postId)
+                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_REVIEW));
 
         return ofDetail(
-                new PlanReviewDetailResponse(
-                        review,
-                        meet.getName(),
-                        meet.getMeetImage(),
-                        participantCount,
-                        images
-                ),
-                commentCount
+                new PlanReviewDetailResponse(review),
+                commentRepositorySupport.countComment(review.getPlanId())
         );
     }
 
     @Transactional
-    public void removeReview(Long userId, Long reviewId) {
-        reader.findUser(userId);
-        PlanReview review = reader.findReview(reviewId);
-
-        if (review.isCreator(userId)) {
-            throw new AuthException(NOT_CREATOR);
-        }
-
-        review.softDelete(userId);
-
-        try {
-            planReviewRepository.flush();
-
-        } catch (
-                OptimisticLockException
-                | OptimisticLockingFailureException
-                | StaleObjectStateException e
-        ) {
-            throw new ConcurrencyConflictException(REQUEST_CONFLICT, getVersion(review.getId()));
-        }
-
-        ReviewSoftDeletedEvent deletedEvent = ReviewSoftDeletedEvent.builder()
-                .planId(review.getPlanId())
-                .reviewId(reviewId)
-                .reviewDeletedBy(userId)
-                .build();
-
-        outboxService.save(REVIEW_SOFT_DELETED, REVIEW, reviewId, deletedEvent);
+    public void removeReview(Long reviewId) {
+        planReviewRepository.deleteById(reviewId);
     }
 
     @Transactional(readOnly = true)
-    public FlatCursorPageResponse<UserRoleClientResponse> getParticipantList(Long userId, Long reviewId, CursorPageRequest request) {
-        reader.findUser(userId);
+    public FlatCursorPageResponse<UserRoleClientResponse> getReviewParticipants(Long userId, Long reviewId, CursorPageRequest request) {
         PlanReview review = reader.findReview(reviewId);
-
-        if (!memberRepository.existsByMeetIdAndUserId(review.getMeetId(), userId)) {
-            throw new AuthException(NOT_MEMBER);
-        }
-
-        Meet meet = reader.findMeet(review.getMeetId());
+        validateMemberByReviewId(userId, reviewId);
 
         int size = request.getSafeSize();
-        Long hostId = meet.getCreatorId();
+        Long hostId = review.getMeet().getCreator().getId();
         Long creatorId = review.getCreatorId();
         List<PlanParticipant> participants = getReviewParticipants(reviewId, hostId, creatorId, request.cursor(), size);
 
         return FlatCursorPageResponse.of(
-                participantRepository.countByReviewId(reviewId),
+                participantRepositorySupport.countReviewParticipants(reviewId),
                 buildParticipantCursorPage(size, participants, hostId, creatorId)
         );
     }
@@ -250,24 +185,24 @@ public class ReviewService {
     }
 
     private CursorPageResponse<UserRoleClientResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants, Long hostId, Long creatorId) {
-        List<Long> userIds = participants.stream()
-                .map(PlanParticipant::getUserId)
-                .toList();
-
-        Map<Long, UserInfo> userInfoById = ofMap(userRepository.findByIdInAndStatus(userIds, Status.ACTIVE));
-
         return buildCursorPage(
                 participants,
                 size,
-                p -> {
-                    User user = reader.findUser(p.getUserId());
-                    return new String[]{
-                            user.getNickname(),
-                            p.getId().toString()
-                    };
+                c -> new String[]{
+                        c.getUser().getNickname(),
+                        c.getId().toString()
                 },
-                list -> ofParticipants(list, userInfoById, hostId, creatorId)
+                list -> ofParticipants(list, hostId, creatorId)
         );
+    }
+
+    private void validateMemberByReviewId(Long userId, Long reviewId) {
+        User user = reader.findUser(userId);
+        PlanReview review = reader.findReview(reviewId);
+
+        if (review.getMeet().matchMember(user.getId())) {
+            throw new BadRequestException(NOT_MEMBER);
+        }
     }
 
     private void validateParticipantCursor(String cursorNickname, Long cursorId) {
@@ -278,97 +213,70 @@ public class ReviewService {
 
     @Transactional(readOnly = true)
     public List<ReviewImageListResponse> getReviewImages(Long reviewId) {
-        reader.findReview(reviewId);
         List<ReviewImage> reviewImages = reviewImageRepository.findByReviewId(reviewId);
 
         if (reviewImages.isEmpty()) {
             return List.of();
         }
 
-        return ofReviewImageResponses(reviewImages);
+        return mapper.getReviewImages(reviewImages);
     }
 
     @Transactional
-    public List<ReviewImageListResponse> removeReviewImages(
-            Long userId,
-            Long reviewId,
-            ReviewImageDeleteRequest request
-    ) {
-        reader.findUser(userId);
-        PlanReview review = reader.findReview(reviewId);
+    public List<ReviewImageListResponse> removeReviewImages(Long reviewId, ReviewImageDeleteRequest request) {
+        List<ReviewImage> reviewImages = reviewImageRepository.getReviewImages(request.reviewImages(), reviewId);
 
-        if (review.isCreator(userId)) {
-            throw new AuthException(NOT_CREATOR);
-        }
-
-        if (request.reviewImages() == null || request.reviewImages().isEmpty()) {
+        if (request.reviewImages().isEmpty()) {
             return List.of();
         }
 
-        List<ReviewImage> reviewImages = reviewImageRepository.getReviewImages(request.reviewImages(), reviewId);
+        PlanReview review = reviewImages.get(0).getReview();
 
-        if (reviewImages.isEmpty()) {
-            List<ReviewImage> images = reviewImageRepository.findByReviewId(reviewImages.get(0).getReviewId());
-            return ofReviewImageResponses(images);
-        }
+        reviewImages.forEach(i -> {
+            imageService.deleteImage(i.getReviewImage());
+            i.getReview().removeImage(i);
+        });
 
         reviewImageRepository.deleteAll(reviewImages);
 
-        reviewImages.forEach(i -> {
-            ReviewImageRemoveEvent removeEvent = ReviewImageRemoveEvent.builder()
-                    .reviewId(reviewId)
-                    .imageUrl(i.getReviewImage())
-                    .imageDeletedBy(userId)
-                    .build();
-
-            outboxService.save(REVIEW_IMAGE_REMOVE, REVIEW, reviewId, removeEvent);
-        });
-
-        planReviewRepository.upVersion(review.getId());
-
-        List<ReviewImage> images = reviewImageRepository.findByReviewId(reviewImages.get(0).getReviewId());
-        return ofReviewImageResponses(images);
+        return mapper.getReviewImages(review.getImages());
     }
 
     @Transactional
-    public List<String> storeReviewImages(
-            Long userId,
-            List<String> images,
-            Long reviewId
-    ) {
-        reader.findUser(userId);
-        PlanReview review = reader.findReview(reviewId);
+    public List<String> storeReviewImages(List<String> images, Long reviewId) {
+        PlanReview review =
+                planReviewRepository.findReview(reviewId)
+                        .orElseThrow(() -> new BadRequestException(ExceptionReturnCode.NOT_FOUND_REVIEW));
 
-        if (review.isCreator(userId)) {
-            throw new AuthException(NOT_CREATOR);
-        }
+        if (!review.getUpload()) {
+            review.updateUpload();
 
-        if (images == null || images.isEmpty()) {
-            return images;
+            publisher.publishEvent(
+                    NotifyEventPublisher.reviewUpdate(
+                            ReviewUpdateEventData.builder()
+                                    .meetId(review.getMeet().getId())
+                                    .meetName(review.getMeet().getName())
+                                    .reviewId(review.getId())
+                                    .reviewName(review.getName())
+                                    .reviewUpdatedBy(review.getCreatorId())
+                                    .build()
+                    )
+            );
         }
 
         reviewImageRepository.saveAll(
-                images.stream()
-                        .map(imageName ->
-                                ReviewImage.builder()
-                                        .reviewId(reviewId)
-                                        .reviewImage(imageName)
-                                        .build()
-                        )
-                        .toList()
+                images.stream().map(
+                        imageName -> {
+                            ReviewImage image = ReviewImage
+                                    .builder()
+                                    .reviewImage(imageName)
+                                    .build();
+                            review.updateImage(image);
+
+                            return image;
+                        }
+                ).toList()
         );
-
-        if (!review.getUpload()) {
-            ReviewUploadEvent uploadEvent = ReviewUploadEvent.builder()
-                    .reviewId(review.getId())
-                    .reviewUpdatedBy(userId)
-                    .build();
-
-            outboxService.save(REVIEW_UPLOAD, REVIEW, review.getId(), uploadEvent);
-        }
-
-        planReviewRepository.markUploaded(review.getId());
-        planReviewRepository.upVersion(review.getId());
 
         return images;
     }
@@ -381,9 +289,5 @@ public class ReviewService {
                         .reporterId(userId)
                         .build()
         );
-    }
-
-    public long getVersion(Long reviewId) {
-        return planReviewRepository.findVersion(reviewId);
     }
 }

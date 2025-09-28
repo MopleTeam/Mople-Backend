@@ -1,28 +1,27 @@
 package com.mople.entity.meet.review;
 
 import com.mople.entity.common.BaseTimeEntity;
+import com.mople.entity.meet.Meet;
+import com.mople.entity.meet.plan.PlanParticipant;
 
-import com.mople.global.enums.Status;
 import jakarta.persistence.*;
 
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "plan_review")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PlanReview extends BaseTimeEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "review_id")
     private Long id;
-
-    @Version
-    private Long version;
 
     @Column(name = "plan_id")
     private Long planId;
@@ -57,27 +56,24 @@ public class PlanReview extends BaseTimeEntity {
     @Column(name = "pop", length = 10)
     private Double pop;
 
-    @Column(name = "creator_id", nullable = false)
+    @Column(name = "creator_id")
     private Long creatorId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 10)
-    private Status status;
-
-    @Column(name = "upload", nullable = false)
+    @Column(name = "upload")
     private Boolean upload;
 
-    @Column(name = "meet_id", nullable = false)
-    private Long meetId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "meet_id")
+    private Meet meet;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PlanParticipant> participants = new ArrayList<>();
 
-    @Column(name = "deleted_by")
-    private Long deletedBy;
+    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ReviewImage> images = new ArrayList<>();
 
     @Builder
-    public PlanReview(Long planId, String name, BigDecimal latitude, BigDecimal longitude, LocalDateTime planTime, String address, String title, String weatherIcon, String weatherAddress, Double temperature, Double pop, Long creatorId, Long meetId) {
+    public PlanReview(Long planId, String name, BigDecimal latitude, BigDecimal longitude, LocalDateTime planTime, String address, String title, String weatherIcon, String weatherAddress, Double temperature, Double pop, Long creatorId) {
         this.planId = planId;
         this.name = name;
         this.planTime = planTime;
@@ -90,22 +86,31 @@ public class PlanReview extends BaseTimeEntity {
         this.temperature = temperature;
         this.pop = pop;
         this.creatorId = creatorId;
-        this.status = Status.ACTIVE;
         this.upload = false;
-        this.meetId = meetId;
     }
 
-    public boolean isCreator(Long userId) {
-        return !creatorId.equals(userId);
+    public void updateMeet(Meet meet) {
+        this.meet = meet;
     }
 
-    public void softDelete(Long deletedBy) {
-        if (status == Status.DELETED) {
-            return;
-        }
+    public void updateParticipants(List<PlanParticipant> participants) {
+        this.participants = new ArrayList<>(participants);
+    }
 
-        this.status = Status.DELETED;
-        this.deletedAt = LocalDateTime.now();
-        this.deletedBy = deletedBy;
+    public boolean findParticipantUser(Long userId) {
+        return participants.stream().anyMatch(p -> p.getUser().getId().equals(userId));
+    }
+
+    public void updateImage(ReviewImage image) {
+        image.updateReview(this);
+        images.add(image);
+    }
+
+    public void removeImage(ReviewImage image) {
+        images.remove(image);
+    }
+
+    public void updateUpload() {
+        this.upload = true;
     }
 }

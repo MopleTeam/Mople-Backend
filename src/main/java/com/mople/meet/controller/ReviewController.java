@@ -41,22 +41,18 @@ public class ReviewController {
             @PathVariable Long meetId,
             @ParameterObject @Valid CursorPageRequest request
     ) {
-        return ResponseEntity.ok(reviewService.getReviewList(user.id(), meetId, request));
+        return ResponseEntity.ok(reviewService.getAllMeetReviews(user.id(), meetId, request));
     }
 
     @Operation(
             summary = "후기 상세 조회 API",
-            description = "후기 review Id로 상세 조회합니다."
+            description = "후기 Post Id로 상세 조회합니다."
     )
     @GetMapping("/{reviewId}")
     public ResponseEntity<ReviewClientResponse> getReviewDetail(
             @PathVariable Long reviewId
     ) {
-        var body = reviewService.getReviewDetail(reviewId);
-
-        return ResponseEntity.ok()
-                .eTag("\"" + body.getVersion() + "\"")
-                .body(body);
+        return ResponseEntity.ok(reviewService.getReviewDetail(reviewId));
     }
 
     @Operation(
@@ -67,11 +63,7 @@ public class ReviewController {
     public ResponseEntity<ReviewClientResponse> getReviewDetailByPostId(
             @PathVariable Long postId
     ) {
-        var body = reviewService.getReviewDetailByPost(postId);
-
-        return ResponseEntity.ok()
-                .eTag("\"" + body.getVersion() + "\"")
-                .body(body);
+        return ResponseEntity.ok(reviewService.getReviewDetailByPost(postId));
     }
 
     @Operation(
@@ -80,10 +72,9 @@ public class ReviewController {
     )
     @DeleteMapping("/{reviewId}")
     public ResponseEntity<Void> removeReview(
-            @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long reviewId
     ) {
-        reviewService.removeReview(user.id(), reviewId);
+        reviewService.removeReview(reviewId);
         return ResponseEntity.ok().build();
     }
 
@@ -97,7 +88,7 @@ public class ReviewController {
             @PathVariable Long reviewId,
             @ParameterObject @Valid CursorPageRequest request
     ) {
-        return ResponseEntity.ok(reviewService.getParticipantList(user.id(), reviewId, request));
+        return ResponseEntity.ok(reviewService.getReviewParticipants(user.id(), reviewId, request));
     }
 
     @Operation(
@@ -117,19 +108,10 @@ public class ReviewController {
     )
     @DeleteMapping("/images/{reviewId}")
     public ResponseEntity<List<ReviewImageListResponse>> deleteReviewImages(
-            @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long reviewId,
             @RequestBody ReviewImageDeleteRequest reviewImageDeleteRequest
     ) {
-        var body = reviewService.removeReviewImages(
-                user.id(),
-                reviewId,
-                reviewImageDeleteRequest
-        );
-
-        return ResponseEntity.ok()
-                .eTag("\"" + reviewService.getVersion(reviewId) + "\"")
-                .body(body);
+        return ResponseEntity.ok(reviewService.removeReviewImages(reviewId, reviewImageDeleteRequest));
     }
 
     @Operation(

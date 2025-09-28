@@ -38,11 +38,7 @@ public class MeetController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @RequestBody MeetCreateRequest create
     ) {
-        var body = meetService.createMeet(user.id(), create);
-
-        return ResponseEntity.ok()
-                .eTag("\"" + body.getVersion() + "\"")
-                .body(body);
+        return ResponseEntity.ok(meetService.createMeet(user.id(), create));
     }
 
     @Operation(
@@ -55,11 +51,7 @@ public class MeetController {
             @PathVariable Long meetId,
             @RequestBody MeetUpdateRequest updateRequest
     ) {
-        var body = meetService.updateMeet(user.id(), meetId, updateRequest);
-
-        return ResponseEntity.ok()
-                .eTag("\"" + body.getVersion() + "\"")
-                .body(body);
+        return ResponseEntity.ok(meetService.updateMeet(user.id(), meetId, updateRequest));
     }
 
     @Operation(
@@ -83,11 +75,7 @@ public class MeetController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long meetId
     ) {
-        var body = meetService.getMeetDetail(user.id(), meetId);
-
-        return ResponseEntity.ok()
-                .eTag("\"" + body.getVersion() + "\"")
-                .body(body);
+        return ResponseEntity.ok(meetService.getMeetDetail(user.id(), meetId));
     }
 
     @Operation(
@@ -122,10 +110,9 @@ public class MeetController {
     )
     @PostMapping("/invite/{meetId}")
     public ResponseEntity<String> createInvite(
-            @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long meetId
     ) {
-        return ResponseEntity.ok(meetService.createInvite(user.id(), meetId));
+        return ResponseEntity.ok(meetService.createInvite(meetId));
     }
 
     @Operation(

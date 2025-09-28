@@ -12,7 +12,6 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MeetInvite {
-
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "invite_id")
@@ -32,6 +31,10 @@ public class MeetInvite {
         this.inviteCode = UUID.randomUUID().toString();
         this.expiredAt = LocalDateTime.now().plusDays(3);
         this.meetId = meetId;
+    }
+
+    public void generateInviteCode() {
+        inviteCode = UUID.randomUUID().toString();
     }
 
     public String getInviteUrl(String inviteUrl) {

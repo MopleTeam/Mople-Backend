@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 
 public record PlanListResponse(
         Long planId,
-        Long version,
         Long meetId,
         String meetName,
         String meetImage,
