@@ -3,6 +3,7 @@ package com.mople.notification.repository;
 import com.mople.entity.notification.FirebaseToken;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
@@ -13,4 +14,8 @@ public interface FirebaseTokenRepository extends JpaRepository<FirebaseToken, Lo
 
     @Query("select t.token from FirebaseToken t where t.userId in :memberIds")
     List<String> findMemberTokens(List<Long> memberIds);
+
+    @Modifying(flushAutomatically = true)
+    @Query("delete from FirebaseToken t where t.userId = :userId")
+    void deleteByUserId(Long userId);
 }

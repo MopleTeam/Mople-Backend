@@ -1,79 +1,39 @@
 package com.mople.meet.schedule;
 
-import com.mople.entity.meet.plan.MeetPlan;
-import com.mople.entity.meet.review.PlanReview;
+import com.mople.dto.event.data.domain.plan.PlanTransitionRequestedEvent;
+import com.mople.global.enums.Status;
 import com.mople.meet.repository.plan.MeetPlanRepository;
-import com.mople.meet.repository.review.PlanReviewRepository;
-
-import jakarta.transaction.Transactional;
-
+import com.mople.outbox.service.OutboxService;
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
 import java.util.List;
+
+import static com.mople.global.enums.event.AggregateType.PLAN;
+import static com.mople.global.enums.event.EventTypeNames.PLAN_TRANSITION_REQUESTED;
+import static com.mople.global.utils.batch.Batching.chunk;
 
 @Component
 @RequiredArgsConstructor
 public class PlanScheduler {
+
     private final MeetPlanRepository meetPlanRepository;
-    private final PlanReviewRepository planReviewRepository;
-    private final TaskScheduler taskScheduler;
-    private final PlanScheduleJob planScheduleJob;
+    private final OutboxService outboxService;
 
-    @Transactional
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "${cron.plan.transition}", zone = "Asia/Seoul")
     public void previousPlanReviewChangeSchedule() {
-        List<MeetPlan> previousPlanAll = meetPlanRepository.findPreviousPlanAll(LocalDateTime.now());
+        List<Long> previousPlanIds = meetPlanRepository.findPreviousPlanAll(LocalDateTime.now(), Status.ACTIVE);
 
-        List<PlanReview> planReviews = planReviewRepository.saveAll(
-                previousPlanAll
-                        .stream()
-                        .map(p -> {
-                            PlanReview review = PlanReview
-                                    .builder()
-                                    .planId(p.getId())
-                                    .name(p.getName())
-                                    .planTime(p.getPlanTime())
-                                    .address(p.getAddress())
-                                    .title(p.getTitle())
-                                    .latitude(p.getLatitude())
-                                    .longitude(p.getLongitude())
-                                    .weatherIcon(p.getWeatherIcon())
-                                    .weatherAddress(p.getWeatherAddress())
-                                    .temperature(p.getTemperature())
-                                    .pop(p.getPop())
-                                    .creatorId(p.getCreator().getId())
-                                    .build();
+        chunk(previousPlanIds, ids ->
+            ids.forEach(id -> {
+                PlanTransitionRequestedEvent requestedEvent = PlanTransitionRequestedEvent.builder()
+                        .planId(id)
+                        .build();
 
-                            p.getMeet().addReview(review);
-                            p.getMeet().removePlan(p);
-
-                            p.getParticipants().forEach(participant -> participant.updateReview(review));
-
-                            review.updateParticipants(p.getParticipants());
-
-                            return review;
-                        })
-                        .toList()
+                outboxService.save(PLAN_TRANSITION_REQUESTED, PLAN, id, requestedEvent);
+            })
         );
-
-        meetPlanRepository.deleteAll(previousPlanAll);
-
-        planReviews.forEach(review -> {
-            taskScheduler.schedule(
-                    () -> planScheduleJob.reviewRemindJob(review.getId()),
-                    LocalDateTime
-                            .of(LocalDate.now(), LocalTime.of(12, 0, 0))
-                            .atZone(ZoneId.systemDefault())
-                            .toInstant()
-            );
-        });
     }
 }

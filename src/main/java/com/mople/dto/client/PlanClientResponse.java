@@ -14,6 +14,7 @@ import java.util.List;
 @Builder
 public class PlanClientResponse {
     private final Long planId;
+    private final Long version;
     private final Long meetId;
     private final String meetName;
     private final String meetImg;
@@ -39,6 +40,7 @@ public class PlanClientResponse {
     public static PlanClientResponse ofView(PlanViewResponse viewResponse, Integer commentCount) {
         return PlanClientResponse.builder()
                 .planId(viewResponse.planId())
+                .version(viewResponse.version())
                 .meetId(viewResponse.meetId())
                 .meetName(viewResponse.meetName())
                 .meetImg(viewResponse.meetImage())
@@ -61,6 +63,7 @@ public class PlanClientResponse {
     public static PlanClientResponse ofViewAndParticipant(PlanViewResponse viewResponse, boolean participant, Integer commentCount) {
         return PlanClientResponse.builder()
                 .planId(viewResponse.planId())
+                .version(viewResponse.version())
                 .meetId(viewResponse.meetId())
                 .meetName(viewResponse.meetName())
                 .meetImg(viewResponse.meetImage())
@@ -84,6 +87,7 @@ public class PlanClientResponse {
     public static PlanClientResponse ofUpdate(PlanViewResponse viewResponse, Integer commentCount) {
         return PlanClientResponse.builder()
                 .planId(viewResponse.planId())
+                .version(viewResponse.version())
                 .meetId(viewResponse.meetId())
                 .meetName(viewResponse.meetName())
                 .meetImg(viewResponse.meetImage())
@@ -111,6 +115,7 @@ public class PlanClientResponse {
     private static PlanClientResponse ofList(PlanListResponse listResponse) {
         return PlanClientResponse.builder()
                 .planId(listResponse.planId())
+                .version(listResponse.version())
                 .meetId(listResponse.meetId())
                 .meetName(listResponse.meetName())
                 .meetImg(listResponse.meetImage())

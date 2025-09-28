@@ -3,16 +3,20 @@ package com.mople.meet.service;
 import com.mople.core.exception.custom.*;
 import com.mople.dto.client.MeetClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
-import com.mople.dto.event.data.meet.MeetJoinEventData;
+import com.mople.dto.event.data.domain.meet.MeetImageChangedEvent;
+import com.mople.dto.event.data.domain.meet.MeetJoinedEvent;
+import com.mople.dto.event.data.domain.meet.MeetLeftEvent;
+import com.mople.dto.event.data.domain.meet.MeetSoftDeletedEvent;
 import com.mople.dto.request.meet.MeetCreateRequest;
 import com.mople.dto.request.meet.MeetUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.meet.*;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
+import com.mople.dto.response.user.UserInfo;
+import com.mople.entity.user.User;
+import com.mople.global.enums.Status;
 import com.mople.global.utils.cursor.MemberCursor;
-import com.mople.entity.meet.plan.MeetPlan;
-import com.mople.global.event.data.notify.NotifyEventPublisher;
 import com.mople.global.utils.cursor.CursorUtils;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.impl.MeetMemberRepositorySupport;
@@ -20,11 +24,12 @@ import com.mople.meet.repository.impl.MeetRepositorySupport;
 import com.mople.entity.meet.*;
 import com.mople.meet.repository.*;
 
-import com.mople.meet.repository.plan.MeetPlanRepository;
-import com.mople.meet.repository.review.PlanReviewRepository;
-
+import com.mople.outbox.service.OutboxService;
+import com.mople.user.repository.UserRepository;
+import jakarta.persistence.OptimisticLockException;
+import org.hibernate.StaleObjectStateException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
@@ -33,7 +38,10 @@ import java.util.*;
 
 import static com.mople.dto.client.MeetClientResponse.*;
 import static com.mople.dto.client.UserRoleClientResponse.ofMembers;
+import static com.mople.dto.response.user.UserInfo.ofMap;
+import static com.mople.global.enums.event.AggregateType.MEET;
 import static com.mople.global.enums.ExceptionReturnCode.*;
+import static com.mople.global.enums.event.EventTypeNames.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
 @Service
@@ -47,11 +55,9 @@ public class MeetService {
     private final MeetInviteRepository meetInviteRepository;
     private final MeetRepositorySupport meetRepositorySupport;
     private final MeetMemberRepositorySupport meetMemberRepositorySupport;
-    private final MeetPlanRepository meetPlanRepository;
-    private final PlanReviewRepository reviewRepository;
+    private final UserRepository userRepository;
+    private final OutboxService outboxService;
     private final EntityReader reader;
-
-    private final ApplicationEventPublisher publisher;
 
     private final String inviteUrl;
 
@@ -61,21 +67,19 @@ public class MeetService {
             MeetInviteRepository meetInviteRepository,
             MeetRepositorySupport meetRepositorySupport,
             MeetMemberRepositorySupport meetMemberRepositorySupport,
-            MeetPlanRepository meetPlanRepository,
-            PlanReviewRepository reviewRepository,
+            UserRepository userRepository,
+            OutboxService outboxService,
             EntityReader reader,
-            ApplicationEventPublisher publisher,
-            @Value("${mople.url}") String  inviteUrl
+            @Value("${mople.url}") String inviteUrl
     ) {
         this.meetRepository = meetRepository;
         this.meetMemberRepository = meetMemberRepository;
         this.meetInviteRepository = meetInviteRepository;
         this.meetRepositorySupport = meetRepositorySupport;
         this.meetMemberRepositorySupport = meetMemberRepositorySupport;
-        this.meetPlanRepository = meetPlanRepository;
-        this.reviewRepository = reviewRepository;
+        this.userRepository = userRepository;
+        this.outboxService = outboxService;
         this.reader = reader;
-        this.publisher = publisher;
         this.inviteUrl = inviteUrl;
     }
 
@@ -86,35 +90,63 @@ public class MeetService {
         Meet meet =
                 meetRepository.save(
                         Meet.builder()
-                                .creator(user)
-                                .name(request.name())
+                                .creatorId(user.getId())
                                 .meetImage(request.image())
+                                .name(request.name())
                                 .build()
                 );
 
-        MeetMember member =
-                meetMemberRepository.save(
-                        MeetMember.builder()
-                                .user(user)
-                                .build()
-                );
+        meetMemberRepository.save(
+                MeetMember.builder()
+                        .meetId(meet.getId())
+                        .userId(user.getId())
+                        .build()
+        );
 
-        meet.addMember(member);
+        Integer memberCount = meetRepositorySupport.countMeetMember(meet.getId());
 
-        return ofMeet(new MeetInfoResponse(meet));
+        return ofMeet(new MeetInfoResponse(meet, memberCount));
     }
 
     @Transactional
     public MeetClientResponse updateMeet(Long creatorId, Long meetId, MeetUpdateRequest request) {
-
+        reader.findUser(creatorId);
         var meet = reader.findMeet(meetId);
 
-        if (!Objects.equals(creatorId, meet.getCreator().getId())) {
+        if (!meet.matchCreator(creatorId)) {
             throw new AuthException(NOT_CREATOR);
         }
+
+        String oldImage = meet.getMeetImage();
         meet.updateMeetInfo(request.name(), request.image());
 
-        return ofMeet(new MeetInfoResponse(meet));
+        try {
+            meetRepository.flush();
+
+        } catch (
+                OptimisticLockException
+                | OptimisticLockingFailureException
+                | StaleObjectStateException e
+        ) {
+            long currentVersion = meetRepository.findVersion(meet.getId());
+            throw new ConcurrencyConflictException(REQUEST_CONFLICT, currentVersion);
+        }
+
+        if ((oldImage != null && !oldImage.isBlank())
+                && !Objects.equals(oldImage, request.image())) {
+
+            MeetImageChangedEvent changedEvent = MeetImageChangedEvent.builder()
+                    .meetId(meetId)
+                    .imageUrl(oldImage)
+                    .imageDeletedBy(creatorId)
+                    .build();
+
+            outboxService.save(MEET_IMAGE_CHANGED, MEET, meetId, changedEvent);
+        }
+
+        Integer memberCount = meetRepositorySupport.countMeetMember(meet.getId());
+
+        return ofMeet(new MeetInfoResponse(meet, memberCount));
     }
 
     @Transactional(readOnly = true)
@@ -153,8 +185,8 @@ public class MeetService {
         return buildCursorPage(
                 meetListResponses,
                 size,
-                c -> new String[]{
-                        c.meetId().toString()
+                r -> new String[]{
+                        r.meetId().toString()
                 },
                 MeetClientResponse::ofListMeets
         );
@@ -164,25 +196,32 @@ public class MeetService {
     public MeetClientResponse getMeetDetail(Long userId, Long meetId) {
         var meet = reader.findMeet(meetId);
 
-        if (meet.matchMember(userId)) {
-            throw new AuthException(NOT_FOUND_MEMBER);
+        if (!meetMemberRepository.existsByMeetIdAndUserId(meetId, userId)) {
+            throw new AuthException(NOT_MEMBER);
         }
 
-        return ofMeet(new MeetInfoResponse(meet));
+        Integer memberCount = meetRepositorySupport.countMeetMember(meetId);
+
+        return ofMeet(new MeetInfoResponse(meet, memberCount));
     }
 
     @Transactional(readOnly = true)
     public FlatCursorPageResponse<UserRoleClientResponse> meetMemberList(Long userId, Long meetId, CursorPageRequest request) {
         reader.findUser(userId);
         Meet meet = reader.findMeet(meetId);
-        validateMember(userId, meetId);
 
-        Long hostId = meet.getCreator().getId();
+        if (!meetMemberRepository.existsByMeetIdAndUserId(meetId, userId)) {
+            throw new AuthException(NOT_MEMBER);
+        }
+
+        Long hostId = meet.getCreatorId();
         int size = request.getSafeSize();
         List<MeetMember> meetMembers = getMeetMembers(meet.getId(), hostId, request.cursor(), size);
 
+        Integer memberCount = meetRepositorySupport.countMeetMember(meetId);
+
         return FlatCursorPageResponse.of(
-                meetMemberRepositorySupport.countMeetMembers(meetId),
+                memberCount,
                 buildMemberCursorPage(size, meetMembers, hostId)
         );
     }
@@ -205,22 +244,24 @@ public class MeetService {
     }
 
     private CursorPageResponse<UserRoleClientResponse> buildMemberCursorPage(int size, List<MeetMember> members, Long hostId) {
+        List<Long> userIds = members.stream()
+                .map(MeetMember::getUserId)
+                .toList();
+
+        Map<Long, UserInfo> userInfoById = ofMap(userRepository.findByIdInAndStatus(userIds, Status.ACTIVE));
+
         return buildCursorPage(
                 members,
                 size,
-                c -> new String[]{
-                        c.getUser().getNickname(),
-                        c.getId().toString()
+                m -> {
+                    User user = reader.findUser(m.getUserId());
+                    return new String[]{
+                            user.getNickname(),
+                            m.getId().toString()
+                    };
                 },
-                list -> ofMembers(list, hostId)
+                list -> ofMembers(list, userInfoById, hostId)
         );
-    }
-
-    private void validateMember(Long userId, Long meetId) {
-        Meet meet = reader.findMeet(meetId);
-        if (meet.matchMember(userId)) {
-            throw new BadRequestException(NOT_MEMBER);
-        }
     }
 
     private void validateCursor(String cursorNickname, Long cursorId) {
@@ -231,33 +272,58 @@ public class MeetService {
 
     @Transactional
     public void removeMeet(Long userId, Long meetId) {
+        reader.findUser(userId);
         var meet = reader.findMeet(meetId);
 
+        if (!meetMemberRepository.existsByMeetIdAndUserId(meetId, userId)) {
+            throw new BadRequestException(NOT_MEMBER);
+        }
+
         if (meet.matchCreator(userId)) {
-            meetRepository.delete(meet);
+
+            meet.softDelete(userId);
+
+            try {
+                meetRepository.flush();
+
+            } catch (
+                    OptimisticLockException
+                    | OptimisticLockingFailureException
+                    | StaleObjectStateException e
+            ) {
+                long currentVersion = meetRepository.findVersion(meet.getId());
+                throw new ConcurrencyConflictException(REQUEST_CONFLICT, currentVersion);
+            }
+
+            MeetSoftDeletedEvent deletedEvent = MeetSoftDeletedEvent.builder()
+                    .meetId(meetId)
+                    .meetDeletedBy(userId)
+                    .build();
+
+            outboxService.save(MEET_SOFT_DELETED, MEET, meetId, deletedEvent);
+
             return;
         }
 
-        meet.removeMember(userId);
+        meetMemberRepository.deleteByMeetIdAndUserId(meetId, userId);
 
-        List<MeetPlan> plans = meet
-                .getPlans()
-                .stream()
-                .filter(p -> p.getCreator().getId().equals(userId))
-                .toList();
+        MeetLeftEvent leftEvent = MeetLeftEvent.builder()
+                .meetId(meetId)
+                .leaveMemberId(userId)
+                .build();
 
-        if (!plans.isEmpty()) {
-            plans.forEach(p -> p.getMeet().removePlan(p));
-            meetPlanRepository.deleteAllInBatch(plans);
-        }
-
-        reviewRepository.deleteAll(reviewRepository.findReviewByUserId(userId));
-
-        meetMemberRepository.deleteMember(meetId, userId);
+        outboxService.save(MEET_LEFT, MEET, meetId, leftEvent);
     }
 
     @Transactional
-    public String createInvite(Long meetId) {
+    public String createInvite(Long userId, Long meetId) {
+        reader.findUser(userId);
+        reader.findMeet(meetId);
+
+        if (!meetMemberRepository.existsByMeetIdAndUserId(meetId, userId)) {
+            throw new BadRequestException(NOT_MEMBER);
+        }
+
         MeetInvite meetInvite =
                 meetInviteRepository.save(
                         MeetInvite.builder()
@@ -270,38 +336,34 @@ public class MeetService {
 
     @Transactional
     public MeetClientResponse meetJoinMember(Long userId, String meetCode) {
+        reader.findUser(userId);
+
         MeetInvite inviteMeet = meetInviteRepository.findByInviteCodeMeet(meetCode)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_INVITE));
 
-        var meet = reader.findMeet(inviteMeet.getMeetId());
-        var user = reader.findUser(userId);
+        Meet meet = reader.findMeet(inviteMeet.getMeetId());
 
-        if (meet.meetMemberSearch(userId)) {
+        if (meetMemberRepository.existsByMeetIdAndUserId(meet.getId(), userId)) {
             throw new BadRequestException(CURRENT_MEMBER);
         }
 
-        MeetMember meetMember =
-                meetMemberRepository.save(
-                        MeetMember
-                                .builder()
-                                .user(user)
-                                .build()
-                );
-
-        meet.addMember(meetMember);
-
-        publisher.publishEvent(
-                NotifyEventPublisher.meetNewMember(
-                        MeetJoinEventData.builder()
-                                .meetId(meet.getId())
-                                .meetName(meet.getName())
-                                .newMemberId(user.getId())
-                                .newMemberNickname(user.getNickname())
-                                .build()
-                )
+        meetMemberRepository.save(
+                MeetMember.builder()
+                        .meetId(meet.getId())
+                        .userId(userId)
+                        .build()
         );
 
-        return ofMeet(new MeetInfoResponse(meet));
+        MeetJoinedEvent joinedEvent = MeetJoinedEvent.builder()
+                .meetId(meet.getId())
+                .newMemberId(userId)
+                .build();
+
+        outboxService.save(MEET_JOINED, MEET, meet.getId(), joinedEvent);
+
+        Integer memberCount = meetRepositorySupport.countMeetMember(meet.getId());
+
+        return ofMeet(new MeetInfoResponse(meet, memberCount));
     }
 
     @Transactional(readOnly = true)
@@ -309,9 +371,9 @@ public class MeetService {
         MeetInvite inviteMeet = meetInviteRepository.findByInviteCodeMeet(code)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_INVITE));
 
-        Meet meet = meetRepository.findMeetById(inviteMeet.getMeetId()).orElse(null);
+        Optional<Meet> meet = meetRepository.findByIdAndStatus(inviteMeet.getMeetId(), Status.ACTIVE);
 
-        if (meet == null) {
+        if (meet.isEmpty()) {
             model.addAttribute("meetId", null);
             model.addAttribute("meetName", "없습니다");
             model.addAttribute("meetImage", "https://www.urbanbrush.net/web/wp-content/uploads/edd/2023/03/urban-20230310112234917676.jpg");
@@ -320,7 +382,7 @@ public class MeetService {
         }
 
         model.addAttribute("meetId", inviteMeet.getInviteCode());
-        model.addAttribute("meetName", meet.getName());
-        model.addAttribute("meetImage", meet.getMeetImage());
+        model.addAttribute("meetName", meet.get().getName());
+        model.addAttribute("meetImage", meet.get().getMeetImage());
     }
 }

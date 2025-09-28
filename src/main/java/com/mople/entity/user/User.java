@@ -7,6 +7,8 @@ import com.mople.global.enums.Status;
 import jakarta.persistence.*;
 
 import lombok.*;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
 
@@ -15,22 +17,26 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "user_id")
     private Long id;
 
+    @Version
+    private Long version;
+
     @Column(name = "email", unique = true, length = 50)
     private String email;
 
-    @Column(name = "nickname", unique = true, length = 20)
+    @Column(name = "nickname", length = 20)
     private String nickname;
 
     @Column(name = "profile_img")
     private String profileImg;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "social_provider", nullable = false, length = 10)
+    @Column(name = "social_provider", length = 10)
     private SocialProvider socialProvider;
 
     @Enumerated(EnumType.STRING)
@@ -51,7 +57,6 @@ public class User {
             String profileImg,
             LocalDateTime lastLaunchAt,
             Role role,
-            Status status,
             SocialProvider socialProvider
     ) {
         this.email = email;
@@ -59,7 +64,7 @@ public class User {
         this.profileImg = profileImg;
         this.lastLaunchAt = lastLaunchAt;
         this.role = role;
-        this.status = status;
+        this.status = Status.ACTIVE;
         this.socialProvider = socialProvider;
     }
 
@@ -70,5 +75,18 @@ public class User {
 
     public boolean imageValid() {
         return profileImg != null && !"null".equals(profileImg);
+    }
+
+    public void deleteUser() {
+        if (status == Status.DELETED) {
+            return;
+        }
+
+        this.email = null;
+        this.nickname = "탈퇴한 사용자";
+        this.profileImg = null;
+        this.lastLaunchAt = null;
+        this.status = Status.DELETED;
+        this.socialProvider = null;
     }
 }

@@ -14,6 +14,7 @@ import java.util.List;
 @Getter
 public class MeetClientResponse {
     private final Long meetId;
+    private final Long version;
     private final String meetName;
     private final String meetImage;
     private final Long sinceDays;
@@ -28,6 +29,7 @@ public class MeetClientResponse {
     private static MeetClientResponse ofListMeet(MeetListResponse listResponse) {
         return MeetClientResponse.builder()
                 .meetId(listResponse.meetId())
+                .version(listResponse.version())
                 .meetName(listResponse.meetName())
                 .meetImage(listResponse.meetImage())
                 .memberCount(listResponse.memberCount())
@@ -38,6 +40,7 @@ public class MeetClientResponse {
     public static MeetClientResponse ofMeet(MeetInfoResponse infoResponse) {
         return MeetClientResponse.builder()
                 .meetId(infoResponse.meetId())
+                .version(infoResponse.version())
                 .meetName(infoResponse.meetName())
                 .meetImage(infoResponse.meetImage())
                 .creatorId(infoResponse.creatorId())
