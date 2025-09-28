@@ -42,6 +42,7 @@ import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 
 import org.hibernate.StaleObjectStateException;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,6 +82,7 @@ public class PlanService {
     private final EntityReader reader;
     private final OutboxService outboxService;
 
+    @Cacheable(cacheNames = "homeViewPlan", key = "#userId")
     @Transactional(readOnly = true)
     public PlanHomeViewResponse getPlanView(Long userId) {
         reader.findUser(userId);

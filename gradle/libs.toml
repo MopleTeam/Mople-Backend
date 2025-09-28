@@ -86,6 +86,12 @@ jakarta-persistence-api = { module = "jakarta.persistence:jakarta.persistence-ap
 datasource-proxy = { module = "net.ttddyy:datasource-proxy", version.ref = "datasource-proxy" }
 logstash-logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logback-encoder" }
 
+spring-boot-starter-cache = { module = "org.springframework.boot:spring-boot-starter-cache" }
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine" }
+
+spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
+micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
+
 firebase-admin = { module = "com.google.firebase:firebase-admin", version.ref = "firebase" }
 
 datafaker = { module = "net.datafaker:datafaker", version.ref = "data-faker" }
