@@ -19,7 +19,7 @@ public record CommentMentionNotifyEvent(
     public NotificationPayload payload() {
         return new NotificationPayload(
                 meetName + "의 새로운 멘션 👀",
-                meetName + "에서 " + senderNickname + "님이 회원님을 멘션했어요!"
+                 senderNickname + "님이 회원님을 멘션했어요!"
         );
     }
 

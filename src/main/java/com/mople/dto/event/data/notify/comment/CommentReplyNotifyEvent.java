@@ -19,7 +19,7 @@ public record CommentReplyNotifyEvent(
     public NotificationPayload payload() {
         return new NotificationPayload(
                 meetName + "의 새로운 대댓글 👀",
-                meetName + "에서 " + senderNickname + "님이 답글을 남겼어요!"
+                senderNickname + "님이 답글을 남겼어요!"
         );
     }
 
