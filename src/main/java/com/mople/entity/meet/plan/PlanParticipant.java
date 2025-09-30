@@ -1,8 +1,6 @@
 package com.mople.entity.meet.plan;
 
 import com.mople.entity.common.BaseTimeEntity;
-import com.mople.entity.meet.review.PlanReview;
-import com.mople.entity.user.User;
 
 import jakarta.persistence.*;
 
@@ -13,36 +11,30 @@ import lombok.*;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PlanParticipant extends BaseTimeEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "participant_id")
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "plan_id")
-    private MeetPlan plan;
+    @Column(name = "user_id")
+    private Long userId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "review_id")
-    private PlanReview review;
+    @Column(name = "plan_id")
+    private Long planId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
+    @Column(name = "review_id")
+    private Long reviewId;
 
     @Builder
-    public PlanParticipant(MeetPlan plan, User user, PlanReview review) {
-        this.plan = plan;
-        this.user = user;
-        this.review = review;
+    public PlanParticipant(Long planId, Long userId, Long reviewId) {
+        this.planId = planId;
+        this.userId = userId;
+        this.reviewId = reviewId;
     }
 
-    public void updatePlan(MeetPlan plan) {
-        this.plan = plan;
-    }
-
-    public void updateReview(PlanReview review) {
-        this.plan = null;
-        this.review = review;
+    public void updateReview(Long reviewId) {
+        this.planId = null;
+        this.reviewId = reviewId;
     }
 }

@@ -9,25 +9,21 @@ import lombok.*;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ReviewImage {
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "image_id")
     private Long id;
 
+    @Column(name = "review_id", nullable = false)
+    private Long reviewId;
+
     @Column(name = "image")
     private String reviewImage;
 
-    @ManyToOne
-    @JoinColumn(name = "review_id")
-    private PlanReview review;
-
     @Builder
-    public ReviewImage(String reviewImage, PlanReview review) {
+    public ReviewImage(Long reviewId, String reviewImage) {
+        this.reviewId = reviewId;
         this.reviewImage = reviewImage;
-        this.review = review;
-    }
-
-    public void updateReview(PlanReview planReview) {
-        review = planReview;
     }
 }

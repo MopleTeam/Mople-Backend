@@ -16,7 +16,7 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, Commen
 
     Optional<CommentLike> findByUserIdAndCommentId(Long userId, Long commentId);
 
-    @Modifying
+    @Modifying(flushAutomatically = true)
     @Query(value =
             "insert into comment_like (comment_id, user_id) " +
             "       values (:commentId, :userId) " +
@@ -26,7 +26,10 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, Commen
 
     boolean existsByUserIdAndCommentId(Long userId, Long commentId);
 
-    void deleteByCommentIdIn(List<Long> commentIds);
-
-    void deleteByCommentId(Long commentId);
+    @Modifying(flushAutomatically = true)
+    @Query(
+            "delete from CommentLike cl " +
+            "      where cl.commentId in :commentIds "
+    )
+    void deleteAllByCommentIdIn(List<Long> commentIds);
 }

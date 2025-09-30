@@ -7,6 +7,7 @@ import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.plan.QMeetPlan;
 import com.mople.entity.meet.review.PlanReview;
 import com.mople.entity.meet.review.QPlanReview;
+import com.mople.global.enums.Status;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -30,7 +31,8 @@ public class MeetRepositorySupport {
         QMeetMember meetMember = QMeetMember.meetMember;
 
         BooleanBuilder whereCondition = new BooleanBuilder()
-                .and(meetMember.user.id.eq(userId));
+                .and(meet.status.eq(Status.ACTIVE))
+                .and(meetMember.userId.eq(userId));
 
         if (cursorId != null) {
             whereCondition.and(meet.id.gt(cursorId));
@@ -38,7 +40,7 @@ public class MeetRepositorySupport {
 
         return queryFactory
                 .selectFrom(meet)
-                .join(meetMember).on(meet.id.eq(meetMember.joinMeet.id))
+                .join(meetMember).on(meet.id.eq(meetMember.meetId))
                 .where(whereCondition)
                 .orderBy(meet.id.asc())
                 .limit(size + 1)
@@ -52,7 +54,10 @@ public class MeetRepositorySupport {
         List<Long> meetIdList = meets.stream().map(Meet::getId).toList();
 
         List<MeetPlan> plans = queryFactory.selectFrom(plan)
-                .where(plan.meet.id.in(meetIdList))
+                .where(
+                        plan.status.eq(Status.ACTIVE),
+                        plan.meetId.in(meetIdList)
+                )
                 .orderBy(plan.planTime.desc())
                 .fetch();
 
@@ -60,13 +65,16 @@ public class MeetRepositorySupport {
                 plans.stream()
                         .collect(
                                 groupingBy(
-                                        p -> p.getMeet().getId(),
+                                        MeetPlan::getMeetId,
                                         minBy(Comparator.comparing(MeetPlan::getPlanTime))
                                 )
                         );
 
         List<PlanReview> reviews = queryFactory.selectFrom(review)
-                .where(review.meet.id.in(meetIdList))
+                .where(
+                        review.status.eq(Status.ACTIVE),
+                        review.meetId.in(meetIdList)
+                )
                 .orderBy(review.planTime.asc())
                 .fetch();
 
@@ -75,7 +83,7 @@ public class MeetRepositorySupport {
                         .stream()
                         .collect(
                                 groupingBy(
-                                        r -> r.getMeet().getId(),
+                                        PlanReview::getMeetId,
                                         maxBy(Comparator.comparing(PlanReview::getPlanTime))
                                 )
                         );
@@ -87,9 +95,10 @@ public class MeetRepositorySupport {
 
                         return new MeetListResponse(
                                 m.getId(),
+                                m.getVersion(),
                                 m.getName(),
                                 m.getMeetImage(),
-                                m.getMembers().size(),
+                                countMeetMember(m.getId()),
                                 meetPlan.getPlanTime()
                         );
                     }
@@ -99,18 +108,20 @@ public class MeetRepositorySupport {
 
                         return new MeetListResponse(
                                 m.getId(),
+                                m.getVersion(),
                                 m.getName(),
                                 m.getMeetImage(),
-                                m.getMembers().size(),
+                                countMeetMember(m.getId()),
                                 planReview.getPlanTime()
                         );
                     }
 
                     return new MeetListResponse(
                             m.getId(),
+                            m.getVersion(),
                             m.getName(),
                             m.getMeetImage(),
-                            m.getMembers().size(),
+                            countMeetMember(m.getId()),
                             null
                     );
                 })
@@ -130,10 +141,25 @@ public class MeetRepositorySupport {
                         )
                 )
                 .from(meet)
-                .join(meet.members, meetMember)
-                .on(meet.id.eq(meetMember.joinMeet.id))
-                .where(meetMember.user.id.eq(userId))
+                .join(meetMember).on(meetMember.meetId.eq(meet.id))
+                .where(
+                        meet.status.eq(Status.ACTIVE),
+                        meetMember.userId.eq(userId)
+                )
+                .distinct()
                 .fetch();
+    }
+
+    public Integer countMeetMember(Long meetId) {
+        QMeetMember member = QMeetMember.meetMember;
+
+        Long count = queryFactory
+                .select(member.count())
+                .from(member)
+                .where(member.meetId.eq(meetId))
+                .fetchOne();
+
+        return Math.toIntExact(count != null ? count : 0);
     }
 
     public boolean isCursorInvalid(Long cursorId) {
@@ -142,7 +168,10 @@ public class MeetRepositorySupport {
         return queryFactory
                 .selectOne()
                 .from(meet)
-                .where(meet.id.eq(cursorId))
+                .where(
+                        meet.status.eq(Status.ACTIVE),
+                        meet.id.eq(cursorId)
+                )
                 .fetchFirst() == null;
     }
 }

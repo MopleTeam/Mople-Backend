@@ -7,20 +7,22 @@ import java.time.temporal.ChronoUnit;
 
 public record MeetInfoResponse(
         Long meetId,
+        Long version,
         String meetName,
         String meetImage,
         Long creatorId,
         Long meetStartDate,
-        int memberCount
+        Integer memberCount
 ) {
-    public MeetInfoResponse(Meet meet) {
+    public MeetInfoResponse(Meet meet, Integer memberCount) {
         this(
                 meet.getId(),
+                meet.getVersion(),
                 meet.getName(),
                 meet.getMeetImage(),
-                meet.getCreator().getId(),
+                meet.getCreatorId(),
                 meet.getCreatedAt().until(LocalDateTime.now(), ChronoUnit.DAYS),
-                meet.getMembers().size()
+                memberCount
         );
     }
 }

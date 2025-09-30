@@ -32,7 +32,11 @@ public class UserController {
     public ResponseEntity<UserClientResponse> getMyInfo(
             @Parameter(hidden = true) @SignUser AuthUserRequest user
     ) {
-        return ResponseEntity.ok(userService.getInfo(user.id()));
+        var body = userService.getInfo(user.id());
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.version() + "\"")
+                .body(body);
     }
 
     @Operation(
@@ -44,8 +48,11 @@ public class UserController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @Valid @RequestBody UserInfoRequest userInfoRequest
     ) {
-        var updateUserInfo = userService.updateInfo(user.id(), userInfoRequest);
-        return ResponseEntity.ok(updateUserInfo);
+        var body = userService.updateInfo(user.id(), userInfoRequest);
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.version() + "\"")
+                .body(body);
     }
 
     @Operation(

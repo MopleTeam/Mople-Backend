@@ -2,7 +2,6 @@ package com.mople.notification.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mople.core.exception.custom.CursorException;
-import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.request.notification.topic.PushTopicRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.notification.NotificationResponse;
@@ -15,13 +14,13 @@ import com.mople.entity.notification.Topic;
 import com.mople.entity.user.User;
 import com.mople.global.enums.Action;
 import com.mople.global.enums.PushTopic;
+import com.mople.global.enums.Status;
 import com.mople.global.utils.cursor.CursorUtils;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.meet.repository.review.PlanReviewRepository;
 import com.mople.notification.repository.NotificationRepository;
 import com.mople.notification.repository.TopicRepository;
-import com.mople.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -46,7 +45,6 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final TopicRepository topicRepository;
-    private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
     private final MeetPlanRepository planRepository;
     private final PlanReviewRepository reviewRepository;
@@ -111,7 +109,7 @@ public class NotificationService {
                 .distinct()
                 .toList();
 
-        Map<Long, LocalDateTime> planMap = planRepository.findPlanAndTime(planIds)
+        Map<Long, LocalDateTime> planMap = planRepository.findPlanAndTime(planIds, Status.ACTIVE)
                 .stream()
                 .collect(Collectors.toMap(
                                 MeetPlan::getId,
@@ -120,7 +118,7 @@ public class NotificationService {
                 );
 
         planMap.putAll(
-                reviewRepository.findReviewsByPostId(planIds)
+                reviewRepository.findReviewsByPostIdIn(planIds, Status.ACTIVE)
                         .stream()
                         .collect(
                                 Collectors.toMap(
@@ -133,7 +131,7 @@ public class NotificationService {
         List<NotificationResponse> notificationListResponses = NotificationResponse.of(objectMapper, notifications, planMap);
 
         return FlatCursorPageResponse.of(
-                notificationRepository.countBadgeCount(userId, Action.COMPLETE.name()),
+                Math.toIntExact(notificationRepository.countBadgeCount(userId, Action.PUBLISHED.name())),
                 buildNotificationCursorPage(size, notificationListResponses)
         );
     }
@@ -142,7 +140,7 @@ public class NotificationService {
         int limit = size + 1;
 
         if (encodedCursor == null || encodedCursor.isEmpty()) {
-            return notificationRepository.findNotificationFirstPage(userId, Action.COMPLETE.name(), limit);
+            return notificationRepository.findNotificationFirstPage(userId, Action.PUBLISHED.name(), limit);
         }
 
         String[] decodeParts = CursorUtils.decode(encodedCursor, NOTIFICATION_CURSOR_FIELD_COUNT);
@@ -150,11 +148,11 @@ public class NotificationService {
 
         validateCursor(cursorId);
 
-        return notificationRepository.findNotificationNextPage(userId, Action.COMPLETE.name(), cursorId, limit);
+        return notificationRepository.findNotificationNextPage(userId, Action.PUBLISHED.name(), cursorId, limit);
     }
 
     private void validateCursor(Long cursorId) {
-        if (notificationRepository.isCursorInvalid(cursorId).isEmpty()) {
+        if (notificationRepository.isCursorInvalid(cursorId, Action.PUBLISHED).isEmpty()) {
             throw new CursorException(INVALID_CURSOR);
         }
     }
@@ -172,11 +170,10 @@ public class NotificationService {
 
     @Transactional
     public void readAllNotifications(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException(NOT_USER));
+        User user = reader.findUser(userId);
 
         notificationRepository
-                .getUserNotificationList(user.getId(), Action.COMPLETE)
+                .getUserNotificationList(user.getId())
                 .forEach(Notification::updateReadAt);
     }
 }

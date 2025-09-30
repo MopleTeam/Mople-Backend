@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
+import java.util.Map;
+
 @RestControllerAdvice
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
@@ -151,6 +153,37 @@ public class GlobalExceptionHandler {
                                 e.getExceptionReturnCode().getCode(),
                                 e.getExceptionReturnCode().getMessage(),
                                 null
+                        )
+                );
+    }
+
+    @ExceptionHandler(AsyncException.class)
+    public ResponseEntity<ExceptionResponse<Object>> handleAsyncException(AsyncException e) {
+        exceptionLogger.logClientError(e.getMessage(), e.getExceptionReturnCode().returnCode());
+        loggingContextManager.clear();
+
+        return ResponseEntity
+                .status(e.getExceptionReturnCode().returnCode())
+                .body(new ExceptionResponse<>(
+                                e.getExceptionReturnCode().getCode(),
+                                e.getExceptionReturnCode().getMessage(),
+                                null
+                        )
+                );
+    }
+
+    @ExceptionHandler(ConcurrencyConflictException.class)
+    public ResponseEntity<ExceptionResponse<Object>> handleAsyncException(ConcurrencyConflictException e) {
+        exceptionLogger.logClientError(e.getMessage(), e.getExceptionReturnCode().returnCode());
+        loggingContextManager.clear();
+
+        return ResponseEntity
+                .status(e.getExceptionReturnCode().returnCode())
+                .eTag("\"" + e.getCurrentVersion() + "\"")
+                .body(new ExceptionResponse<>(
+                                e.getExceptionReturnCode().getCode(),
+                                e.getExceptionReturnCode().getMessage(),
+                                Map.of("currentVersion", e.getCurrentVersion())
                         )
                 );
     }

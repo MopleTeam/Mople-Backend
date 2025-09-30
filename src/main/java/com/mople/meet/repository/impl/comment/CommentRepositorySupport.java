@@ -2,7 +2,7 @@ package com.mople.meet.repository.impl.comment;
 
 import com.mople.entity.meet.comment.PlanComment;
 import com.mople.entity.meet.comment.QPlanComment;
-import com.mople.entity.user.QUser;
+import com.mople.global.enums.Status;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -18,9 +18,9 @@ public class CommentRepositorySupport {
 
     public List<PlanComment> findCommentPage(Long postId, Long cursorId, int size) {
         QPlanComment comment = QPlanComment.planComment;
-        QUser user = QUser.user;
 
         BooleanBuilder whereCondition = new BooleanBuilder()
+                .and(comment.status.eq(Status.ACTIVE))
                 .and(comment.postId.eq(postId))
                 .and(comment.parentId.isNull());
 
@@ -40,33 +40,33 @@ public class CommentRepositorySupport {
 
         return queryFactory
                 .selectFrom(comment)
-                .join(comment.writer, user).fetchJoin()
                 .where(whereCondition)
                 .orderBy(comment.writeTime.desc(), comment.id.desc())
                 .limit(size + 1)
                 .fetch();
     }
 
-    public Long countComments(Long postId) {
+    public Integer countComments(Long postId) {
         QPlanComment comment = QPlanComment.planComment;
 
         Long count = queryFactory
                 .select(comment.count())
                 .from(comment)
                 .where(
+                        comment.status.eq(Status.ACTIVE),
                         comment.postId.eq(postId),
                         comment.parentId.isNull()
                 )
                 .fetchOne();
 
-        return count != null ? count : 0L;
+        return Math.toIntExact(count != null ? count : 0L);
     }
 
     public List<PlanComment> findCommentReplyPage(Long postId, Long commentId, Long cursorId, int size) {
         QPlanComment comment = QPlanComment.planComment;
-        QUser user = QUser.user;
 
         BooleanBuilder whereCondition = new BooleanBuilder()
+                .and(comment.status.eq(Status.ACTIVE))
                 .and(comment.postId.eq(postId))
                 .and(comment.parentId.eq(commentId));
 
@@ -85,7 +85,6 @@ public class CommentRepositorySupport {
 
         return queryFactory
                 .selectFrom(comment)
-                .join(comment.writer, user).fetchJoin()
                 .where(whereCondition)
                 .orderBy(comment.writeTime.asc(), comment.id.asc())
                 .limit(size + 1)
@@ -98,7 +97,10 @@ public class CommentRepositorySupport {
         Long result = queryFactory
                 .select(comment.count())
                 .from(comment)
-                .where(comment.postId.eq(postId))
+                .where(
+                        comment.status.eq(Status.ACTIVE),
+                        comment.postId.eq(postId)
+                )
                 .fetchOne();
 
         return result == null ? 0 : result.intValue();
@@ -110,7 +112,10 @@ public class CommentRepositorySupport {
         return queryFactory
                 .selectOne()
                 .from(comment)
-                .where(comment.id.eq(cursorId))
+                .where(
+                        comment.status.eq(Status.ACTIVE),
+                        comment.id.eq(cursorId)
+                )
                 .fetchFirst() == null;
     }
 }

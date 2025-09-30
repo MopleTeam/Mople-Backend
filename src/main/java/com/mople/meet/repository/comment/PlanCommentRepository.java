@@ -1,34 +1,45 @@
 package com.mople.meet.repository.comment;
 
 import com.mople.entity.meet.comment.PlanComment;
-
+import com.mople.global.enums.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface PlanCommentRepository extends JpaRepository<PlanComment, Long> {
-    @Query("select c from PlanComment c where c.postId = :postId order by c.writeTime desc")
-    List<PlanComment> getComment(Long postId);
 
-    List<PlanComment> findAllByParentId(Long parentId);
+    @Modifying(flushAutomatically = true)
+    @Query(
+            "update PlanComment c " +
+            "   set c.status = :status, " +
+            "       c.deletedAt = :deletedAt, " +
+            "       c.deletedBy = :userId " +
+            " where c.id in :commentIds " +
+            "   and c.status <> :status"
+    )
+    int softDeleteAll(Status status, List<Long> commentIds, Long userId, LocalDateTime deletedAt);
 
-    void deleteByIdIn(List<Long> ids);
+    @Query("select c.id from PlanComment c where c.parentId = :parentId and c.status = com.mople.global.enums.Status.ACTIVE")
+    List<Long> findChildIds(Long parentId);
 
-    @Modifying(clearAutomatically = true)
-    @Query("UPDATE PlanComment c SET c.likeCount = c.likeCount + 1 WHERE c.id = :id")
-    void increaseLikeCount(Long id);
+    @Query("select c.id from PlanComment c where c.postId = :postId and c.status = com.mople.global.enums.Status.ACTIVE")
+    List<Long> findIdByPostId(Long postId);
 
-    @Modifying(clearAutomatically = true)
-    @Query("UPDATE PlanComment c SET c.likeCount = c.likeCount - 1 WHERE c.id = :id AND c.likeCount > 0")
-    void decreaseLikeCount(Long id);
+    @Modifying(flushAutomatically = true)
+    @Query(
+            "delete " +
+            "  from PlanComment c " +
+            " where c.id in :commentIds " +
+            "   and c.status = com.mople.global.enums.Status.DELETED"
+    )
+    void hardDeleteById(List<Long> commentIds);
 
-    @Modifying(clearAutomatically = true)
-    @Query("UPDATE PlanComment c SET c.replyCount = c.replyCount + 1 WHERE c.id = :id")
-    void increaseReplyCount(Long id);
-
-    @Modifying(clearAutomatically = true)
-    @Query("UPDATE PlanComment c SET c.replyCount = c.replyCount - 1 WHERE c.id = :id AND c.replyCount > 0")
-    void decreaseReplyCount(Long id);
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
+    @Query(value = "select version from plan_comment where comment_id = :commentId", nativeQuery = true)
+    long findVersion(Long commentId);
 }
