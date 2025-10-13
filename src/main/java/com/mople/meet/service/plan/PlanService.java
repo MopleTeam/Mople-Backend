@@ -1,5 +1,6 @@
 package com.mople.meet.service.plan;
 
+import com.mople.core.annotation.cache.InvalidateCache;
 import com.mople.core.exception.custom.*;
 import com.mople.dto.client.PlanClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
@@ -95,15 +96,16 @@ public class PlanService {
         );
     }
 
+    @InvalidateCache(
+            cacheName = "homeViewPlan",
+            keys = {"#userId"}
+    )
     @Transactional
-    public PlanClientResponse createPlan(
-            Long creatorId,
-            PlanCreateRequest request
-    ) {
-        var user = reader.findUser(creatorId);
+    public PlanClientResponse createPlan(Long userId, PlanCreateRequest request) {
+        var user = reader.findUser(userId);
         var meet = reader.findMeet(request.meetId());
 
-        if (!memberRepository.existsByMeetIdAndUserId(request.meetId(), creatorId)) {
+        if (!memberRepository.existsByMeetIdAndUserId(request.meetId(), userId)) {
             throw new AuthException(NOT_CREATOR);
         }
 
@@ -218,6 +220,10 @@ public class PlanService {
                 commentRepositorySupport.countComment(plan.getId()));
     }
 
+    @InvalidateCache(
+            cacheName = "homeViewPlan",
+            keys = {"@planParticipantRepository.findUserIdsByPlanId(#planId)"}
+    )
     @Transactional
     public void deletePlan(Long userId, Long planId) {
         reader.findUser(userId);
@@ -408,6 +414,10 @@ public class PlanService {
         }
     }
 
+    @InvalidateCache(
+            cacheName = "homeViewPlan",
+            keys = {"#userId"}
+    )
     @Transactional
     public void joinPlanParticipant(Long userId, Long planId) {
         reader.findUser(userId);
@@ -425,6 +435,10 @@ public class PlanService {
         planParticipantRepository.save(planParticipant);
     }
 
+    @InvalidateCache(
+            cacheName = "homeViewPlan",
+            keys = {"#userId"}
+    )
     @Transactional
     public void deletePlanParticipant(Long userId, Long planId) {
         reader.findPlan(planId);
