@@ -1,4 +1,4 @@
-package com.mople.meet.service;
+package com.mople.meet.service.meet;
 
 import com.mople.core.exception.custom.*;
 import com.mople.dto.client.MeetClientResponse;
@@ -57,6 +57,7 @@ public class MeetService {
     private final MeetMemberRepositorySupport meetMemberRepositorySupport;
     private final UserRepository userRepository;
     private final OutboxService outboxService;
+    private final MeetRemoveService meetRemoveService;
     private final EntityReader reader;
 
     private final String inviteUrl;
@@ -69,6 +70,7 @@ public class MeetService {
             MeetMemberRepositorySupport meetMemberRepositorySupport,
             UserRepository userRepository,
             OutboxService outboxService,
+            MeetRemoveService meetRemoveService,
             EntityReader reader,
             @Value("${mople.url}") String inviteUrl
     ) {
@@ -79,6 +81,7 @@ public class MeetService {
         this.meetMemberRepositorySupport = meetMemberRepositorySupport;
         this.userRepository = userRepository;
         this.outboxService = outboxService;
+        this.meetRemoveService = meetRemoveService;
         this.reader = reader;
         this.inviteUrl = inviteUrl;
     }
@@ -280,32 +283,19 @@ public class MeetService {
         }
 
         if (meet.matchCreator(userId)) {
-
-            meet.softDelete(userId);
-
-            try {
-                meetRepository.flush();
-
-            } catch (
-                    OptimisticLockException
-                    | OptimisticLockingFailureException
-                    | StaleObjectStateException e
-            ) {
-                long currentVersion = meetRepository.findVersion(meet.getId());
-                throw new ConcurrencyConflictException(REQUEST_CONFLICT, currentVersion);
-            }
+            meetRemoveService.removeMeetAsCreator(meet, userId);
 
             MeetSoftDeletedEvent deletedEvent = MeetSoftDeletedEvent.builder()
-                    .meetId(meetId)
+                    .meetId(meet.getId())
                     .meetDeletedBy(userId)
                     .build();
 
-            outboxService.save(MEET_SOFT_DELETED, MEET, meetId, deletedEvent);
+            outboxService.save(MEET_SOFT_DELETED, MEET, meet.getId(), deletedEvent);
 
             return;
         }
 
-        meetMemberRepository.deleteByMeetIdAndUserId(meetId, userId);
+        meetRemoveService.removeMeetAsMember(meetId, userId);
 
         MeetLeftEvent leftEvent = MeetLeftEvent.builder()
                 .meetId(meetId)
@@ -317,6 +307,7 @@ public class MeetService {
 
     @Transactional
     public String createInvite(Long userId, Long meetId) {
+
         reader.findUser(userId);
         reader.findMeet(meetId);
 
