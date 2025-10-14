@@ -186,7 +186,11 @@ public class PlanService {
             throw new ConcurrencyConflictException(REQUEST_CONFLICT, currentVersion);
         }
 
-        if (changedLocation && newTime.isBefore(LocalDateTime.now().plusDays(5))) {
+        boolean oldWithin = oldTime.isBefore(LocalDateTime.now().plusDays(5));
+        boolean newWithin = newTime.isBefore(LocalDateTime.now().plusDays(5));
+        boolean crossedIntoWindow = (!oldWithin && newWithin) && plan.hasLocation();
+
+        if (changedLocation || crossedIntoWindow) {
             WeatherRefreshRequestedEvent requestedEvent = WeatherRefreshRequestedEvent.builder()
                     .planId(plan.getId())
                     .build();
