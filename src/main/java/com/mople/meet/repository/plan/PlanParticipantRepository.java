@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
+
 public interface PlanParticipantRepository extends JpaRepository<PlanParticipant, Long> {
 
     boolean existsByPlanIdAndUserId(Long planId, Long userId);
@@ -44,4 +46,7 @@ public interface PlanParticipantRepository extends JpaRepository<PlanParticipant
             "      where p.reviewId = :reviewId "
     )
     void deleteByReviewId(Long reviewId);
+
+    @Query("select p.userId from PlanParticipant p where p.planId = :planId")
+    List<Long> findUserIdsByPlanId(Long planId);
 }
