@@ -59,6 +59,7 @@ public class PlanRepositorySupport {
                                 plan.planTime,
                                 plan.address,
                                 plan.title,
+                                plan.description,
                                 plan.latitude,
                                 plan.longitude,
                                 plan.weatherIcon,
@@ -328,7 +329,9 @@ public class PlanRepositorySupport {
                 .where(
                         plan.status.eq(Status.ACTIVE),
                         plan.planTime.after(now),
-                        plan.planTime.before(now.plusDays(5))
+                        plan.planTime.before(now.plusDays(5)),
+                        plan.latitude.isNotNull(),
+                        plan.longitude.isNotNull()
                 )
                 .orderBy(
                         new CaseBuilder()

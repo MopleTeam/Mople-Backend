@@ -32,7 +32,7 @@ public interface MeetPlanRepository extends JpaRepository<MeetPlan, Long>{
     )
     int updateWeather(Long planId, Double temperature, Double pop, String icon);
 
-    @Modifying(flushAutomatically = true)
+    @Modifying(clearAutomatically = true)
     @Query(
             "update MeetPlan p " +
             "   set p.temperature = null, " +

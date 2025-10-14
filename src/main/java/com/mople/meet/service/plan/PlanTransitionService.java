@@ -41,6 +41,7 @@ public class PlanTransitionService {
                         .planTime(plan.getPlanTime())
                         .address(plan.getAddress())
                         .title(plan.getTitle())
+                        .description(plan.getDescription())
                         .latitude(plan.getLatitude())
                         .longitude(plan.getLongitude())
                         .weatherIcon(plan.getWeatherIcon())

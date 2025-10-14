@@ -11,6 +11,7 @@ public record PlanUpdateRequest(
         @NotNull LocalDateTime planTime,
         String planAddress,
         String title,
+        String description,
         BigDecimal lot,
         BigDecimal lat,
         String weatherAddress
