@@ -56,7 +56,7 @@ public class NotificationUserReader {
                 .fetch();
     }
 
-    public List<Long> findReviewCreator(Long creatorId) {
+    public List<Long> findPlanReviewCreator(Long creatorId) {
         QUser user = QUser.user;
 
         return queryFactory

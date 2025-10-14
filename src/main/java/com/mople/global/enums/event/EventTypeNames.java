@@ -16,6 +16,7 @@ public final class EventTypeNames {
     public static final String PLAN_TRANSITION_REQUESTED = "PLAN_TRANSITION_REQUESTED";
     public static final String PLAN_TRANSITIONED = "PLAN_TRANSITIONED";
     public static final String PLAN_REMIND = "PLAN_REMIND";
+    public static final String PLAN_NO_LOCATION = "PLAN_NO_LOCATION";
     public static final String PLAN_PURGE = "PLAN_PURGE";
 
     // REVIEW

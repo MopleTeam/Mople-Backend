@@ -1,17 +1,17 @@
-package com.mople.global.event.handler.domain.impl.review.notifier;
+package com.mople.global.event.handler.domain.impl.plan.notifier;
 
 import com.mople.core.exception.custom.NonRetryableOutboxException;
 import com.mople.dto.event.data.domain.global.NotifyRequestedEvent;
-import com.mople.dto.event.data.domain.review.ReviewRemindEvent;
-import com.mople.dto.event.data.notify.review.ReviewRemindNotifyEvent;
+import com.mople.dto.event.data.domain.plan.PlanNoLocationEvent;
+import com.mople.dto.event.data.notify.plan.PlanNoLocationNotifyEvent;
 import com.mople.entity.meet.Meet;
-import com.mople.entity.meet.review.PlanReview;
+import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.notification.Notification;
 import com.mople.global.enums.ExceptionReturnCode;
 import com.mople.global.enums.Status;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.MeetRepository;
-import com.mople.meet.repository.review.PlanReviewRepository;
+import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.notification.reader.NotificationUserReader;
 import com.mople.notification.repository.NotificationRepository;
 import com.mople.outbox.service.OutboxService;
@@ -20,47 +20,43 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-import static com.mople.global.enums.event.AggregateType.REVIEW;
+import static com.mople.global.enums.event.AggregateType.PLAN;
 import static com.mople.global.enums.event.EventTypeNames.NOTIFY_REQUESTED;
 
 @Component
 @RequiredArgsConstructor
-public class ReviewRemindNotifier implements DomainEventHandler<ReviewRemindEvent> {
+public class PlanNoLocationNotifier implements DomainEventHandler<PlanNoLocationEvent> {
 
     private final MeetRepository meetRepository;
-    private final PlanReviewRepository reviewRepository;
+    private final MeetPlanRepository planRepository;
     private final NotificationRepository notificationRepository;
 
     private final NotificationUserReader userReader;
     private final OutboxService outboxService;
 
     @Override
-    public Class<ReviewRemindEvent> getHandledType() {
-        return ReviewRemindEvent.class;
+    public Class<PlanNoLocationEvent> getHandledType() {
+        return PlanNoLocationEvent.class;
     }
 
     @Override
-    public void handle(ReviewRemindEvent event) {
-        PlanReview review = reviewRepository.findByIdAndStatus(event.reviewId(), Status.ACTIVE)
-                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_REVIEW));
+    public void handle(PlanNoLocationEvent event) {
+        MeetPlan plan = planRepository.findByIdAndStatus(event.planId(), Status.ACTIVE)
+                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_PLAN));
 
-        if (review.getUpload()) {
-            return;
-        }
-
-        List<Long> targetIds = userReader.findPlanReviewCreator(review.getCreatorId());
+        List<Long> targetIds = userReader.findPlanReviewCreator(plan.getCreatorId());
 
         if (targetIds.isEmpty()) {
             return;
         }
 
-        Meet meet = meetRepository.findByIdAndStatus(review.getMeetId(), Status.ACTIVE)
+        Meet meet = meetRepository.findByIdAndStatus(plan.getMeetId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
 
-        ReviewRemindNotifyEvent notifyEvent = ReviewRemindNotifyEvent.builder()
+        PlanNoLocationNotifyEvent notifyEvent = PlanNoLocationNotifyEvent.builder()
                 .meetName(meet.getName())
-                .reviewId(review.getId())
-                .reviewName(review.getName())
+                .planId(plan.getId())
+                .planName(plan.getName())
                 .build();
 
         List<Long> notificationIds = notificationRepository.saveAll(
@@ -69,7 +65,7 @@ public class ReviewRemindNotifier implements DomainEventHandler<ReviewRemindEven
                                         Notification.builder()
                                                 .type(notifyEvent.notifyType())
                                                 .meetId(meet.getId())
-                                                .reviewId(review.getId())
+                                                .planId(plan.getId())
                                                 .payload(notifyEvent.payload())
                                                 .userId(targetId)
                                                 .build()
@@ -80,8 +76,8 @@ public class ReviewRemindNotifier implements DomainEventHandler<ReviewRemindEven
 
         outboxService.save(
                 NOTIFY_REQUESTED,
-                REVIEW,
-                review.getId(),
+                PLAN,
+                plan.getId(),
                 new NotifyRequestedEvent(notifyEvent, notificationIds)
         );
     }

@@ -15,9 +15,6 @@ import java.util.Optional;
 
 public interface MeetPlanRepository extends JpaRepository<MeetPlan, Long>{
 
-    @Query("select p.id from MeetPlan p where p.planTime < :time and p.status = :status")
-    List<Long> findPreviousPlanAll(LocalDateTime time, Status status);
-
     @Query("select p from MeetPlan p where p.id in :planIds and p.status = :status")
     List<MeetPlan> findPlanAndTime(List<Long> planIds, Status status);
 
