@@ -21,6 +21,7 @@ public class PlanClientResponse {
     private final String planName;
     private final String planAddress;
     private final String title;
+    private final String description;
     private final Long creatorId;
     private final LocalDateTime planTime;
     private final Integer planMemberCount;
@@ -49,6 +50,7 @@ public class PlanClientResponse {
                 .planTime(viewResponse.planTime())
                 .planAddress(viewResponse.planAddress())
                 .title(viewResponse.title())
+                .description(viewResponse.description())
                 .creatorId(viewResponse.creatorId())
                 .lat(viewResponse.lat())
                 .lot(viewResponse.lot())
@@ -72,6 +74,7 @@ public class PlanClientResponse {
                 .planTime(viewResponse.planTime())
                 .planAddress(viewResponse.planAddress())
                 .title(viewResponse.title())
+                .description(viewResponse.description())
                 .creatorId(viewResponse.creatorId())
                 .lat(viewResponse.lat())
                 .lot(viewResponse.lot())
@@ -96,6 +99,7 @@ public class PlanClientResponse {
                 .planTime(viewResponse.planTime())
                 .planAddress(viewResponse.planAddress())
                 .title(viewResponse.title())
+                .description(viewResponse.description())
                 .creatorId(viewResponse.creatorId())
                 .lat(viewResponse.lat())
                 .lot(viewResponse.lot())

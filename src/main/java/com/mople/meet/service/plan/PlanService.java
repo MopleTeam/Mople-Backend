@@ -115,6 +115,7 @@ public class PlanService {
                         .planTime(request.planTime())
                         .address(request.planAddress())
                         .title(request.title())
+                        .description(request.description())
                         .longitude(request.lot())
                         .latitude(request.lat())
                         .weatherAddress(request.weatherAddress())
@@ -123,7 +124,7 @@ public class PlanService {
                         .build()
         );
 
-        if (request.planTime().isBefore(LocalDateTime.now().plusDays(5))) {
+        if (request.lat() != null && request.lot() != null && request.planTime().isBefore(LocalDateTime.now().plusDays(5))) {
             WeatherRefreshRequestedEvent requestedEvent = WeatherRefreshRequestedEvent.builder()
                     .planId(plan.getId())
                     .build();
@@ -171,7 +172,7 @@ public class PlanService {
         LocalDateTime newTime = request.planTime();
         LocalDateTime oldTime = plan.getPlanTime();
 
-        boolean changedPlace = plan.updatePlan(request);
+        boolean changedLocation = plan.updatePlan(request) && plan.hasLocation();
 
         try {
             meetPlanRepository.flush();
@@ -185,7 +186,11 @@ public class PlanService {
             throw new ConcurrencyConflictException(REQUEST_CONFLICT, currentVersion);
         }
 
-        if (changedPlace || newTime.isBefore(LocalDateTime.now().plusDays(5))) {
+        boolean oldWithin = oldTime.isBefore(LocalDateTime.now().plusDays(5));
+        boolean newWithin = newTime.isBefore(LocalDateTime.now().plusDays(5));
+        boolean crossedIntoWindow = (!oldWithin && newWithin) && plan.hasLocation();
+
+        if (changedLocation || crossedIntoWindow) {
             WeatherRefreshRequestedEvent requestedEvent = WeatherRefreshRequestedEvent.builder()
                     .planId(plan.getId())
                     .build();
@@ -193,8 +198,9 @@ public class PlanService {
             outboxService.save(WEATHER_REFRESH_REQUESTED, PLAN, plan.getId(), requestedEvent);
         }
 
-        if (newTime.isAfter(LocalDateTime.now().plusDays(5))) {
+        if (!plan.hasLocation() || newTime.isAfter(LocalDateTime.now().plusDays(5))) {
             meetPlanRepository.deleteWeather(plan.getId());
+            plan = reader.findPlan(plan.getId());
         }
 
         if (!newTime.equals(oldTime)) {

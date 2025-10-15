@@ -26,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
@@ -59,6 +60,7 @@ public class PlanRepositorySupport {
                                 plan.planTime,
                                 plan.address,
                                 plan.title,
+                                plan.description,
                                 plan.latitude,
                                 plan.longitude,
                                 plan.weatherIcon,
@@ -328,7 +330,9 @@ public class PlanRepositorySupport {
                 .where(
                         plan.status.eq(Status.ACTIVE),
                         plan.planTime.after(now),
-                        plan.planTime.before(now.plusDays(5))
+                        plan.planTime.before(now.plusDays(5)),
+                        plan.latitude.isNotNull(),
+                        plan.longitude.isNotNull()
                 )
                 .orderBy(
                         new CaseBuilder()
@@ -338,6 +342,37 @@ public class PlanRepositorySupport {
                                 .asc()
                 )
                 .limit(40)
+                .fetch();
+    }
+
+    public List<Long> findPreviousPlanAll() {
+        QMeetPlan plan = QMeetPlan.meetPlan;
+
+        return queryFactory
+                .select(plan.id)
+                .from(plan)
+                .where(
+                        plan.status.eq(Status.ACTIVE),
+                        plan.planTime.lt(LocalDateTime.now())
+                )
+                .orderBy(plan.planTime.desc())
+                .fetch();
+    }
+
+    public List<Long> findNoLocationPlanAll() {
+        QMeetPlan plan = QMeetPlan.meetPlan;
+        var now = LocalDate.now();
+
+        return queryFactory
+                .select(plan.id)
+                .from(plan)
+                .where(
+                        plan.status.eq(Status.ACTIVE),
+                        plan.planTime.goe(now.plusDays(2).atStartOfDay()),
+                        plan.planTime.lt(now.plusDays(3).atStartOfDay()),
+                        plan.latitude.isNull().or(plan.longitude.isNull())
+                )
+                .orderBy(plan.planTime.asc())
                 .fetch();
     }
 }

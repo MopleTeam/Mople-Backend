@@ -21,6 +21,7 @@ public class ReviewClientResponse {
     private final String reviewName;
     private final String address;
     private final String title;
+    private final String description;
     private final LocalDateTime reviewTime;
     private final String meetName;
     private final String meetImg;
@@ -59,6 +60,7 @@ public class ReviewClientResponse {
                 .reviewName(detailResponse.reviewName())
                 .address(detailResponse.address())
                 .title(detailResponse.title())
+                .description(detailResponse.description())
                 .lat(detailResponse.lat())
                 .lot(detailResponse.lot())
                 .reviewTime(detailResponse.reviewDateTime())

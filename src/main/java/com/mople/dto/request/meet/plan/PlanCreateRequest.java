@@ -9,6 +9,7 @@ public record PlanCreateRequest(
      LocalDateTime planTime,
      String planAddress,
      String title,
+     String description,
      BigDecimal lot,
      BigDecimal lat,
      String weatherAddress
