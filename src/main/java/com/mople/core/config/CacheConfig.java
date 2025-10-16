@@ -19,13 +19,15 @@ public class CacheConfig {
 
     @Bean
     public CacheManager cacheManager(CacheSpecsConfig properties) {
-        CaffeineCache homeViewPlan = new CaffeineCache(
-                "homeViewPlan",
-                Caffeine.from(properties.homeViewPlan()).recordStats().build()
-        );
+        List<CaffeineCache> caches = properties.specs().entrySet().stream()
+                .map(entry -> new CaffeineCache(
+                        entry.getKey(),
+                        Caffeine.from(entry.getValue()).recordStats().build()
+                ))
+                .toList();
 
         SimpleCacheManager manager = new SimpleCacheManager();
-        manager.setCaches(List.of(homeViewPlan));
+        manager.setCaches(caches);
         return manager;
     }
 }

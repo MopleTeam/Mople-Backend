@@ -2,8 +2,10 @@ package com.mople.core.config.component;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "cache.caffeine.spec")
+import java.util.Map;
+
+@ConfigurationProperties(prefix = "cache.caffeine")
 public record  CacheSpecsConfig(
-        String homeViewPlan
-) {
+        Map<String, String> specs
+){
 }
