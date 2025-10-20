@@ -15,13 +15,12 @@ import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.dto.response.user.UserInfo;
 import com.mople.global.enums.Status;
-import com.mople.global.utils.cursor.MemberCursor;
+import com.mople.global.utils.cursor.custom.MemberCursor;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.plan.PlanParticipant;
 import com.mople.entity.meet.review.PlanReview;
 import com.mople.entity.meet.review.ReviewImage;
 import com.mople.entity.meet.review.ReviewReport;
-import com.mople.entity.user.User;
 import com.mople.global.utils.cursor.CursorUtils;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.MeetMemberRepository;
@@ -48,6 +47,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.mople.dto.client.ReviewClientResponse.*;
 import static com.mople.dto.client.UserRoleClientResponse.ofParticipants;
@@ -63,7 +63,7 @@ import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 public class ReviewService {
 
     private static final int REVIEW_CURSOR_FIELD_COUNT = 1;
-    private static final int REVIEW_PARTICIPANT_CURSOR_FIELD_COUNT = 2;
+    private static final int REVIEW_PARTICIPANT_CURSOR_FIELD_COUNT = 1;
 
     private final PlanReviewRepository planReviewRepository;
     private final PlanParticipantRepository participantRepository;
@@ -219,37 +219,42 @@ public class ReviewService {
             throw new AuthException(NOT_MEMBER);
         }
 
-        Meet meet = reader.findMeet(review.getMeetId());
-
         int size = request.getSafeSize();
-        Long hostId = meet.getCreatorId();
-        Long creatorId = review.getCreatorId();
-        List<PlanParticipant> participants = getReviewParticipants(reviewId, hostId, creatorId, request.cursor(), size);
+        List<PlanParticipant> participants = getReviewParticipants(reviewId, request.cursor(), size);
 
         return FlatCursorPageResponse.of(
                 participantRepository.countByReviewId(reviewId),
-                buildParticipantCursorPage(size, participants, hostId, creatorId)
+                buildParticipantCursorPage(size, participants)
         );
     }
 
-    private List<PlanParticipant> getReviewParticipants(Long reviewId, Long hostId, Long creatorId, String encodedCursor, int size) {
+    private List<PlanParticipant> getReviewParticipants(Long reviewId, String encodedCursor, int size) {
 
         MemberCursor cursor = null;
 
         if (encodedCursor != null && !encodedCursor.isEmpty()) {
             String[] decodeParts = CursorUtils.decode(encodedCursor, REVIEW_PARTICIPANT_CURSOR_FIELD_COUNT);
 
-            String cursorNickname = decodeParts[0];
-            Long cursorId = Long.valueOf(decodeParts[1]);
-            validateParticipantCursor(cursorNickname, cursorId);
+            Long cursorId = Long.parseLong(decodeParts[0]);
+            PlanParticipant participant = participantRepository.findById(cursorId)
+                    .orElseThrow(() -> new CursorException(INVALID_CURSOR));
 
-            cursor = new MemberCursor(cursorNickname, cursorId, hostId, creatorId);
+            if (!Objects.equals(participant.getReviewId(), reviewId)) {
+                throw new CursorException(INVALID_CURSOR);
+            }
+
+            cursor = new MemberCursor(
+                    participant.getRoleOrder(),
+                    participant.getNicknameTypeOrder(),
+                    participant.getNicknameLower(),
+                    participant.getId()
+            );
         }
 
-        return participantRepositorySupport.findReviewParticipantPage(reviewId, hostId, creatorId, cursor, size);
+        return participantRepositorySupport.findReviewParticipantPage(reviewId, cursor, size);
     }
 
-    private CursorPageResponse<UserRoleClientResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants, Long hostId, Long creatorId) {
+    private CursorPageResponse<UserRoleClientResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants) {
         List<Long> userIds = participants.stream()
                 .map(PlanParticipant::getUserId)
                 .toList();
@@ -259,21 +264,12 @@ public class ReviewService {
         return buildCursorPage(
                 participants,
                 size,
-                p -> {
-                    User user = reader.findUser(p.getUserId());
-                    return new String[]{
-                            user.getNickname(),
-                            p.getId().toString()
-                    };
-                },
-                list -> ofParticipants(list, userInfoById, hostId, creatorId)
+                p ->
+                        new String[]{
+                                p.getId().toString()
+                        },
+                list -> ofParticipants(list, userInfoById)
         );
-    }
-
-    private void validateParticipantCursor(String cursorNickname, Long cursorId) {
-        if (participantRepositorySupport.isCursorInvalid(cursorNickname, cursorId)) {
-            throw new CursorException(INVALID_CURSOR);
-        }
     }
 
     @Transactional(readOnly = true)

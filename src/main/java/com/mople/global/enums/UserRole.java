@@ -3,23 +3,12 @@ package com.mople.global.enums;
 public enum UserRole {
     HOST, CREATOR, PARTICIPANT;
 
-    public static UserRole getRole(Long userId, Long hostId) {
-        if (userId.equals(hostId)) {
+    public static UserRole getRole(Integer roleOrder) {
+        if (roleOrder.equals(1)) {
             return HOST;
         }
 
-        return PARTICIPANT;
-    }
-
-    public static UserRole getRole(Long userId, Long hostId, Long creatorId) {
-        if (userId.equals(hostId)) {
-            if (userId.equals(creatorId)) {
-                return CREATOR;
-            }
-            return HOST;
-        }
-
-        if (userId.equals(creatorId)) {
+        if (roleOrder.equals(2)) {
             return CREATOR;
         }
 

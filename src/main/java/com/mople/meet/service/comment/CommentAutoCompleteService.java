@@ -4,12 +4,11 @@ import com.mople.core.exception.custom.CursorException;
 import com.mople.dto.client.UserRoleClientResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.user.UserInfo;
-import com.mople.entity.user.User;
 import com.mople.global.enums.Status;
-import com.mople.global.utils.cursor.AutoCompleteCursor;
+import com.mople.global.utils.cursor.custom.AutoCompleteCursor;
 import com.mople.entity.meet.MeetMember;
 import com.mople.global.utils.cursor.CursorUtils;
-import com.mople.meet.reader.EntityReader;
+import com.mople.meet.repository.MeetMemberRepository;
 import com.mople.meet.repository.impl.MeetMemberRepositorySupport;
 import com.mople.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +16,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-import static com.mople.dto.client.UserRoleClientResponse.ofAutoCompleteUsers;
+import static com.mople.dto.client.UserRoleClientResponse.ofMembers;
 import static com.mople.dto.response.user.UserInfo.ofMap;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
@@ -27,30 +27,38 @@ import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 @RequiredArgsConstructor
 public class CommentAutoCompleteService {
 
-    private static final int MEET_MEMBER_CURSOR_FIELD_COUNT = 2;
+    private static final int MEET_MEMBER_CURSOR_FIELD_COUNT = 1;
 
     private final MeetMemberRepositorySupport memberRepositorySupport;
+    private final MeetMemberRepository memberRepository;
     private final UserRepository userRepository;
-    private final EntityReader reader;
 
-    public List<MeetMember> getMeetMembers(Long meetId, Long hostId, Long creatorId, String keyword, String encodedCursor, int size) {
+    public List<MeetMember> getMeetMembers(Long meetId, String keyword, String encodedCursor, int size) {
 
         AutoCompleteCursor cursor = null;
 
         if (encodedCursor != null && !encodedCursor.isEmpty()) {
             String[] decodeParts = CursorUtils.decode(encodedCursor, MEET_MEMBER_CURSOR_FIELD_COUNT);
 
-            String cursorNickname = decodeParts[0];
-            Long cursorId = Long.parseLong(decodeParts[1]);
-            validateCursor(cursorNickname, cursorId);
+            Long cursorId = Long.parseLong(decodeParts[0]);
+            MeetMember member = memberRepository.findById(cursorId)
+                    .orElseThrow(() -> new CursorException(INVALID_CURSOR));
 
-            cursor = new AutoCompleteCursor(cursorNickname, keyword, cursorId, hostId, creatorId);
+            if (!Objects.equals(member.getMeetId(), meetId)) {
+                throw new CursorException(INVALID_CURSOR);
+            }
+
+            cursor = new AutoCompleteCursor(
+                    member.getRoleOrder(),
+                    member.getNicknameLower(),
+                    member.getId()
+            );
         }
 
-        return memberRepositorySupport.findMemberAutoCompletePage(meetId, hostId, creatorId, keyword, cursor, size);
+        return memberRepositorySupport.findMemberAutoCompletePage(meetId, keyword, cursor, size);
     }
 
-    public CursorPageResponse<UserRoleClientResponse> buildAutoCompleteCursorPage(int size, List<MeetMember> members, Long hostId, Long creatorId) {
+    public CursorPageResponse<UserRoleClientResponse> buildAutoCompleteCursorPage(int size, List<MeetMember> members) {
         List<Long> userIds = members.stream()
                 .map(MeetMember::getUserId)
                 .toList();
@@ -60,21 +68,10 @@ public class CommentAutoCompleteService {
         return buildCursorPage(
                 members,
                 size,
-                m -> {
-                    User user = reader.findUser(m.getUserId());
-
-                    return new String[]{
-                            user.getNickname(),
-                            m.getId().toString()
-                    };
+                m -> new String[]{
+                        m.getId().toString()
                 },
-                list -> ofAutoCompleteUsers(list, userInfoById, hostId, creatorId)
+                list -> ofMembers(list, userInfoById)
         );
-    }
-
-    private void validateCursor(String cursorNickname, Long cursorId) {
-        if (memberRepositorySupport.isCursorInvalid(cursorNickname, cursorId)) {
-            throw new CursorException(INVALID_CURSOR);
-        }
     }
 }

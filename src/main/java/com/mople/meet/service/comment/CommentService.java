@@ -378,15 +378,17 @@ public class CommentService {
         commentValidator.validatePostId(postId);
 
         Meet meet = getMeet(postId);
-
         Long meetId = meet.getId();
-        Long hostId = meet.getCreatorId();
-        Long creatorId = getMeetId(postId);
 
         int size = request.getSafeSize();
-        List<MeetMember> meetMembers = autoCompleteService.getMeetMembers(meetId, hostId, creatorId, keyword, request.cursor(), size);
+        List<MeetMember> meetMembers = autoCompleteService.getMeetMembers(
+                meetId,
+                keyword.toLowerCase(),
+                request.cursor(),
+                size
+        );
 
-        return autoCompleteService.buildAutoCompleteCursorPage(size, meetMembers, hostId, creatorId);
+        return autoCompleteService.buildAutoCompleteCursorPage(size, meetMembers);
     }
 
     private Long getMeetId(Long postId) {
