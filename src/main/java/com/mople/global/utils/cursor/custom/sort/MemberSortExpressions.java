@@ -12,7 +12,7 @@ public class MemberSortExpressions {
                 .otherwise(2);
     }
 
-    public static int startsWithOrder(String nickname, String keyword) {
+    public static Integer startsWithOrder(String nickname, String keyword) {
         if (nickname.startsWith(keyword)) {
             return 1;
         }
@@ -20,7 +20,7 @@ public class MemberSortExpressions {
         return 2;
     }
 
-    public static int calculateRoleOrder(Long userId, Long hostId, Long creatorId) {
+    public static Integer calculateRoleOrder(Long userId, Long hostId, Long creatorId) {
         if (userId.equals(hostId)) {
             return 1;
         } else if (userId.equals(creatorId)) {
@@ -30,7 +30,7 @@ public class MemberSortExpressions {
         }
     }
 
-    public static int calculateNicknameTypeOrder(String nickname) {
+    public static Integer calculateNicknameTypeOrder(String nickname) {
         String firstChar = nickname.substring(0, 1);
         if (firstChar.matches("[가-힣]")) {
             return 1;

@@ -36,11 +36,6 @@ public class MeetMember {
     public MeetMember(Long meetId, Long userId, String nickName, Long hostId) {
         this.meetId = meetId;
         this.userId = userId;
-
-        updateNickname(userId, nickName, hostId);
-    }
-
-    public void updateNickname(Long userId, String nickName, Long hostId) {
         this.roleOrder = calculateRoleOrder(userId, hostId, null);
         this.nicknameTypeOrder = calculateNicknameTypeOrder(nickName);
         this.nicknameLower = nickName.toLowerCase();

@@ -43,11 +43,6 @@ public class PlanParticipant extends BaseTimeEntity {
         this.planId = planId;
         this.userId = userId;
         this.reviewId = reviewId;
-
-        updateNickname(userId, nickName, hostId, creatorId);
-    }
-
-    public void updateNickname(Long userId, String nickName, Long hostId, Long creatorId) {
         this.roleOrder = calculateRoleOrder(userId, hostId, creatorId);
         this.nicknameTypeOrder = calculateNicknameTypeOrder(nickName);
         this.nicknameLower = nickName.toLowerCase();
