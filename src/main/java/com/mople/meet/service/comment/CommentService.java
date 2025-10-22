@@ -31,6 +31,7 @@ import com.mople.dto.request.meet.comment.CommentReportRequest;
 import com.mople.meet.repository.impl.comment.CommentRepositorySupport;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.outbox.service.OutboxService;
+import com.mople.user.repository.UserRepository;
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 
@@ -41,6 +42,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.mople.dto.client.CommentClientResponse.*;
 import static com.mople.global.enums.ExceptionReturnCode.NOT_FOUND_COMMENT_STATS;
@@ -56,6 +59,7 @@ public class CommentService {
     private static final int COMMENT_CURSOR_FIELD_COUNT = 1;
 
     private final MeetPlanRepository planRepository;
+    private final UserRepository userRepository;
     private final PlanCommentRepository commentRepository;
     private final CommentRepositorySupport commentRepositorySupport;
     private final CommentReportRepository commentReportRepository;
@@ -144,23 +148,29 @@ public class CommentService {
                 .map(PlanComment::getId)
                 .toList();
 
+        List<Long> writerIds = comments.stream()
+                .map(PlanComment::getWriterId)
+                .distinct()
+                .toList();
+
+        Map<Long, CommentStats> statsMap = statsRepository.findAllById(commentIds).stream()
+                .collect(Collectors.toMap(CommentStats::getCommentId, Function.identity()));
+
+        Map<Long, User> userMap = userRepository.findAllById(writerIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        Map<Long, List<User>> mentionsMap = mentionService.findMentionedUsersInBatch(commentIds);
+
         List<Long> likedCommentIds = likeService.findLikedCommentIds(userId, commentIds);
 
         return comments.stream()
-                .map(comment -> {
-                    CommentStats stats = statsRepository.findById(comment.getId())
-                            .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_COMMENT_STATS));
-
-                    User writer = reader.findUser(comment.getWriterId());
-
-                    return new CommentResponse(
-                            comment,
-                            stats,
-                            writer,
-                            mentionService.findMentionedUsers(comment.getId()),
-                            likedCommentIds.contains(comment.getId())
-                    );
-                })
+                .map(comment -> new CommentResponse(
+                        comment,
+                        statsMap.get(comment.getId()),
+                        userMap.get(comment.getWriterId()),
+                        mentionsMap.getOrDefault(comment.getId(), List.of()),
+                        likedCommentIds.contains(comment.getId())
+                ))
                 .toList();
     }
 
