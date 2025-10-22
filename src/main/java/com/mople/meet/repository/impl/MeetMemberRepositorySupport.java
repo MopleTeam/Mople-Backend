@@ -1,11 +1,12 @@
 package com.mople.meet.repository.impl;
 
 import com.mople.global.utils.cursor.custom.AutoCompleteCursor;
-import com.mople.global.utils.cursor.custom.MemberCursor;
+import com.mople.global.utils.cursor.custom.UserCursor;
 import com.mople.entity.meet.MeetMember;
 import com.mople.entity.meet.QMeetMember;
 import com.mople.global.utils.cursor.custom.sort.MemberSortExpressions;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ import java.util.List;
 public class MeetMemberRepositorySupport {
     private final JPAQueryFactory queryFactory;
 
-    public List<MeetMember> findMemberPage(Long meetId, MemberCursor cursor, int size) {
+    public List<MeetMember> findMemberPage(Long meetId, UserCursor cursor, int size) {
         QMeetMember member = QMeetMember.meetMember;
 
         BooleanBuilder whereCondition = new BooleanBuilder()
@@ -26,12 +27,10 @@ public class MeetMemberRepositorySupport {
 
         if (cursor != null) {
             whereCondition.and(
-                    MemberCursor.memberCursorCondition(
-                            member.roleOrder,
-                            member.nicknameTypeOrder,
-                            member.nicknameLower,
-                            member.id,
-                            cursor
+                    Expressions.booleanTemplate(
+                            "( {0}, {1}, {2}, {3} ) > ({4}, {5}, {6}, {7})",
+                            member.roleOrder, member.nicknameTypeOrder, member.nicknameLower, member.id,
+                            cursor.roleOrder(), cursor.nicknameTypeOrder(), cursor.nicknameLower(), cursor.id()
                     )
             );
         }

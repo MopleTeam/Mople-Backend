@@ -7,7 +7,6 @@ import com.mople.dto.response.meet.UserPageResponse;
 import com.mople.dto.response.meet.plan.PlanListResponse;
 import com.mople.dto.response.meet.plan.PlanViewResponse;
 import com.mople.entity.meet.*;
-import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.plan.QMeetPlan;
 import com.mople.entity.meet.plan.QPlanParticipant;
 import com.mople.entity.meet.review.QPlanReview;
@@ -111,8 +110,11 @@ public class PlanRepositorySupport {
                     .where(plan.id.eq(cursorId))
                     .fetchOne();
 
-            whereCondition.and(plan.planTime.gt(cursorPlanTime)
-                    .or(plan.planTime.eq(cursorPlanTime).and(plan.id.gt(cursorId)))
+            whereCondition.and(
+                    Expressions.booleanTemplate(
+                            "( {0}, {1} ) > ({2}, {3})",
+                            plan.planTime, plan.id, cursorPlanTime, cursorId
+                    )
             );
         }
 

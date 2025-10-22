@@ -1,23 +1,22 @@
 package com.mople.meet.repository.impl.plan;
 
-import com.mople.global.utils.cursor.custom.MemberCursor;
+import com.mople.global.utils.cursor.custom.UserCursor;
 import com.mople.entity.meet.plan.PlanParticipant;
 import com.mople.entity.meet.plan.QPlanParticipant;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-import static com.mople.global.utils.cursor.custom.MemberCursor.memberCursorCondition;
-
 @Repository
 @RequiredArgsConstructor
 public class ParticipantRepositorySupport {
     private final JPAQueryFactory queryFactory;
 
-    public List<PlanParticipant> findPlanParticipantPage(Long planId, MemberCursor cursor, int size) {
+    public List<PlanParticipant> findPlanParticipantPage(Long planId, UserCursor cursor, int size) {
         QPlanParticipant participant = QPlanParticipant.planParticipant;
 
         BooleanBuilder whereCondition = new BooleanBuilder()
@@ -25,12 +24,10 @@ public class ParticipantRepositorySupport {
 
         if (cursor != null) {
             whereCondition.and(
-                    memberCursorCondition(
-                            participant.roleOrder,
-                            participant.nicknameTypeOrder,
-                            participant.nicknameLower,
-                            participant.id,
-                            cursor
+                    Expressions.booleanTemplate(
+                            "( {0}, {1}, {2}, {3} ) > ({4}, {5}, {6}, {7})",
+                            participant.roleOrder, participant.nicknameTypeOrder, participant.nicknameLower, participant.id,
+                            cursor.roleOrder(), cursor.nicknameTypeOrder(), cursor.nicknameLower(), cursor.id()
                     )
             );
         }
@@ -49,7 +46,7 @@ public class ParticipantRepositorySupport {
                 .fetch();
     }
 
-    public List<PlanParticipant> findReviewParticipantPage(Long reviewId, MemberCursor cursor, int size) {
+    public List<PlanParticipant> findReviewParticipantPage(Long reviewId, UserCursor cursor, int size) {
         QPlanParticipant participant = QPlanParticipant.planParticipant;
 
         BooleanBuilder whereCondition = new BooleanBuilder()
@@ -57,12 +54,10 @@ public class ParticipantRepositorySupport {
 
         if (cursor != null) {
             whereCondition.and(
-                    memberCursorCondition(
-                            participant.roleOrder,
-                            participant.nicknameTypeOrder,
-                            participant.nicknameLower,
-                            participant.id,
-                            cursor
+                    Expressions.booleanTemplate(
+                            "( {0}, {1}, {2}, {3} ) > ({4}, {5}, {6}, {7})",
+                            participant.roleOrder, participant.nicknameTypeOrder, participant.nicknameLower, participant.id,
+                            cursor.roleOrder(), cursor.nicknameTypeOrder(), cursor.nicknameLower(), cursor.id()
                     )
             );
         }

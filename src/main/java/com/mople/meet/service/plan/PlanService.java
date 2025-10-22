@@ -19,7 +19,7 @@ import com.mople.dto.response.user.UserInfo;
 import com.mople.entity.user.User;
 import com.mople.global.enums.Status;
 import com.mople.global.enums.event.DeletionCause;
-import com.mople.global.utils.cursor.custom.MemberCursor;
+import com.mople.global.utils.cursor.custom.UserCursor;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.plan.PlanParticipant;
@@ -62,6 +62,7 @@ import static com.mople.global.enums.event.AggregateType.PLAN;
 import static com.mople.global.enums.event.EventTypeNames.*;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
+import static com.mople.global.utils.cursor.custom.UserCursor.ofUserCursor;
 
 @Service
 @RequiredArgsConstructor
@@ -379,7 +380,7 @@ public class PlanService {
 
     private List<PlanParticipant> getPlanParticipants(Long planId, String encodedCursor, int size) {
 
-        MemberCursor cursor = null;
+        UserCursor cursor = null;
 
         if (encodedCursor != null && !encodedCursor.isEmpty()) {
             String[] decodeParts = CursorUtils.decode(encodedCursor, PLAN_PARTICIPANT_CURSOR_FIELD_COUNT);
@@ -392,12 +393,7 @@ public class PlanService {
                 throw new CursorException(INVALID_CURSOR);
             }
 
-            cursor = new MemberCursor(
-                    participant.getRoleOrder(),
-                    participant.getNicknameTypeOrder(),
-                    participant.getNicknameLower(),
-                    participant.getId()
-            );
+            cursor = ofUserCursor(participant);
         }
 
         return participantRepositorySupport.findPlanParticipantPage(planId, cursor, size);

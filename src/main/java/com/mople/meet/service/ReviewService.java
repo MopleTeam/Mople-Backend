@@ -15,7 +15,7 @@ import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.dto.response.user.UserInfo;
 import com.mople.global.enums.Status;
-import com.mople.global.utils.cursor.custom.MemberCursor;
+import com.mople.global.utils.cursor.custom.UserCursor;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.plan.PlanParticipant;
 import com.mople.entity.meet.review.PlanReview;
@@ -57,6 +57,7 @@ import static com.mople.global.enums.event.AggregateType.REVIEW;
 import static com.mople.global.enums.event.EventTypeNames.*;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
+import static com.mople.global.utils.cursor.custom.UserCursor.ofUserCursor;
 
 @Service
 @RequiredArgsConstructor
@@ -230,7 +231,7 @@ public class ReviewService {
 
     private List<PlanParticipant> getReviewParticipants(Long reviewId, String encodedCursor, int size) {
 
-        MemberCursor cursor = null;
+        UserCursor cursor = null;
 
         if (encodedCursor != null && !encodedCursor.isEmpty()) {
             String[] decodeParts = CursorUtils.decode(encodedCursor, REVIEW_PARTICIPANT_CURSOR_FIELD_COUNT);
@@ -243,12 +244,7 @@ public class ReviewService {
                 throw new CursorException(INVALID_CURSOR);
             }
 
-            cursor = new MemberCursor(
-                    participant.getRoleOrder(),
-                    participant.getNicknameTypeOrder(),
-                    participant.getNicknameLower(),
-                    participant.getId()
-            );
+            cursor = ofUserCursor(participant);
         }
 
         return participantRepositorySupport.findReviewParticipantPage(reviewId, cursor, size);

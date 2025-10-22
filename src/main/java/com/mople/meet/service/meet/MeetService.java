@@ -16,7 +16,7 @@ import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.dto.response.user.UserInfo;
 import com.mople.entity.user.User;
 import com.mople.global.enums.Status;
-import com.mople.global.utils.cursor.custom.MemberCursor;
+import com.mople.global.utils.cursor.custom.UserCursor;
 import com.mople.global.utils.cursor.CursorUtils;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.impl.MeetMemberRepositorySupport;
@@ -219,9 +219,8 @@ public class MeetService {
             throw new AuthException(NOT_MEMBER);
         }
 
-        Long hostId = meet.getCreatorId();
         int size = request.getSafeSize();
-        List<MeetMember> meetMembers = getMeetMembers(meet.getId(), hostId, request.cursor(), size);
+        List<MeetMember> meetMembers = getMeetMembers(meet.getId(), request.cursor(), size);
 
         Integer memberCount = meetRepositorySupport.countMeetMember(meetId);
 
@@ -231,9 +230,9 @@ public class MeetService {
         );
     }
 
-    private List<MeetMember> getMeetMembers(Long meetId, Long hostId, String encodedCursor, int size) {
+    private List<MeetMember> getMeetMembers(Long meetId, String encodedCursor, int size) {
 
-        MemberCursor cursor = null;
+        UserCursor cursor = null;
 
         if (encodedCursor != null && !encodedCursor.isEmpty()) {
             String[] decodeParts = CursorUtils.decode(encodedCursor, MEET_MEMBER_CURSOR_FIELD_COUNT);
@@ -246,12 +245,7 @@ public class MeetService {
                 throw new CursorException(INVALID_CURSOR);
             }
 
-            cursor = new MemberCursor(
-                    member.getRoleOrder(),
-                    member.getNicknameTypeOrder(),
-                    member.getNicknameLower(),
-                    member.getId()
-            );
+            cursor = UserCursor.ofUserCursor(member);
         }
 
         return meetMemberRepositorySupport.findMemberPage(meetId, cursor, size);

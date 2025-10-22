@@ -1,5 +1,6 @@
 package com.mople.global.utils.cursor.custom;
 
+import com.mople.entity.meet.MeetMember;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.core.types.dsl.StringExpression;
@@ -9,6 +10,14 @@ public record AutoCompleteCursor(
         String nicknameLower,
         Long id
 ) {
+
+    public static AutoCompleteCursor ofAutoCompleteCursor(MeetMember member) {
+        return new AutoCompleteCursor(
+                member.getRoleOrder(),
+                member.getNicknameLower(),
+                member.getId()
+        );
+    }
 
     public static BooleanExpression autoCompleteCursorCondition(
             NumberExpression<Integer> startsWithOrder,

@@ -22,6 +22,7 @@ import static com.mople.dto.client.UserRoleClientResponse.ofMembers;
 import static com.mople.dto.response.user.UserInfo.ofMap;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
+import static com.mople.global.utils.cursor.custom.AutoCompleteCursor.ofAutoCompleteCursor;
 
 @Service
 @RequiredArgsConstructor
@@ -48,11 +49,7 @@ public class CommentAutoCompleteService {
                 throw new CursorException(INVALID_CURSOR);
             }
 
-            cursor = new AutoCompleteCursor(
-                    member.getRoleOrder(),
-                    member.getNicknameLower(),
-                    member.getId()
-            );
+            cursor = ofAutoCompleteCursor(member);
         }
 
         return memberRepositorySupport.findMemberAutoCompletePage(meetId, keyword, cursor, size);
