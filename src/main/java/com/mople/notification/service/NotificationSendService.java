@@ -1,11 +1,16 @@
 package com.mople.notification.service;
 
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutureCallback;
+import com.google.api.core.ApiFutures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.firebase.messaging.*;
 
 import com.mople.dto.event.data.domain.global.NotifyRequestedEvent;
 import com.mople.dto.response.notification.NotifySendRequest;
 import com.mople.entity.notification.FirebaseToken;
 import com.mople.entity.notification.Notification;
+import com.mople.global.logging.logger.ExceptionLogger;
 import com.mople.notification.reader.NotificationTokenReader;
 import com.mople.notification.repository.NotificationRepository;
 
@@ -28,6 +33,7 @@ public class NotificationSendService {
     private final FirebaseMessaging sender;
     private final NotificationRepository notificationRepository;
     private final NotificationTokenReader tokenReader;
+    private final ExceptionLogger logger;
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void sendMultiNotification(NotifyRequestedEvent event) {
@@ -49,7 +55,27 @@ public class NotificationSendService {
                 .map(request -> buildMessage(event, request))
                 .toList();
 
-        afterCommit(() -> sender.sendEachAsync(messages));
+        afterCommit(() -> {
+            ApiFuture<BatchResponse> future = sender.sendEachAsync(messages);
+
+            ApiFutures.addCallback(future, new ApiFutureCallback<>() {
+
+                @Override
+                public void onFailure(Throwable t) {
+                    if (t instanceof FirebaseMessagingException fme) {
+                        String code = fme.getMessagingErrorCode().name();
+                        logger.logServerError(t.getStackTrace(), code + ": " + t.getMessage(), 502);
+
+                    } else {
+                        logger.logServerError(t.getStackTrace(), t.getMessage(), 500);
+                    }
+                }
+
+                @Override
+                public void onSuccess(BatchResponse batchResponse) {}
+
+            }, MoreExecutors.directExecutor());
+        });
     }
 
     private Message buildMessage(NotifyRequestedEvent event, NotifySendRequest request) {

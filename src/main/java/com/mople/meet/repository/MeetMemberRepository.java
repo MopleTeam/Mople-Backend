@@ -38,6 +38,16 @@ public interface MeetMemberRepository extends JpaRepository<MeetMember, Long> {
     )
     void deleteByMeetIdAndUserId(Long meetId, Long userId);
 
+    // 모임 삭제 시 removeMeetAsCreator() 키 무효화에서 사용 - 삭제 금지
     @Query("select m.userId from MeetMember m where m.meetId = :meetId")
     List<Long> findUserIdsByMeetId(Long meetId);
+
+    @Modifying(flushAutomatically = true)
+    @Query(
+            "update MeetMember m " +
+            "   set m.nicknameLower = :lower, " +
+            "       m.nicknameTypeOrder = :typeOrder " +
+            " where m.userId = :userId"
+    )
+    void updateNickname(Long userId, String lower, Integer typeOrder);
 }

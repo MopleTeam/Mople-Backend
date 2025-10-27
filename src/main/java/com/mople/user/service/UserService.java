@@ -4,6 +4,7 @@ import com.mople.core.exception.custom.ConcurrencyConflictException;
 import com.mople.dto.client.UserClientResponse;
 import com.mople.dto.event.data.domain.user.UserDeletedEvent;
 import com.mople.dto.event.data.domain.user.UserImageChangedEvent;
+import com.mople.dto.event.data.domain.user.UserNicknameChangedEvent;
 import com.mople.dto.request.user.RandomNicknameRequest;
 import com.mople.dto.request.user.UserInfoRequest;
 import com.mople.entity.user.User;
@@ -64,6 +65,15 @@ public class UserService {
                     .build();
 
             outboxService.save(USER_IMAGE_CHANGED, USER, id, changedEvent);
+        }
+
+        if (!user.getNickname().equals(updateInfo.nickname())) {
+            UserNicknameChangedEvent changedEvent = UserNicknameChangedEvent.builder()
+                    .userId(id)
+                    .newNickname(updateInfo.nickname())
+                    .build();
+
+            outboxService.save(USER_NICKNAME_CHANGED, USER, id, changedEvent);
         }
 
         user.updateImageAndNickname(updateInfo.image(), updateInfo.nickname());

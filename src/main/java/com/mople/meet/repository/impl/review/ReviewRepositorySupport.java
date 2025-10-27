@@ -4,6 +4,7 @@ import com.mople.entity.meet.review.PlanReview;
 import com.mople.entity.meet.review.QPlanReview;
 import com.mople.global.enums.Status;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -31,8 +32,10 @@ public class ReviewRepositorySupport {
                     .fetchOne();
 
             whereCondition.and(
-                    review.planTime.lt(cursorPlanTime)
-                            .or(review.planTime.eq(cursorPlanTime).and(review.id.lt(cursorId)))
+                    Expressions.booleanTemplate(
+                            "( {0}, {1} ) < ({2}, {3})",
+                            review.planTime, review.id, cursorPlanTime, cursorId
+                    )
             );
         }
 

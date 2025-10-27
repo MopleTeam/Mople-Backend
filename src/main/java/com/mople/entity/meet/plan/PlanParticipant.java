@@ -6,6 +6,9 @@ import jakarta.persistence.*;
 
 import lombok.*;
 
+import static com.mople.global.utils.cursor.custom.sort.MemberSortExpressions.calculateNicknameTypeOrder;
+import static com.mople.global.utils.cursor.custom.sort.MemberSortExpressions.calculateRoleOrder;
+
 @Entity
 @Table(name = "plan_participant")
 @Getter
@@ -26,15 +29,22 @@ public class PlanParticipant extends BaseTimeEntity {
     @Column(name = "review_id")
     private Long reviewId;
 
+    @Column(name = "role_order", nullable = false)
+    private Integer roleOrder = 2;
+
+    @Column(name = "nickname_type_order")
+    private Integer nicknameTypeOrder;
+
+    @Column(name = "nickname_lower")
+    private String nicknameLower;
+
     @Builder
-    public PlanParticipant(Long planId, Long userId, Long reviewId) {
+    public PlanParticipant(Long planId, Long userId, Long reviewId, String nickName, Long hostId, Long creatorId) {
         this.planId = planId;
         this.userId = userId;
         this.reviewId = reviewId;
-    }
-
-    public void updateReview(Long reviewId) {
-        this.planId = null;
-        this.reviewId = reviewId;
+        this.roleOrder = calculateRoleOrder(userId, hostId, creatorId);
+        this.nicknameTypeOrder = calculateNicknameTypeOrder(nickName);
+        this.nicknameLower = nickName.toLowerCase();
     }
 }

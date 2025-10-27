@@ -18,51 +18,28 @@ public record UserRoleClientResponse(
 ) {
     public static List<UserRoleClientResponse> ofParticipants(
             List<PlanParticipant> participants,
-            Map<Long, UserInfo> usersById,
-            Long hostId,
-            Long creatorId
+            Map<Long, UserInfo> usersById
     ) {
         return participants.stream()
-                .map(p -> ofUser(usersById.get(p.getUserId()), hostId, creatorId))
-                .toList();
-    }
-
-    public static List<UserRoleClientResponse> ofAutoCompleteUsers(
-            List<MeetMember> members,
-            Map<Long, UserInfo> usersById,
-            Long hostId,
-            Long creatorId
-    ) {
-        return members.stream()
-                .map(m -> ofUser(usersById.get(m.getUserId()), hostId, creatorId))
+                .map(p -> ofUser(usersById.get(p.getUserId()), p.getRoleOrder()))
                 .toList();
     }
 
     public static List<UserRoleClientResponse> ofMembers(
             List<MeetMember> members,
-            Map<Long, UserInfo> usersById,
-            Long hostId
+            Map<Long, UserInfo> usersById
     ) {
         return members.stream()
-                .map(m -> ofUser(usersById.get(m.getUserId()), hostId))
+                .map(m -> ofUser(usersById.get(m.getUserId()), m.getRoleOrder()))
                 .toList();
     }
 
-    private static UserRoleClientResponse ofUser(UserInfo userInfo, Long hostId, Long creatorId) {
+    private static UserRoleClientResponse ofUser(UserInfo userInfo, Integer roleOrder) {
         return UserRoleClientResponse.builder()
                 .userId(userInfo.userId())
                 .nickname(userInfo.nickname())
                 .image(userInfo.image())
-                .role(UserRole.getRole(userInfo.userId(), hostId, creatorId))
-                .build();
-    }
-
-    private static UserRoleClientResponse ofUser(UserInfo userInfo, Long hostId) {
-        return UserRoleClientResponse.builder()
-                .userId(userInfo.userId())
-                .nickname(userInfo.nickname())
-                .image(userInfo.image())
-                .role(UserRole.getRole(userInfo.userId(), hostId))
+                .role(UserRole.getRole(roleOrder))
                 .build();
     }
 }

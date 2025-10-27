@@ -14,6 +14,7 @@ import com.mople.dto.event.data.domain.review.*;
 import com.mople.dto.event.data.domain.user.UserDeletedEvent;
 import com.mople.dto.event.data.domain.user.UserImageChangedEvent;
 import com.mople.dto.event.data.domain.global.WeatherRefreshRequestedEvent;
+import com.mople.dto.event.data.domain.user.UserNicknameChangedEvent;
 
 import static com.mople.global.enums.event.EventTypeNames.*;
 
@@ -26,6 +27,7 @@ import static com.mople.global.enums.event.EventTypeNames.*;
         // User
         @JsonSubTypes.Type(value = UserDeletedEvent.class, name = USER_DELETED),
         @JsonSubTypes.Type(value = UserImageChangedEvent.class, name = USER_IMAGE_CHANGED),
+        @JsonSubTypes.Type(value = UserNicknameChangedEvent.class, name = USER_NICKNAME_CHANGED),
 
         // Meet
         @JsonSubTypes.Type(value = MeetSoftDeletedEvent.class, name = MEET_SOFT_DELETED),

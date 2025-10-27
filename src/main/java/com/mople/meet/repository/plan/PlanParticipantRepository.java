@@ -47,6 +47,16 @@ public interface PlanParticipantRepository extends JpaRepository<PlanParticipant
     )
     void deleteByReviewId(Long reviewId);
 
+    // 일정 삭제 시 deletePlan() 키 무효화에서 사용 - 삭제 금지
     @Query("select p.userId from PlanParticipant p where p.planId = :planId")
     List<Long> findUserIdsByPlanId(Long planId);
+
+    @Modifying(flushAutomatically = true)
+    @Query(
+            "update PlanParticipant p " +
+            "   set p.nicknameLower = :lower, " +
+            "       p.nicknameTypeOrder = :typeOrder " +
+            " where p.userId = :userId"
+    )
+    void updateNickname(Long userId, String lower, Integer typeOrder);
 }

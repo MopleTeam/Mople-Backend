@@ -1,14 +1,13 @@
 package com.mople.meet.repository.impl;
 
-import com.mople.entity.user.QUser;
-import com.mople.global.utils.cursor.AutoCompleteCursor;
-import com.mople.global.utils.cursor.MemberCursor;
+import com.mople.global.utils.cursor.custom.AutoCompleteCursor;
+import com.mople.global.utils.cursor.custom.UserCursor;
 import com.mople.entity.meet.MeetMember;
 import com.mople.entity.meet.QMeetMember;
-import com.mople.global.utils.cursor.MemberSortExpressions;
+import com.mople.global.utils.cursor.custom.sort.MemberSortExpressions;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
-import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -20,25 +19,18 @@ import java.util.List;
 public class MeetMemberRepositorySupport {
     private final JPAQueryFactory queryFactory;
 
-    public List<MeetMember> findMemberPage(Long meetId, Long hostId, MemberCursor cursor, int size) {
+    public List<MeetMember> findMemberPage(Long meetId, UserCursor cursor, int size) {
         QMeetMember member = QMeetMember.meetMember;
-        QUser user = QUser.user;
-
-        NumberExpression<Integer> roleOrder = MemberSortExpressions.roleOrder(user, hostId);
-        NumberExpression<Integer> nicknameTypeOrder = MemberSortExpressions.nicknameTypeOrder(user);
-        StringExpression nicknameLower = MemberSortExpressions.nicknameLower(user);
 
         BooleanBuilder whereCondition = new BooleanBuilder()
                 .and(member.meetId.eq(meetId));
 
         if (cursor != null) {
             whereCondition.and(
-                    MemberCursor.memberCursorCondition(
-                            roleOrder,
-                            nicknameTypeOrder,
-                            nicknameLower,
-                            member.id,
-                            cursor
+                    Expressions.booleanTemplate(
+                            "( {0}, {1}, {2}, {3} ) > ({4}, {5}, {6}, {7})",
+                            member.roleOrder, member.nicknameTypeOrder, member.nicknameLower, member.id,
+                            cursor.roleOrder(), cursor.nicknameTypeOrder(), cursor.nicknameLower(), cursor.id()
                     )
             );
         }
@@ -46,11 +38,10 @@ public class MeetMemberRepositorySupport {
         return queryFactory
                 .selectFrom(member)
                 .where(whereCondition)
-                .join(user).on(user.id.eq(member.userId))
                 .orderBy(
-                        roleOrder.asc(),
-                        nicknameTypeOrder.asc().nullsLast(),
-                        nicknameLower.asc(),
+                        member.roleOrder.asc(),
+                        member.nicknameTypeOrder.asc().nullsLast(),
+                        member.nicknameLower.asc(),
                         member.id.asc()
                 )
                 .limit(size + 1)
@@ -59,30 +50,28 @@ public class MeetMemberRepositorySupport {
 
     public List<MeetMember> findMemberAutoCompletePage(
             Long meetId,
-            Long hostId,
-            Long creatorId,
             String keyword,
             AutoCompleteCursor cursor,
             int size
     ) {
         QMeetMember member = QMeetMember.meetMember;
-        QUser user = QUser.user;
 
-        NumberExpression<Integer> startsWithOrder = MemberSortExpressions.startsWithOrder(user, keyword);
-        NumberExpression<Integer> roleOrder = MemberSortExpressions.roleOrder(user, hostId, creatorId);
-        StringExpression nicknameLower = MemberSortExpressions.nicknameLower(user);
+        NumberExpression<Integer> startsWithOrder = MemberSortExpressions.startsWithOrder(member, keyword);
 
         BooleanBuilder whereCondition = new BooleanBuilder()
                 .and(member.meetId.eq(meetId))
-                .and(user.nickname.containsIgnoreCase(keyword));
+                .and(member.nicknameLower.contains(keyword));
 
         if (cursor != null) {
+            int cursorStartsWithOrder = MemberSortExpressions.startsWithOrder(cursor.nicknameLower(), keyword);
+
             whereCondition.and(
                     AutoCompleteCursor.autoCompleteCursorCondition(
                             startsWithOrder,
-                            roleOrder,
-                            nicknameLower,
+                            member.roleOrder,
+                            member.nicknameLower,
                             member.id,
+                            cursorStartsWithOrder,
                             cursor
                     )
             );
@@ -90,27 +79,14 @@ public class MeetMemberRepositorySupport {
 
         return queryFactory
                 .selectFrom(member)
-                .join(user).on(user.id.eq(member.userId))
                 .where(whereCondition)
                 .orderBy(
                         startsWithOrder.asc(),
-                        roleOrder.asc(),
-                        nicknameLower.asc(),
+                        member.roleOrder.asc(),
+                        member.nicknameLower.asc(),
                         member.id.asc()
                 )
                 .limit(size + 1)
                 .fetch();
-    }
-
-    public boolean isCursorInvalid(String cursorNickname, Long cursorId) {
-        QMeetMember member = QMeetMember.meetMember;
-        QUser user = QUser.user;
-
-        return queryFactory
-                .selectOne()
-                .from(member)
-                .join(user).on(user.id.eq(member.userId))
-                .where(user.nickname.eq(cursorNickname), member.id.eq(cursorId))
-                .fetchFirst() == null;
     }
 }

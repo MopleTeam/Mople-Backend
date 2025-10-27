@@ -31,18 +31,19 @@ public class MeetRepositorySupport {
         QMeetMember meetMember = QMeetMember.meetMember;
 
         BooleanBuilder whereCondition = new BooleanBuilder()
-                .and(meet.status.eq(Status.ACTIVE))
-                .and(meetMember.userId.eq(userId));
+                .and(meetMember.userId.eq(userId))
+                .and(meet.status.eq(Status.ACTIVE));
 
         if (cursorId != null) {
-            whereCondition.and(meet.id.gt(cursorId));
+            whereCondition.and(meetMember.meetId.gt(cursorId));
         }
 
         return queryFactory
-                .selectFrom(meet)
-                .join(meetMember).on(meet.id.eq(meetMember.meetId))
+                .select(meet)
+                .from(meetMember)
+                .join(meet).on(meet.id.eq(meetMember.meetId))
                 .where(whereCondition)
-                .orderBy(meet.id.asc())
+                .orderBy(meetMember.meetId.asc())
                 .limit(size + 1)
                 .fetch();
     }

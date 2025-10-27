@@ -16,14 +16,14 @@ import com.mople.dto.response.meet.plan.*;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.dto.response.user.UserInfo;
+import com.mople.entity.user.User;
 import com.mople.global.enums.Status;
 import com.mople.global.enums.event.DeletionCause;
-import com.mople.global.utils.cursor.MemberCursor;
+import com.mople.global.utils.cursor.custom.UserCursor;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.plan.PlanParticipant;
 import com.mople.entity.meet.plan.PlanReport;
-import com.mople.entity.user.User;
 import com.mople.global.utils.cursor.CursorUtils;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.MeetMemberRepository;
@@ -52,6 +52,7 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.mople.dto.client.PlanClientResponse.*;
 import static com.mople.dto.client.UserRoleClientResponse.ofParticipants;
@@ -61,6 +62,7 @@ import static com.mople.global.enums.event.AggregateType.PLAN;
 import static com.mople.global.enums.event.EventTypeNames.*;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
+import static com.mople.global.utils.cursor.custom.UserCursor.ofUserCursor;
 
 @Service
 @RequiredArgsConstructor
@@ -68,12 +70,12 @@ public class PlanService {
 
     private static final int PLAN_HOME_VIEW_SIZE = 5;
     private static final int PLAN_CURSOR_FIELD_COUNT = 1;
-    private static final int PLAN_PARTICIPANT_CURSOR_FIELD_COUNT = 2;
+    private static final int PLAN_PARTICIPANT_CURSOR_FIELD_COUNT = 1;
 
     private final MeetPlanRepository meetPlanRepository;
     private final MeetMemberRepository memberRepository;
     private final PlanReportRepository planReportRepository;
-    private final PlanParticipantRepository planParticipantRepository;
+    private final PlanParticipantRepository participantRepository;
     private final ParticipantRepositorySupport participantRepositorySupport;
     private final PlanRepositorySupport planRepositorySupport;
     private final CommentRepositorySupport commentRepositorySupport;
@@ -132,10 +134,13 @@ public class PlanService {
             outboxService.save(WEATHER_REFRESH_REQUESTED, PLAN, plan.getId(), requestedEvent);
         }
 
-        planParticipantRepository.save(
+        participantRepository.save(
                 PlanParticipant.builder()
                         .userId(user.getId())
                         .planId(plan.getId())
+                        .nickName(user.getNickname())
+                        .hostId(meet.getCreatorId())
+                        .creatorId(plan.getCreatorId())
                         .build()
         );
 
@@ -148,7 +153,7 @@ public class PlanService {
 
         outboxService.save(PLAN_CREATED, PLAN, plan.getId(), createEvent);
 
-        Integer participantCount = planParticipantRepository.countByPlanId(plan.getId());
+        Integer participantCount = participantRepository.countByPlanId(plan.getId());
 
         return ofView(
                 ofPlanView(
@@ -214,7 +219,7 @@ public class PlanService {
             outboxService.save(PLAN_TIME_CHANGED, PLAN, plan.getId(), changedEvent);
         }
 
-        Integer participantCount = planParticipantRepository.countByPlanId(plan.getId());
+        Integer participantCount = participantRepository.countByPlanId(plan.getId());
 
         return ofView(
                 ofPlanView(
@@ -272,7 +277,7 @@ public class PlanService {
             throw new AuthException(NOT_MEMBER);
         }
 
-        Integer participantCount = planParticipantRepository.countByPlanId(plan.getId());
+        Integer participantCount = participantRepository.countByPlanId(plan.getId());
 
         return ofViewAndParticipant(
                 ofPlanView(
@@ -281,7 +286,7 @@ public class PlanService {
                         meet.getMeetImage(),
                         participantCount
                 ),
-                planParticipantRepository.existsByPlanIdAndUserId(planId, userId),
+                participantRepository.existsByPlanIdAndUserId(planId, userId),
                 commentRepositorySupport.countComment(plan.getId())
         );
     }
@@ -359,41 +364,42 @@ public class PlanService {
     @Transactional(readOnly = true)
     public FlatCursorPageResponse<UserRoleClientResponse> getParticipantList(Long userId, Long planId, CursorPageRequest request) {
         MeetPlan plan = reader.findPlan(planId);
-        Meet meet = reader.findMeet(plan.getMeetId());
 
         if (!memberRepository.existsByMeetIdAndUserId(plan.getMeetId(), userId)) {
             throw new AuthException(NOT_MEMBER);
         }
 
-        Long hostId = meet.getCreatorId();
-        Long creatorId = plan.getCreatorId();
         int size = request.getSafeSize();
-        List<PlanParticipant> participants = getPlanParticipants(planId, hostId, creatorId, request.cursor(), size);
+        List<PlanParticipant> participants = getPlanParticipants(planId, request.cursor(), size);
 
         return FlatCursorPageResponse.of(
-                planParticipantRepository.countByPlanId(plan.getId()),
-                buildParticipantCursorPage(size, participants, hostId, creatorId)
+                participantRepository.countByPlanId(plan.getId()),
+                buildParticipantCursorPage(size, participants)
         );
     }
 
-    private List<PlanParticipant> getPlanParticipants(Long planId, Long hostId, Long creatorId, String encodedCursor, int size) {
+    private List<PlanParticipant> getPlanParticipants(Long planId, String encodedCursor, int size) {
 
-        MemberCursor cursor = null;
+        UserCursor cursor = null;
 
         if (encodedCursor != null && !encodedCursor.isEmpty()) {
             String[] decodeParts = CursorUtils.decode(encodedCursor, PLAN_PARTICIPANT_CURSOR_FIELD_COUNT);
 
-            String cursorNickname = decodeParts[0];
-            Long cursorId = Long.valueOf(decodeParts[1]);
-            validateParticipantCursor(cursorNickname, cursorId);
+            Long cursorId = Long.valueOf(decodeParts[0]);
+            PlanParticipant participant = participantRepository.findById(cursorId)
+                    .orElseThrow(() -> new CursorException(INVALID_CURSOR));
 
-            cursor = new MemberCursor(cursorNickname, cursorId, hostId, creatorId);
+            if (!Objects.equals(participant.getPlanId(), planId)) {
+                throw new CursorException(INVALID_CURSOR);
+            }
+
+            cursor = ofUserCursor(participant);
         }
 
-        return participantRepositorySupport.findPlanParticipantPage(planId, hostId, creatorId, cursor, size);
+        return participantRepositorySupport.findPlanParticipantPage(planId, cursor, size);
     }
 
-    private CursorPageResponse<UserRoleClientResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants, Long hostId, Long creatorId) {
+    private CursorPageResponse<UserRoleClientResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants) {
         List<Long> userIds = participants.stream()
                 .map(PlanParticipant::getUserId)
                 .toList();
@@ -403,21 +409,12 @@ public class PlanService {
         return buildCursorPage(
                 participants,
                 size,
-                p -> {
-                    User user = reader.findUser(p.getUserId());
-                    return new String[]{
-                            user.getNickname(),
+                p ->
+                    new String[]{
                             p.getId().toString()
-                    };
-                },
-                list -> ofParticipants(list, userInfoById, hostId, creatorId)
+                    },
+                list -> ofParticipants(list, userInfoById)
         );
-    }
-
-    private void validateParticipantCursor(String cursorNickname, Long cursorId) {
-        if (participantRepositorySupport.isCursorInvalid(cursorNickname, cursorId)) {
-            throw new CursorException(INVALID_CURSOR);
-        }
     }
 
     @InvalidateCache(
@@ -426,19 +423,23 @@ public class PlanService {
     )
     @Transactional
     public void joinPlanParticipant(Long userId, Long planId) {
-        reader.findUser(userId);
-        reader.findPlan(planId);
+        User user = reader.findUser(userId);
+        MeetPlan plan = reader.findPlan(planId);
+        Meet meet = reader.findMeet(plan.getMeetId());
 
-        if (planParticipantRepository.existsByPlanIdAndUserId(planId, userId)) {
+        if (participantRepository.existsByPlanIdAndUserId(planId, userId)) {
             throw new BadRequestException(CURRENT_PARTICIPANT);
         }
 
         var planParticipant = PlanParticipant.builder()
                 .planId(planId)
                 .userId(userId)
+                .nickName(user.getNickname())
+                .hostId(meet.getCreatorId())
+                .creatorId(plan.getCreatorId())
                 .build();
 
-        planParticipantRepository.save(planParticipant);
+        participantRepository.save(planParticipant);
     }
 
     @InvalidateCache(
@@ -450,10 +451,10 @@ public class PlanService {
         reader.findPlan(planId);
         reader.findUser(userId);
 
-        if (!planParticipantRepository.existsByPlanIdAndUserId(planId, userId)) {
+        if (!participantRepository.existsByPlanIdAndUserId(planId, userId)) {
             throw new AuthException(NOT_PARTICIPANT);
         }
 
-        planParticipantRepository.deleteByPlanIdAndUserId(planId, userId);
+        participantRepository.deleteByPlanIdAndUserId(planId, userId);
     }
 }
