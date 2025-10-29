@@ -8,6 +8,7 @@ public record ReviewPageResponse(
         String meetImage,
         Long reviewId,
         String reviewName,
+        Long creatorId,
         LocalDateTime reviewTime,
         Integer reviewParticipants,
         String weatherIcon,

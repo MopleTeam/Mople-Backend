@@ -193,6 +193,7 @@ public class PlanRepositorySupport {
                                 meet.meetImage,
                                 plan.id,
                                 plan.name,
+                                plan.creatorId,
                                 plan.planTime,
                                 JPAExpressions
                                         .select(ppAll.count().intValue())
@@ -230,6 +231,7 @@ public class PlanRepositorySupport {
                                 meet.meetImage,
                                 review.id,
                                 review.name,
+                                review.creatorId,
                                 review.planTime,
                                 JPAExpressions
                                         .select(ppAll.count().intValue())
