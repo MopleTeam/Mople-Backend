@@ -44,7 +44,11 @@ public class ReviewUploadNotifier implements DomainEventHandler<ReviewUploadEven
         PlanReview review = reviewRepository.findByIdAndStatus(event.reviewId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_REVIEW));
 
-        List<Long> targetIds = userReader.findReviewUsersNoTriggers(event.reviewUpdatedBy(), event.reviewId());
+        List<Long> targetIds = userReader.findReviewUsersNoTriggers(
+                event.reviewUpdatedBy(),
+                event.reviewId(),
+                review.getMeetId()
+        );
 
         if (targetIds.isEmpty()) {
             return;

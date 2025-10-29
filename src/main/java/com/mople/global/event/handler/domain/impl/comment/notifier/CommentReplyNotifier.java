@@ -4,17 +4,12 @@ import com.mople.core.exception.custom.NonRetryableOutboxException;
 import com.mople.dto.event.data.domain.comment.CommentCreatedEvent;
 import com.mople.dto.event.data.domain.global.NotifyRequestedEvent;
 import com.mople.dto.event.data.notify.comment.CommentReplyNotifyEvent;
-import com.mople.entity.meet.Meet;
-import com.mople.entity.meet.plan.MeetPlan;
-import com.mople.entity.meet.review.PlanReview;
 import com.mople.entity.notification.Notification;
 import com.mople.entity.user.User;
 import com.mople.global.enums.ExceptionReturnCode;
 import com.mople.global.enums.Status;
 import com.mople.global.event.handler.domain.DomainEventHandler;
-import com.mople.meet.repository.MeetRepository;
-import com.mople.meet.repository.plan.MeetPlanRepository;
-import com.mople.meet.repository.review.PlanReviewRepository;
+import com.mople.global.event.service.PostContextFinder;
 import com.mople.notification.reader.NotificationUserReader;
 import com.mople.notification.repository.NotificationRepository;
 import com.mople.outbox.service.OutboxService;
@@ -31,12 +26,9 @@ import static com.mople.global.enums.event.EventTypeNames.NOTIFY_REQUESTED;
 @RequiredArgsConstructor
 public class CommentReplyNotifier implements DomainEventHandler<CommentCreatedEvent> {
 
-    private final MeetRepository meetRepository;
-    private final MeetPlanRepository planRepository;
-    private final PlanReviewRepository reviewRepository;
+    private final PostContextFinder contextFinder;
     private final UserRepository userRepository;
     private final NotificationRepository notificationRepository;
-
     private final NotificationUserReader userReader;
     private final OutboxService outboxService;
 
@@ -51,81 +43,66 @@ public class CommentReplyNotifier implements DomainEventHandler<CommentCreatedEv
             return;
         }
 
-        Long targetId = userReader.findCommentRepliedUserNoWriter(event.commentWriterId(), event.parentId());
+        PostContextFinder.PostContext postContext = contextFinder.resolve(event.postId());
+        Long targetId = userReader.findCommentRepliedUserNoWriter(
+                event.commentWriterId(),
+                event.parentId(),
+                postContext.getMeet().getId()
+        );
 
         if (targetId == null) {
             return;
         }
 
-        User user = userRepository.findByIdAndStatus(event.commentWriterId(), Status.ACTIVE)
+        User sender = userRepository.findByIdAndStatus(event.commentWriterId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_USER));
 
         if (event.isExistMention()) {
-            List<Long> mentionedUsers = userReader.findCreatedMentionedUsers(event.commentWriterId(), event.commentId());
+            List<Long> mentionedUsers = userReader.findCreatedMentionedUsers(
+                    event.commentWriterId(),
+                    event.commentId(),
+                    postContext.getMeet().getId()
+            );
 
             if (!mentionedUsers.isEmpty() && mentionedUsers.contains(targetId)) {
                 return;
             }
         }
 
-        if (planRepository.existsByIdAndStatus(event.postId(), Status.ACTIVE)) {
-            MeetPlan plan = planRepository.findByIdAndStatus(event.postId(), Status.ACTIVE)
-                    .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_PLAN));
+        CommentReplyNotifyEvent.CommentReplyNotifyEventBuilder eventBuilder = CommentReplyNotifyEvent.builder()
+                .meetName(postContext.getMeet().getName())
+                .senderNickname(sender.getNickname());
 
-            Meet meet = meetRepository.findByIdAndStatus(plan.getMeetId(), Status.ACTIVE)
-                    .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_MEET));
-
-            CommentReplyNotifyEvent notifyEvent = CommentReplyNotifyEvent.builder()
-                    .meetName(meet.getName())
-                    .planId(plan.getId())
-                    .senderNickname(user.getNickname())
-                    .build();
-
-            Long notificationId = notificationRepository.save(
-                    Notification.builder()
-                            .type(notifyEvent.notifyType())
-                            .meetId(meet.getId())
-                            .planId(plan.getId())
-                            .payload(notifyEvent.payload())
-                            .userId(targetId)
-                            .build()
-            ).getId();
-
-            outboxService.save(
-                    NOTIFY_REQUESTED,
-                    POST,
-                    plan.getId(),
-                    new NotifyRequestedEvent(notifyEvent, List.of(notificationId))
-            );
-            return;
+        if (postContext.isPlan()) {
+            eventBuilder.planId(postContext.getPlanId());
+        }
+        if (postContext.isReview()) {
+            eventBuilder.reviewId(postContext.getReviewId());
         }
 
-        PlanReview review = reviewRepository.findByPlanIdAndStatus(event.postId(), Status.ACTIVE)
-                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_REVIEW));
+        CommentReplyNotifyEvent notifyEvent = eventBuilder.build();
 
-        Meet meet = meetRepository.findByIdAndStatus(review.getMeetId(), Status.ACTIVE)
-                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_MEET));
+        Notification.NotificationBuilder notificationBuilder = Notification.builder()
+                            .type(notifyEvent.notifyType())
+                            .meetId(postContext.getMeet().getId())
+                            .payload(notifyEvent.payload())
+                            .userId(targetId);
 
-        CommentReplyNotifyEvent notifyEvent = CommentReplyNotifyEvent.builder()
-                .meetName(meet.getName())
-                .reviewId(review.getId())
-                .senderNickname(user.getNickname())
-                .build();
+        if (postContext.isPlan()) {
+            notificationBuilder.planId(postContext.getPlanId());
+        }
+        if (postContext.isReview()) {
+            notificationBuilder.reviewId(postContext.getReviewId());
+        }
 
-        Long notificationId = notificationRepository.save(
-                Notification.builder()
-                        .type(notifyEvent.notifyType())
-                        .meetId(meet.getId())
-                        .reviewId(review.getId())
-                        .payload(notifyEvent.payload())
-                        .userId(targetId)
-                        .build()
-        ).getId();
+        Notification notification = notificationBuilder.build();
+
+        Long notificationId = notificationRepository.save(notification).getId();
 
         outboxService.save(
                 NOTIFY_REQUESTED,
                 POST,
-                review.getPlanId(),
+                postContext.getPlanId(),
                 new NotifyRequestedEvent(notifyEvent, List.of(notificationId))
         );
     }

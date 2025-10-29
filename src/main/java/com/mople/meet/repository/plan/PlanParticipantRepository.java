@@ -43,6 +43,14 @@ public interface PlanParticipantRepository extends JpaRepository<PlanParticipant
     @Modifying(flushAutomatically = true)
     @Query(
             "delete from PlanParticipant p " +
+            "      where p.planId in :planIds " +
+            "        and p.userId = :userId "
+    )
+    void deleteByPlanIdsAndUserId(List<Long> planIds, Long userId);
+
+    @Modifying(flushAutomatically = true)
+    @Query(
+            "delete from PlanParticipant p " +
             "      where p.reviewId = :reviewId "
     )
     void deleteByReviewId(Long reviewId);
