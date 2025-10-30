@@ -53,6 +53,7 @@ import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import static com.mople.dto.client.PlanClientResponse.*;
 import static com.mople.dto.client.UserRoleClientResponse.ofParticipants;
@@ -294,22 +295,40 @@ public class PlanService {
     @Transactional(readOnly = true)
     public FlatCursorPageResponse<PlanClientResponse> getPlanList(Long userId, Long meetId, CursorPageRequest request) {
         reader.findUser(userId);
-        reader.findMeet(meetId);
+        Meet meet = reader.findMeet(meetId);
 
         if (!memberRepository.existsByMeetIdAndUserId(meetId, userId)) {
             throw new AuthException(NOT_MEMBER);
         }
 
         int size = request.getSafeSize();
-        List<PlanListResponse> plans = getPlans(userId, meetId, request.cursor(), size);
+        List<MeetPlan> plans = getPlans(meetId, request.cursor(), size);
+
+        List<Long> planIds = plans.stream()
+                .map(MeetPlan::getId)
+                .toList();
+
+        Map<Long, Integer> participantCountMap = participantRepositorySupport.planParticipantCountMap(planIds);
+        Set<Long> joinedPlanIds = participantRepositorySupport.findJoinedPlanIds(userId, planIds);
+
+        List<PlanListResponse> responses = plans.stream()
+                .map((p) ->
+                        new PlanListResponse(
+                                meet,
+                                p,
+                                participantCountMap.getOrDefault(p.getId(), 0),
+                                joinedPlanIds.contains(p.getId())
+                        )
+                )
+                .toList();
 
         return FlatCursorPageResponse.of(
                 meetPlanRepository.countByMeetIdAndStatus(meetId, Status.ACTIVE),
-                buildPlanCursorPage(size, plans)
+                buildPlanCursorPage(size, responses)
         );
     }
 
-    private List<PlanListResponse> getPlans(Long userId, Long meetId, String encodedCursor, int size) {
+    private List<MeetPlan> getPlans(Long meetId, String encodedCursor, int size) {
 
         Long cursorId = null;
 
@@ -320,7 +339,7 @@ public class PlanService {
             validatePlanCursor(cursorId);
         }
 
-        return planRepositorySupport.findPlanPage(userId, meetId, cursorId, size);
+        return planRepositorySupport.findPlanPage(meetId, cursorId, size);
     }
 
     private void validatePlanCursor(Long cursorId) {

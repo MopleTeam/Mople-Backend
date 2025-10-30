@@ -4,9 +4,9 @@ import com.mople.dto.response.meet.PlanPageResponse;
 import com.mople.dto.response.meet.ReviewPageResponse;
 import com.mople.dto.response.meet.UserAllDateResponse;
 import com.mople.dto.response.meet.UserPageResponse;
-import com.mople.dto.response.meet.plan.PlanListResponse;
 import com.mople.dto.response.meet.plan.PlanViewResponse;
 import com.mople.entity.meet.*;
+import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.plan.QMeetPlan;
 import com.mople.entity.meet.plan.QPlanParticipant;
 import com.mople.entity.meet.review.QPlanReview;
@@ -88,15 +88,11 @@ public class PlanRepositorySupport {
                 .fetch();
     }
 
-    public List<PlanListResponse> findPlanPage(Long userId, Long meetId, Long cursorId, int size) {
-        QMeet meet = QMeet.meet;
+    public List<MeetPlan> findPlanPage(Long meetId, Long cursorId, int size) {
         QMeetPlan plan = QMeetPlan.meetPlan;
-        QPlanParticipant participant = QPlanParticipant.planParticipant;
-        QPlanParticipant ppAll = new QPlanParticipant("ppAll");
 
         BooleanBuilder whereCondition = new BooleanBuilder()
                 .and(plan.status.eq(Status.ACTIVE))
-                .and(meet.status.eq(Status.ACTIVE))
                 .and(plan.meetId.eq(meetId))
                 .and(plan.planTime.after(
                         Expressions.dateTimeOperation(
@@ -118,42 +114,8 @@ public class PlanRepositorySupport {
             );
         }
 
-        BooleanExpression joinedByUser = JPAExpressions
-                .selectOne()
-                .from(participant)
-                .where(
-                        participant.planId.eq(plan.id)
-                                .and(participant.userId.eq(userId))
-                )
-                .exists();
-
         return queryFactory
-                .select(
-                        Projections.constructor(
-                                PlanListResponse.class,
-                                plan.id,
-                                plan.version,
-                                meet.id,
-                                meet.name,
-                                meet.meetImage,
-                                plan.name,
-                                JPAExpressions
-                                        .select(ppAll.count().intValue())
-                                        .from(ppAll)
-                                        .where(ppAll.planId.eq(plan.id)),
-                                plan.planTime,
-                                plan.address,
-                                plan.title,
-                                plan.creatorId,
-                                plan.weatherIcon,
-                                plan.weatherAddress,
-                                plan.temperature,
-                                plan.pop,
-                                joinedByUser
-                        )
-                )
-                .from(plan)
-                .join(meet).on(meet.id.eq(plan.meetId))
+                .selectFrom(plan)
                 .where(whereCondition)
                 .orderBy(plan.planTime.asc(), plan.id.asc())
                 .limit(size + 1)
