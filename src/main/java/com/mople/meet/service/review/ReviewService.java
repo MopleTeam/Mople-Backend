@@ -1,4 +1,4 @@
-package com.mople.meet.service;
+package com.mople.meet.service.review;
 
 import com.mople.core.exception.custom.*;
 import com.mople.dto.client.ReviewClientResponse;
@@ -26,6 +26,7 @@ import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.MeetMemberRepository;
 import com.mople.meet.repository.impl.comment.CommentRepositorySupport;
 import com.mople.meet.repository.impl.plan.ParticipantRepositorySupport;
+import com.mople.meet.repository.impl.review.ReviewImageRepositorySupport;
 import com.mople.meet.repository.impl.review.ReviewRepositorySupport;
 import com.mople.meet.repository.plan.PlanParticipantRepository;
 import com.mople.meet.repository.review.PlanReviewRepository;
@@ -68,6 +69,7 @@ public class ReviewService {
 
     private final PlanReviewRepository planReviewRepository;
     private final PlanParticipantRepository participantRepository;
+    private final ReviewImageRepositorySupport reviewImageRepositorySupport;
     private final ReviewImageRepository reviewImageRepository;
     private final ReviewReportRepository reviewReportRepository;
     private final CommentRepositorySupport commentRepositorySupport;
@@ -90,13 +92,22 @@ public class ReviewService {
 
         int size = request.getSafeSize();
         List<PlanReview> reviews = getReviews(meetId, request.cursor(), size);
-        List<PlanReviewInfoResponse> reviewInfoResponses = reviews.stream()
-                .map((r) -> {
-                    Integer participantCount = participantRepository.countByReviewId(r.getId());
-                    List<ReviewImage> images = reviewImageRepository.findByReviewId(r.getId());
 
-                    return new PlanReviewInfoResponse(r, participantCount, images);
-                })
+        List<Long> reviewIds = reviews.stream()
+                .map(PlanReview::getId)
+                .toList();
+
+        Map<Long, Integer> participantCountMap = participantRepositorySupport.reviewParticipantCountMap(reviewIds);
+        Map<Long, List<ReviewImage>> imageMap = reviewImageRepositorySupport.reviewImageMap(reviewIds);
+
+        List<PlanReviewInfoResponse> reviewInfoResponses = reviews.stream()
+                .map((r) ->
+                        new PlanReviewInfoResponse(
+                                r,
+                                participantCountMap.getOrDefault(r.getId(), 0),
+                                imageMap.getOrDefault(r.getId(), List.of())
+                        )
+                )
                 .toList();
 
         return FlatCursorPageResponse.of(

@@ -9,7 +9,8 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -74,5 +75,54 @@ public class ParticipantRepositorySupport {
                 )
                 .limit(size + 1)
                 .fetch();
+    }
+
+    public Map<Long, Integer> reviewParticipantCountMap(List<Long> reviewIds) {
+        QPlanParticipant participant = QPlanParticipant.planParticipant;
+
+         return queryFactory
+                .select(participant.reviewId, participant.count())
+                .from(participant)
+                .where(participant.reviewId.in(reviewIds))
+                .groupBy(participant.reviewId)
+                .fetch()
+                .stream()
+                .collect(Collectors.toMap(
+                        tuple -> tuple.get(participant.reviewId),
+                        tuple -> Objects.requireNonNull(tuple.get(participant.count())).intValue()
+                        )
+                );
+    }
+
+    public Map<Long, Integer> planParticipantCountMap(List<Long> planIds) {
+        QPlanParticipant participant = QPlanParticipant.planParticipant;
+
+         return queryFactory
+                .select(participant.planId, participant.count())
+                .from(participant)
+                .where(participant.planId.in(planIds))
+                .groupBy(participant.planId)
+                .fetch()
+                .stream()
+                .collect(Collectors.toMap(
+                        tuple -> tuple.get(participant.planId),
+                        tuple -> Objects.requireNonNull(tuple.get(participant.count())).intValue()
+                        )
+                );
+    }
+
+    public Set<Long> findJoinedPlanIds(Long userId, List<Long> planIds) {
+        QPlanParticipant participant = QPlanParticipant.planParticipant;
+
+        return new HashSet<>(
+                queryFactory
+                        .select(participant.planId)
+                        .from(participant)
+                        .where(
+                                participant.planId.in(planIds),
+                                participant.userId.eq(userId)
+                        )
+                        .fetch()
+        );
     }
 }
