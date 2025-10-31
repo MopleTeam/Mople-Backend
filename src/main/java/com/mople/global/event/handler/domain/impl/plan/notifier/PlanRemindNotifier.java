@@ -44,7 +44,7 @@ public class PlanRemindNotifier implements DomainEventHandler<PlanRemindEvent> {
         MeetPlan plan = planRepository.findByIdAndStatus(event.planId(), Status.ACTIVE)
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_PLAN));
 
-        List<Long> targetIds = userReader.findPlanUsersAll(plan.getCreatorId());
+        List<Long> targetIds = userReader.findPlanUsersAll(plan.getId());
 
         if (targetIds.isEmpty()) {
             return;

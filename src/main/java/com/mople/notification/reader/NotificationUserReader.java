@@ -5,6 +5,7 @@ import com.mople.entity.meet.comment.QCommentMention;
 import com.mople.entity.meet.comment.QPlanComment;
 import com.mople.entity.meet.plan.QPlanParticipant;
 import com.mople.entity.user.QUser;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -46,13 +47,25 @@ public class NotificationUserReader {
                 .fetch();
     }
 
-    public List<Long> findReviewUsersNoTriggers(Long triggeredBy, Long reviewId) {
+    public List<Long> findReviewUsersNoTriggers(Long triggeredBy, Long reviewId, Long meetId) {
         QPlanParticipant participant = QPlanParticipant.planParticipant;
+        QMeetMember meetMember = QMeetMember.meetMember;
 
         return queryFactory
                 .select(participant.userId)
                 .from(participant)
-                .where(participant.reviewId.eq(reviewId), participant.userId.ne(triggeredBy))
+                .where(
+                        participant.reviewId.eq(reviewId),
+                        participant.userId.ne(triggeredBy),
+                        JPAExpressions
+                                .selectOne()
+                                .from(meetMember)
+                                .where(
+                                        meetMember.meetId.eq(meetId),
+                                        meetMember.userId.eq(participant.userId)
+                                )
+                                .exists()
+                )
                 .fetch();
     }
 
@@ -66,35 +79,56 @@ public class NotificationUserReader {
                 .fetch();
     }
 
-    public Long findCommentRepliedUserNoWriter(Long senderId, Long parentCommentId) {
+    public Long findCommentRepliedUserNoWriter(Long senderId, Long parentCommentId, Long meetId) {
         QPlanComment planComment = QPlanComment.planComment;
+        QMeetMember meetMember = QMeetMember.meetMember;
 
         return queryFactory
                 .select(planComment.writerId)
                 .from(planComment)
-                .where(planComment.id.eq(parentCommentId), planComment.writerId.ne(senderId))
+                .where(
+                        planComment.id.eq(parentCommentId),
+                        planComment.writerId.ne(senderId),
+                        JPAExpressions
+                                .selectOne()
+                                .from(meetMember)
+                                .where(
+                                        meetMember.meetId.eq(meetId),
+                                        meetMember.userId.eq(planComment.writerId)
+                                )
+                                .exists()
+                )
                 .fetchOne();
     }
 
-    private List<Long> findCommentMentionedUsersNoWriter(Long senderId, Long commentId) {
+    private List<Long> findCommentMentionedUsersNoWriter(Long senderId, Long commentId, Long meetId) {
         QCommentMention mention = QCommentMention.commentMention;
+        QMeetMember meetMember = QMeetMember.meetMember;
 
         return queryFactory
-                .select(mention.userId)
+                .selectDistinct(mention.userId)
                 .from(mention)
                 .where(
                         mention.commentId.eq(commentId),
-                        mention.userId.ne(senderId)
+                        mention.userId.ne(senderId),
+                        JPAExpressions
+                                .selectOne()
+                                .from(meetMember)
+                                .where(
+                                        meetMember.meetId.eq(meetId),
+                                        meetMember.userId.eq(mention.userId)
+                                )
+                                .exists()
                 )
                 .fetch();
     }
 
-    public List<Long> findCreatedMentionedUsers(Long senderId, Long commentId) {
-        return findCommentMentionedUsersNoWriter(senderId, commentId);
+    public List<Long> findCreatedMentionedUsers(Long senderId, Long commentId, Long meetId) {
+        return findCommentMentionedUsersNoWriter(senderId, commentId, meetId);
     }
 
-    public List<Long> findUpdatedMentionedUsers(List<Long> originMentions, Long senderId, Long commentId) {
-        List<Long> targetIds = findCommentMentionedUsersNoWriter(senderId, commentId);
+    public List<Long> findUpdatedMentionedUsers(List<Long> originMentions, Long senderId, Long commentId, Long meetId) {
+        List<Long> targetIds = findCommentMentionedUsersNoWriter(senderId, commentId, meetId);
 
         return targetIds.stream()
                 .filter(targetId -> !originMentions.contains(targetId))

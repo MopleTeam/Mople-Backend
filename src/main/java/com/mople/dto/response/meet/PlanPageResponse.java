@@ -8,6 +8,7 @@ public record PlanPageResponse(
         String meetImage,
         Long planId,
         String planName,
+        Long creatorId,
         LocalDateTime planTime,
         Integer planParticipants,
         String weatherIcon,
