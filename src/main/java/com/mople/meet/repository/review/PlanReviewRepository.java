@@ -88,7 +88,6 @@ public interface PlanReviewRepository extends JpaRepository<PlanReview, Long> {
     )
     void hardDeleteById(Long reviewId);
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
     @Query(value = "select version from plan_review where review_id = :reviewId", nativeQuery = true)
     Long findVersion(Long reviewId);
 }

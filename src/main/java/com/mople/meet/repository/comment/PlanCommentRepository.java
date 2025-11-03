@@ -39,7 +39,6 @@ public interface PlanCommentRepository extends JpaRepository<PlanComment, Long> 
     )
     void hardDeleteById(List<Long> commentIds);
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
     @Query(value = "select version from plan_comment where comment_id = :commentId", nativeQuery = true)
     long findVersion(Long commentId);
 }

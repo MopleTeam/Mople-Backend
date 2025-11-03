@@ -44,7 +44,6 @@ public interface MeetRepository extends JpaRepository<Meet, Long> {
     )
     void hardDeleteById(Long meetId);
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
     @Query(value = "select version from meet where meet_id = :meetId", nativeQuery = true)
     long findVersion(Long meetId);
 }
