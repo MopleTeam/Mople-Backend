@@ -7,4 +7,8 @@ public interface DomainEventHandler<T extends DomainEvent> {
     Class<T> getHandledType();
 
     void handle(T event);
+
+    default int getOrder() {
+        return 100;
+    }
 }

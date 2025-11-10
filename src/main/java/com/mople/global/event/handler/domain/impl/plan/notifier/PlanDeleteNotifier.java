@@ -36,6 +36,11 @@ public class PlanDeleteNotifier implements DomainEventHandler<PlanSoftDeletedEve
     private final OutboxService outboxService;
 
     @Override
+    public int getOrder() {
+        return 10;
+    }
+
+    @Override
     public Class<PlanSoftDeletedEvent> getHandledType() {
         return PlanSoftDeletedEvent.class;
     }
