@@ -44,6 +44,17 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
     @Modifying(flushAutomatically = true)
     @Query(
             "update OutboxEvent o " +
+            "   set o.status = com.mople.global.enums.event.OutboxStatus.CANCELED " +
+            " where o.eventType = :eventType " +
+            "   and o.aggregateType = :aggregateType " +
+            "   and o.aggregateId in :aggregateIds " +
+            "   and o.status = com.mople.global.enums.event.OutboxStatus.PENDING"
+    )
+    int eventCanceledAll(String eventType, AggregateType aggregateType, List<Long> aggregateIds);
+
+    @Modifying(flushAutomatically = true)
+    @Query(
+            "update OutboxEvent o " +
             "   set o.status = com.mople.global.enums.event.OutboxStatus.PUBLISHED, " +
             "       o.publishedAt = CURRENT_TIMESTAMP " +
             " where o.eventId = :eventId " +

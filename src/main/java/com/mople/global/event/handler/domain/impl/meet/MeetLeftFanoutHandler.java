@@ -2,7 +2,6 @@ package com.mople.global.event.handler.domain.impl.meet;
 
 import com.mople.dto.event.data.domain.meet.MeetLeftEvent;
 import com.mople.dto.event.data.domain.plan.PlanSoftDeletedEvent;
-import com.mople.dto.event.data.domain.review.ReviewSoftDeletedEvent;
 import com.mople.global.enums.event.DeletionCause;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.plan.MeetPlanRepository;
@@ -40,7 +39,6 @@ public class MeetLeftFanoutHandler implements DomainEventHandler<MeetLeftEvent> 
                 .findIdsByMeetIdAndCreatorId(event.meetId(), event.leaveMemberId());
 
         planRepository.softDeleteAll(DELETED, ownedPlanIds, event.leaveMemberId(), LocalDateTime.now());
-        reviewRepository.softDeleteAll(DELETED, ownedReviewIds, event.leaveMemberId(), LocalDateTime.now());
 
         chunk(ownedPlanIds, ids ->
             ids.forEach(id -> {
@@ -55,15 +53,7 @@ public class MeetLeftFanoutHandler implements DomainEventHandler<MeetLeftEvent> 
         );
 
         chunk(ownedReviewIds, ids ->
-            ids.forEach(id -> {
-                ReviewSoftDeletedEvent deleteEvent = ReviewSoftDeletedEvent.builder()
-                        .planId(reviewRepository.findPlanIdById(id))
-                        .reviewId(id)
-                        .reviewDeletedBy(event.leaveMemberId())
-                        .build();
-
-                outboxService.save(REVIEW_SOFT_DELETED, REVIEW, id, deleteEvent);
-            })
+            outboxService.cancelAll(REVIEW_REMIND, REVIEW, ids)
         );
     }
 }
