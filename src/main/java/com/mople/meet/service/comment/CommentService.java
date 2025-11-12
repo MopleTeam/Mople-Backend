@@ -3,7 +3,6 @@ package com.mople.meet.service.comment;
 import com.mople.core.exception.custom.ConcurrencyConflictException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.CommentClientResponse;
-import com.mople.dto.client.UserRoleClientResponse;
 import com.mople.dto.event.data.domain.comment.CommentCreatedEvent;
 import com.mople.dto.event.data.domain.comment.CommentMentionAddedEvent;
 import com.mople.dto.event.data.domain.comment.CommentsSoftDeletedEvent;
@@ -14,8 +13,6 @@ import com.mople.dto.response.meet.comment.CommentResponse;
 import com.mople.dto.response.meet.comment.CommentUpdateResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
-import com.mople.entity.meet.Meet;
-import com.mople.entity.meet.MeetMember;
 import com.mople.entity.meet.comment.CommentReport;
 import com.mople.entity.meet.comment.CommentStats;
 import com.mople.entity.meet.comment.PlanComment;
@@ -69,7 +66,6 @@ public class CommentService {
 
     private final CommentMentionService mentionService;
     private final CommentLikeService likeService;
-    private final CommentAutoCompleteService autoCompleteService;
     private final OutboxService outboxService;
 
     @Transactional(readOnly = true)
@@ -382,25 +378,6 @@ public class CommentService {
         return getCommentClientResponse(updatedComment, likedByMe);
     }
 
-    @Transactional(readOnly = true)
-    public CursorPageResponse<UserRoleClientResponse> searchMeetMember(Long userId, Long postId, String keyword, CursorPageRequest request) {
-        reader.findUser(userId);
-        commentValidator.validatePostId(postId);
-
-        Meet meet = getMeet(postId);
-        Long meetId = meet.getId();
-
-        int size = request.getSafeSize();
-        List<MeetMember> meetMembers = autoCompleteService.getMeetMembers(
-                meetId,
-                keyword.toLowerCase(),
-                request.cursor(),
-                size
-        );
-
-        return autoCompleteService.buildAutoCompleteCursorPage(size, meetMembers);
-    }
-
     private Long getMeetId(Long postId) {
         boolean existsInPlan = planRepository.existsByIdAndStatus(postId, Status.ACTIVE);
 
@@ -408,12 +385,6 @@ public class CommentService {
             return reader.findPlan(postId).getMeetId();
         }
         return reader.findReviewByPostId(postId).getMeetId();
-    }
-
-    private Meet getMeet(Long postId) {
-        Long meetId = getMeetId(postId);
-
-        return reader.findMeet(meetId);
     }
 
     @Transactional

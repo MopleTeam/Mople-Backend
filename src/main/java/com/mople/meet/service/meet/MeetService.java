@@ -58,6 +58,7 @@ public class MeetService {
     private final UserRepository userRepository;
     private final OutboxService outboxService;
     private final MeetRemoveService meetRemoveService;
+    private final MeetMemberAutoCompleteService autoCompleteService;
     private final EntityReader reader;
 
     private final String inviteUrl;
@@ -71,6 +72,7 @@ public class MeetService {
             UserRepository userRepository,
             OutboxService outboxService,
             MeetRemoveService meetRemoveService,
+            MeetMemberAutoCompleteService autoCompleteService,
             EntityReader reader,
             @Value("${mople.url}") String inviteUrl
     ) {
@@ -82,6 +84,7 @@ public class MeetService {
         this.userRepository = userRepository;
         this.outboxService = outboxService;
         this.meetRemoveService = meetRemoveService;
+        this.autoCompleteService = autoCompleteService;
         this.reader = reader;
         this.inviteUrl = inviteUrl;
     }
@@ -267,6 +270,26 @@ public class MeetService {
                         },
                 list -> ofMembers(list, userInfoById)
         );
+    }
+
+    @Transactional(readOnly = true)
+    public CursorPageResponse<UserRoleClientResponse> searchMeetMember(Long userId, Long meetId, String keyword, CursorPageRequest request) {
+        reader.findUser(userId);
+        reader.findMeet(meetId);
+
+        if (!meetMemberRepository.existsByMeetIdAndUserId(meetId, userId)) {
+            throw new BadRequestException(NOT_MEMBER);
+        }
+
+        int size = request.getSafeSize();
+        List<MeetMember> meetMembers = autoCompleteService.getMeetMembers(
+                meetId,
+                keyword.toLowerCase(),
+                request.cursor(),
+                size
+        );
+
+        return autoCompleteService.buildAutoCompleteCursorPage(size, meetMembers);
     }
 
     @Transactional

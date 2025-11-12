@@ -104,6 +104,20 @@ public class MeetController {
     }
 
     @Operation(
+            summary = "모임 멤버 검색 자동 완성 API",
+            description = "입력한 키워드에 맞는 모임 멤버 닉네임을 자동 완성합니다."
+    )
+    @GetMapping("/members/search/{meetId}")
+    public CursorPageResponse<UserRoleClientResponse> searchMeetMembers(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @PathVariable Long meetId,
+            @RequestParam String keyword,
+            @ParameterObject @Valid CursorPageRequest request
+    ) {
+        return meetService.searchMeetMember(user.id(), meetId, keyword, request);
+    }
+
+    @Operation(
             summary = "모임 탈퇴 API",
             description = "모임에서 모임 생성자라면 모임을 삭제하고, 생성자가 아니면 모임과 일정에서 삭제됩니다. "
     )

@@ -1,4 +1,4 @@
-package com.mople.meet.service.comment;
+package com.mople.meet.service.meet;
 
 import com.mople.core.exception.custom.CursorException;
 import com.mople.dto.client.UserRoleClientResponse;
@@ -26,7 +26,7 @@ import static com.mople.global.utils.cursor.custom.AutoCompleteCursor.ofAutoComp
 
 @Service
 @RequiredArgsConstructor
-public class CommentAutoCompleteService {
+public class MeetMemberAutoCompleteService {
 
     private static final int MEET_MEMBER_CURSOR_FIELD_COUNT = 1;
 
