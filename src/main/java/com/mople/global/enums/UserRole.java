@@ -1,17 +1,24 @@
 package com.mople.global.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum UserRole {
-    HOST, CREATOR, PARTICIPANT;
+    HOST(1),
+    CREATOR(2),
+    PARTICIPANT(3);
 
-    public static UserRole getRole(Integer roleOrder) {
-        if (roleOrder.equals(1)) {
-            return HOST;
-        }
+    private final int order;
 
-        if (roleOrder.equals(2)) {
-            return CREATOR;
-        }
+    UserRole(int order) {
+        this.order = order;
+    }
 
-        return PARTICIPANT;
+    public static UserRole fromOrder(int roleOrder) {
+        return switch (roleOrder) {
+            case 1 -> HOST;
+            case 2 -> CREATOR;
+            default -> PARTICIPANT;
+        };
     }
 }

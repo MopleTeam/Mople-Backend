@@ -29,8 +29,8 @@ public class Meet extends BaseTimeEntity {
     @Column(name = "meet_image")
     private String meetImage;
 
-    @Column(name = "creator_id", nullable = false)
-    private Long creatorId;
+    @Column(name = "host_id", nullable = false)
+    private Long hostId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 15)
@@ -43,10 +43,10 @@ public class Meet extends BaseTimeEntity {
     private Long deletedBy;
 
     @Builder
-    public Meet(String name, String meetImage, Long creatorId) {
+    public Meet(String name, String meetImage, Long hostId) {
         this.name = name;
         this.meetImage = meetImage;
-        this.creatorId = creatorId;
+        this.hostId = hostId;
         this.status = Status.ACTIVE;
     }
 
@@ -55,8 +55,12 @@ public class Meet extends BaseTimeEntity {
         this.meetImage = imageName;
     }
 
-    public boolean matchCreator(Long userId){
-        return creatorId.equals(userId);
+    public boolean matchHost(Long userId){
+        return hostId.equals(userId);
+    }
+
+    public void changeHost(Long userId) {
+        this.hostId = userId;
     }
 
     public void softDelete(Long deletedBy) {

@@ -3,10 +3,8 @@ package com.mople.meet.service.meet;
 import com.mople.core.exception.custom.*;
 import com.mople.dto.client.MeetClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
-import com.mople.dto.event.data.domain.meet.MeetImageChangedEvent;
-import com.mople.dto.event.data.domain.meet.MeetJoinedEvent;
-import com.mople.dto.event.data.domain.meet.MeetLeftEvent;
-import com.mople.dto.event.data.domain.meet.MeetSoftDeletedEvent;
+import com.mople.dto.event.data.domain.meet.*;
+import com.mople.dto.request.meet.HostChangeRequest;
 import com.mople.dto.request.meet.MeetCreateRequest;
 import com.mople.dto.request.meet.MeetUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
@@ -16,6 +14,7 @@ import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.dto.response.user.UserInfo;
 import com.mople.entity.user.User;
 import com.mople.global.enums.Status;
+import com.mople.global.enums.UserRole;
 import com.mople.global.utils.cursor.custom.UserCursor;
 import com.mople.global.utils.cursor.CursorUtils;
 import com.mople.meet.reader.EntityReader;
@@ -96,7 +95,7 @@ public class MeetService {
         Meet meet =
                 meetRepository.save(
                         Meet.builder()
-                                .creatorId(user.getId())
+                                .hostId(user.getId())
                                 .meetImage(request.image())
                                 .name(request.name())
                                 .build()
@@ -107,7 +106,7 @@ public class MeetService {
                         .meetId(meet.getId())
                         .userId(user.getId())
                         .nickName(user.getNickname())
-                        .hostId(meet.getCreatorId())
+                        .hostId(meet.getHostId())
                         .build()
         );
 
@@ -121,7 +120,7 @@ public class MeetService {
         reader.findUser(creatorId);
         var meet = reader.findMeet(meetId);
 
-        if (!meet.matchCreator(creatorId)) {
+        if (!meet.matchHost(creatorId)) {
             throw new AuthException(NOT_CREATOR);
         }
 
@@ -293,6 +292,45 @@ public class MeetService {
     }
 
     @Transactional
+    public void changeMeetHost(Long userId, Long meetId, HostChangeRequest request) {
+        Long newHostId = request.newHostId();
+
+        reader.findUser(userId);
+        reader.findUser(newHostId);
+        Meet meet = reader.findMeet(meetId);
+
+        if (!meetMemberRepository.existsByMeetIdAndUserId(meetId, userId) ||
+                !meetMemberRepository.existsByMeetIdAndUserId(meetId, newHostId)
+        ) {
+            throw new BadRequestException(NOT_MEMBER);
+        }
+
+        if (!meet.matchHost(userId)) {
+            throw new AuthException(NOT_CREATOR);
+        }
+
+        if (newHostId.equals(userId)) {
+            throw new BadRequestException(CURRENT_HOST);
+        }
+
+        meet.changeHost(newHostId);
+
+        MeetMember oldHostMember = meetMemberRepository.findMeetIdAndUserId(meetId, userId);
+        MeetMember newHostMember = meetMemberRepository.findMeetIdAndUserId(meetId, newHostId);
+
+        oldHostMember.changeRole(UserRole.PARTICIPANT);
+        newHostMember.changeRole(UserRole.HOST);
+
+        HostChangedEvent changedEvent = HostChangedEvent.builder()
+                .meetId(meetId)
+                .oldHostId(userId)
+                .newHostId(newHostId)
+                .build();
+
+        outboxService.save(MEET_HOST_CHANGED, MEET, meetId, changedEvent);
+    }
+
+    @Transactional
     public void removeMeet(Long userId, Long meetId) {
         reader.findUser(userId);
         var meet = reader.findMeet(meetId);
@@ -301,7 +339,7 @@ public class MeetService {
             throw new BadRequestException(NOT_MEMBER);
         }
 
-        if (meet.matchCreator(userId)) {
+        if (meet.matchHost(userId)) {
             meetRemoveService.removeMeetAsCreator(meet, userId);
 
             MeetSoftDeletedEvent deletedEvent = MeetSoftDeletedEvent.builder()
@@ -362,7 +400,7 @@ public class MeetService {
                         .meetId(meet.getId())
                         .userId(userId)
                         .nickName(user.getNickname())
-                        .hostId(meet.getCreatorId())
+                        .hostId(meet.getHostId())
                         .build()
         );
 

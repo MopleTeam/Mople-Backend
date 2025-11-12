@@ -140,7 +140,7 @@ public class PlanService {
                         .userId(user.getId())
                         .planId(plan.getId())
                         .nickName(user.getNickname())
-                        .hostId(meet.getCreatorId())
+                        .hostId(meet.getHostId())
                         .creatorId(plan.getCreatorId())
                         .build()
         );
@@ -454,7 +454,7 @@ public class PlanService {
                 .planId(planId)
                 .userId(userId)
                 .nickName(user.getNickname())
-                .hostId(meet.getCreatorId())
+                .hostId(meet.getHostId())
                 .creatorId(plan.getCreatorId())
                 .build();
 

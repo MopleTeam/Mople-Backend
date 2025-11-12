@@ -35,7 +35,7 @@ public class UserDeletedFanoutHandler implements DomainEventHandler<UserDeletedE
     public void handle(UserDeletedEvent event) {
         List<Long> joinedMeetIds = memberRepository.findMeetIdsByUserId(event.userId());
 
-        List<Long> ownedMeetIds = meetRepository.findIdsByCreatorId(event.userId());
+        List<Long> ownedMeetIds = meetRepository.findIdsByHostId(event.userId());
         List<Long> memberMeetIds = joinedMeetIds.stream()
                 .filter(id -> !ownedMeetIds.contains(id))
                 .toList();

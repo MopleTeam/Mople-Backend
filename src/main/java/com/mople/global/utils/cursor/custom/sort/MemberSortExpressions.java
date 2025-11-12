@@ -1,6 +1,7 @@
 package com.mople.global.utils.cursor.custom.sort;
 
 import com.mople.entity.meet.QMeetMember;
+import com.mople.global.enums.UserRole;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
 
@@ -22,11 +23,11 @@ public class MemberSortExpressions {
 
     public static Integer calculateRoleOrder(Long userId, Long hostId, Long creatorId) {
         if (userId.equals(hostId)) {
-            return 1;
+            return UserRole.HOST.getOrder();
         } else if (userId.equals(creatorId)) {
-            return 2;
+            return UserRole.CREATOR.getOrder();
         } else {
-            return 3;
+            return UserRole.PARTICIPANT.getOrder();
         }
     }
 

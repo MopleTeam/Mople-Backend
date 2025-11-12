@@ -7,6 +7,7 @@ public final class EventTypeNames {
     public static final String MEET_IMAGE_CHANGED = "MEET_IMAGE_CHANGED";
     public static final String MEET_JOINED = "MEET_JOINED";
     public static final String MEET_LEFT = "MEET_LEFT";
+    public static final String MEET_HOST_CHANGED = "MEET_HOST_CHANGED";
     public static final String MEET_PURGE = "MEET_PURGE";
 
     // PLAN

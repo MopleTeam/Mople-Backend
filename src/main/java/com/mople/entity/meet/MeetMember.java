@@ -1,5 +1,6 @@
 package com.mople.entity.meet;
 
+import com.mople.global.enums.UserRole;
 import jakarta.persistence.*;
 
 import lombok.*;
@@ -24,7 +25,7 @@ public class MeetMember {
     private Long userId;
 
     @Column(name = "role_order", nullable = false)
-    private Integer roleOrder = 3;
+    private Integer roleOrder = UserRole.PARTICIPANT.getOrder();
 
     @Column(name = "nickname_type_order")
     private Integer nicknameTypeOrder;
@@ -39,5 +40,9 @@ public class MeetMember {
         this.roleOrder = calculateRoleOrder(userId, hostId, null);
         this.nicknameTypeOrder = calculateNicknameTypeOrder(nickName);
         this.nicknameLower = nickName.toLowerCase();
+    }
+
+    public void changeRole(UserRole newRole) {
+        this.roleOrder = newRole.getOrder();
     }
 }
