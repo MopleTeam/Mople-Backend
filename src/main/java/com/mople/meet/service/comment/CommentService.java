@@ -13,6 +13,7 @@ import com.mople.dto.response.meet.comment.CommentResponse;
 import com.mople.dto.response.meet.comment.CommentUpdateResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
+import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.comment.CommentReport;
 import com.mople.entity.meet.comment.CommentStats;
 import com.mople.entity.meet.comment.PlanComment;
@@ -263,9 +264,9 @@ public class CommentService {
             CommentUpdateRequest request
     ) {
         PlanComment comment = reader.findComment(commentId);
-        User user = reader.findUser(userId);
+        reader.findUser(userId);
 
-        commentValidator.validateWriter(comment, user);
+        commentValidator.validateWriter(comment, userId);
 
         comment.updateContent(request.contents());
 
@@ -312,10 +313,11 @@ public class CommentService {
 
     @Transactional
     public void deleteComment(Long userId, Long commentId) {
-        User user = reader.findUser(userId);
+        reader.findUser(userId);
         PlanComment comment = reader.findComment(commentId);
+        Meet meet = reader.findMeet(getMeetId(comment.getPostId()));
 
-        commentValidator.validateWriter(comment, user);
+        commentValidator.validateDeletion(comment, meet.getHostId(), userId);
 
         comment.softDelete(userId);
 

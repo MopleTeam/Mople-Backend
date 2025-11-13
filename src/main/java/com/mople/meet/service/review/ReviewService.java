@@ -195,8 +195,9 @@ public class ReviewService {
     public void removeReview(Long userId, Long reviewId) {
         reader.findUser(userId);
         PlanReview review = reader.findReview(reviewId);
+        Meet meet = reader.findMeet(review.getMeetId());
 
-        if (review.isCreator(userId)) {
+        if (review.isCreator(userId) && !meet.getHostId().equals(userId)) {
             throw new AuthException(NOT_CREATOR);
         }
 
