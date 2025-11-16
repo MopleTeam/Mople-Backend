@@ -140,7 +140,7 @@ public class PlanService {
                         .userId(user.getId())
                         .planId(plan.getId())
                         .nickName(user.getNickname())
-                        .hostId(meet.getCreatorId())
+                        .hostId(meet.getHostId())
                         .creatorId(plan.getCreatorId())
                         .build()
         );
@@ -240,8 +240,9 @@ public class PlanService {
     public void deletePlan(Long userId, Long planId) {
         reader.findUser(userId);
         var plan = reader.findPlan(planId);
+        Meet meet = reader.findMeet(plan.getMeetId());
 
-        if (plan.isCreator(userId)) {
+        if (plan.isCreator(userId) && !meet.getHostId().equals(userId)) {
             throw new AuthException(NOT_CREATOR);
         }
 
@@ -454,7 +455,7 @@ public class PlanService {
                 .planId(planId)
                 .userId(userId)
                 .nickName(user.getNickname())
-                .hostId(meet.getCreatorId())
+                .hostId(meet.getHostId())
                 .creatorId(plan.getCreatorId())
                 .build();
 

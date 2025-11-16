@@ -6,8 +6,6 @@ import com.mople.global.enums.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,10 +29,10 @@ public interface MeetRepository extends JpaRepository<Meet, Long> {
     @Query(
             "select m.id " +
             "  from Meet m " +
-            " where m.creatorId = :creatorId " +
+            " where m.hostId = :hostId " +
             "   and m.status = com.mople.global.enums.Status.ACTIVE"
     )
-    List<Long> findIdsByCreatorId(Long creatorId);
+    List<Long> findIdsByHostId(Long hostId);
 
     @Modifying(flushAutomatically = true)
     @Query(

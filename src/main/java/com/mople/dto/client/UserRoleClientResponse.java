@@ -39,7 +39,7 @@ public record UserRoleClientResponse(
                 .userId(userInfo.userId())
                 .nickname(userInfo.nickname())
                 .image(userInfo.image())
-                .role(UserRole.getRole(roleOrder))
+                .role(UserRole.fromOrder(roleOrder))
                 .build();
     }
 }

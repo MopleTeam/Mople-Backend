@@ -31,9 +31,11 @@ public enum ExceptionReturnCode {
 
     // Meet
     NOT_CREATOR("401", "접근 권한이 없습니다."),
+    UNAUTHORIZED_DELETE("401", "삭제 권한이 없습니다."),
     NOT_FOUND_MEET("404", "모임을 찾을 수 없습니다."),
     INVALID_INVITE_CODE("400", "유효하지 않은 초대 코드입니다."),
     CURRENT_MEMBER("400", "이미 존재하는 멤버입니다."),
+    CURRENT_HOST("400", "현재 모임장입니다."),
     NOT_FOUND_MEMBER("404", "멤버를 찾을 수 없습니다."),
     NOT_FOUND_INVITE("404", "모임 초대정보를 찾을 수 없습니다."),
     NOT_MEMBER("401", "접근 권한이 없습니다."),

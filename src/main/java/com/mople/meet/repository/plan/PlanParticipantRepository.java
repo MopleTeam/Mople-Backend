@@ -67,4 +67,29 @@ public interface PlanParticipantRepository extends JpaRepository<PlanParticipant
             " where p.userId = :userId"
     )
     void updateNickname(Long userId, String lower, Integer typeOrder);
+
+    @Modifying(flushAutomatically = true)
+    @Query("""
+            update PlanParticipant pp
+            set pp.roleOrder = case
+                when (pp.planId in (select p.id from MeetPlan p where p.meetId = :meetId and p.creatorId = :oldHostId))
+                  or (pp.reviewId in (select r.id from PlanReview r where r.meetId = :meetId and r.creatorId = :oldHostId))
+                then 2
+                else 3
+            end
+            where pp.userId = :oldHostId
+    """)
+    void updateOldHostRoles(Long meetId, Long oldHostId);
+
+    @Modifying(flushAutomatically = true)
+    @Query("""
+            update PlanParticipant pp
+            set pp.roleOrder = 1
+            where pp.userId = :newHostId
+              and (
+                  pp.planId in (select p.id from MeetPlan p where p.meetId = :meetId)
+                  or pp.reviewId in (select r.id from PlanReview r where r.meetId = :meetId)
+              )
+    """)
+    void updateNewHostRoles(Long meetId, Long newHostId);
 }

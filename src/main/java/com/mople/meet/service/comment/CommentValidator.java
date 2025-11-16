@@ -1,9 +1,9 @@
 package com.mople.meet.service.comment;
 
+import com.mople.core.exception.custom.AuthException;
 import com.mople.core.exception.custom.CursorException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.entity.meet.comment.PlanComment;
-import com.mople.entity.user.User;
 import com.mople.global.enums.Status;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.MeetMemberRepository;
@@ -61,9 +61,15 @@ public class CommentValidator {
         }
     }
 
-    public void validateWriter(PlanComment comment, User user) {
-        if (comment.matchWriter(user.getId())) {
-            throw new ResourceNotFoundException(NOT_CREATOR);
+    public void validateWriter(PlanComment comment, Long userId) {
+        if (comment.matchWriter(userId)) {
+            throw new AuthException(NOT_CREATOR);
+        }
+    }
+
+    public void validateDeletion(PlanComment comment, Long hostId, Long userId) {
+        if (comment.matchWriter(userId) && !hostId.equals(userId)) {
+            throw new AuthException(UNAUTHORIZED_DELETE);
         }
     }
 }

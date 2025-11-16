@@ -20,7 +20,7 @@ public record MeetInfoResponse(
                 meet.getVersion(),
                 meet.getName(),
                 meet.getMeetImage(),
-                meet.getCreatorId(),
+                meet.getHostId(),
                 meet.getCreatedAt().until(LocalDateTime.now(), ChronoUnit.DAYS),
                 memberCount
         );

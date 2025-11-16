@@ -50,4 +50,7 @@ public interface MeetMemberRepository extends JpaRepository<MeetMember, Long> {
             " where m.userId = :userId"
     )
     void updateNickname(Long userId, String lower, Integer typeOrder);
+
+    @Query("select m from MeetMember m where m.meetId = :meetId and m.userId = :userId ")
+    MeetMember findMeetIdAndUserId(Long meetId, Long userId);
 }

@@ -2,6 +2,7 @@ package com.mople.entity.meet.plan;
 
 import com.mople.entity.common.BaseTimeEntity;
 
+import com.mople.global.enums.UserRole;
 import jakarta.persistence.*;
 
 import lombok.*;
@@ -30,7 +31,7 @@ public class PlanParticipant extends BaseTimeEntity {
     private Long reviewId;
 
     @Column(name = "role_order", nullable = false)
-    private Integer roleOrder = 2;
+    private Integer roleOrder = UserRole.PARTICIPANT.getOrder();
 
     @Column(name = "nickname_type_order")
     private Integer nicknameTypeOrder;

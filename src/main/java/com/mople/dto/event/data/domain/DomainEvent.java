@@ -33,6 +33,7 @@ import static com.mople.global.enums.event.EventTypeNames.*;
         @JsonSubTypes.Type(value = MeetSoftDeletedEvent.class, name = MEET_SOFT_DELETED),
         @JsonSubTypes.Type(value = MeetPurgeEvent.class, name = MEET_PURGE),
         @JsonSubTypes.Type(value = MeetLeftEvent.class, name = MEET_LEFT),
+        @JsonSubTypes.Type(value = HostChangedEvent.class, name = MEET_HOST_CHANGED),
         @JsonSubTypes.Type(value = MeetJoinedEvent.class, name = MEET_JOINED),
         @JsonSubTypes.Type(value = MeetImageChangedEvent.class, name = MEET_IMAGE_CHANGED),
 
