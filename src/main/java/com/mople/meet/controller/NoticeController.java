@@ -4,13 +4,16 @@ import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.NoticeClientResponse;
 import com.mople.dto.request.meet.notice.NoticeCreateRequest;
 import com.mople.dto.request.meet.notice.NoticeUpdateRequest;
+import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
+import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.meet.service.notice.NoticeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +24,19 @@ import org.springframework.web.bind.annotation.*;
 public class NoticeController {
 
     private final NoticeService noticeService;
+
+    @Operation(
+            summary = "공지 조회 API",
+            description = "모임의 공지 목록을 조회합니다."
+    )
+    @GetMapping("/list/{meetId}")
+    public ResponseEntity<CursorPageResponse<NoticeClientResponse>> getMeetNoticeList(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @PathVariable Long meetId,
+            @ParameterObject @Valid CursorPageRequest request
+    ) {
+        return ResponseEntity.ok(noticeService.getNoticeList(user.id(), meetId, request));
+    }
 
     @Operation(
             summary = "공지 생성 API",
