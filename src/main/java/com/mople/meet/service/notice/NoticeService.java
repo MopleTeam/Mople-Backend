@@ -1,6 +1,7 @@
 package com.mople.meet.service.notice;
 
 import com.mople.core.exception.custom.AuthException;
+import com.mople.core.exception.custom.BadRequestException;
 import com.mople.core.exception.custom.ConcurrencyConflictException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.NoticeClientResponse;
@@ -28,7 +29,9 @@ public class NoticeService {
     private final NoticeRepository noticeRepository;
 
     @Transactional
-    public NoticeClientResponse createNotice(Long userId, Long meetId, NoticeCreateRequest request) {
+    public NoticeClientResponse createNotice(Long userId, NoticeCreateRequest request) {
+        Long meetId = request.meetId();
+
         reader.findUser(userId);
         Meet meet = reader.findMeet(meetId);
 
@@ -44,7 +47,9 @@ public class NoticeService {
     }
 
     @Transactional
-    public NoticeClientResponse updateNotice(Long userId, Long meetId, Long noticeId, NoticeUpdateRequest request) {
+    public NoticeClientResponse updateNotice(Long userId, Long noticeId, NoticeUpdateRequest request) {
+        Long meetId = request.meetId();
+
         reader.findUser(userId);
         Meet meet = reader.findMeet(meetId);
 

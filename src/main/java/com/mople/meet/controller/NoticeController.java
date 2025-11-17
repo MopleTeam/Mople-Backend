@@ -15,7 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/meet/{meetId}/notices")
+@RequestMapping("/notice")
 @RequiredArgsConstructor
 @Tag(name = "NOTICE", description = "공지 API")
 public class NoticeController {
@@ -26,13 +26,12 @@ public class NoticeController {
             summary = "공지 생성 API",
             description = "모임장이 공지를 생성하고, 생성된 공지 정보를 반환합니다."
     )
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<NoticeClientResponse> createMeetNotice(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
-            @PathVariable Long meetId,
             @RequestBody @Valid NoticeCreateRequest request
     ) {
-        var body = noticeService.createNotice(user.id(), meetId, request);
+        var body = noticeService.createNotice(user.id(), request);
 
         return ResponseEntity.ok()
                 .eTag("\"" + body.getVersion() + "\"")
@@ -43,14 +42,13 @@ public class NoticeController {
             summary = "공지 수정 API",
             description = "모임장이 공지 내용을 수정하고, 수정된 공지 정보를 반환합니다."
     )
-    @PatchMapping("/{noticeId}")
+    @PatchMapping("/update/{noticeId}")
     public ResponseEntity<NoticeClientResponse> updateMeetNotice(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
-            @PathVariable Long meetId,
             @PathVariable Long noticeId,
             @RequestBody @Valid NoticeUpdateRequest request
     ) {
-        var body = noticeService.updateNotice(user.id(), meetId, noticeId, request);
+        var body = noticeService.updateNotice(user.id(), noticeId, request);
 
         return ResponseEntity.ok()
                 .eTag("\"" + body.getVersion() + "\"")
