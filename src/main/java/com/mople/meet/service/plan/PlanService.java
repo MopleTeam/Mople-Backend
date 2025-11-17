@@ -163,6 +163,7 @@ public class PlanService {
                         meet.getMeetImage(),
                         participantCount
                 ),
+                true,
                 commentRepositorySupport.countComment(plan.getId()));
     }
 
@@ -229,6 +230,7 @@ public class PlanService {
                         meet.getMeetImage(),
                         participantCount
                 ),
+                true,
                 commentRepositorySupport.countComment(plan.getId()));
     }
 
@@ -281,7 +283,7 @@ public class PlanService {
 
         Integer participantCount = participantRepository.countByPlanId(plan.getId());
 
-        return ofViewAndParticipant(
+        return ofView(
                 ofPlanView(
                         plan,
                         meet.getName(),
