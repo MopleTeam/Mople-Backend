@@ -60,6 +60,10 @@ public class NoticeService {
         MeetNotice customNotice = noticeRepository.findById(noticeId)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_NOTICE));
 
+        if (!customNotice.getMeetId().equals(meetId)) {
+            throw new BadRequestException(NOT_FOUND_NOTICE);
+        }
+
         customNotice.updateNotice(request.content());
 
         try {
@@ -75,5 +79,21 @@ public class NoticeService {
         }
 
         return ofNotice(customNotice);
+    }
+
+    @Transactional
+    public void removeNotice(Long userId, Long noticeId) {
+        reader.findUser(userId);
+
+        MeetNotice customNotice = noticeRepository.findById(noticeId)
+                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_NOTICE));
+
+        Meet meet = reader.findMeet(customNotice.getMeetId());
+
+        if (!meet.matchHost(userId)) {
+            throw new AuthException(NOT_HOST);
+        }
+
+        noticeRepository.delete(customNotice);
     }
 }

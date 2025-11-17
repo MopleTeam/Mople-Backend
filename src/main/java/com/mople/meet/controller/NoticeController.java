@@ -54,4 +54,17 @@ public class NoticeController {
                 .eTag("\"" + body.getVersion() + "\"")
                 .body(body);
     }
+
+    @Operation(
+            summary = "공지 삭제 API",
+            description = "모임장이 공지를 삭제합니다."
+    )
+    @DeleteMapping("/{noticeId}")
+    public ResponseEntity<Void> deleteMeetNotice(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @PathVariable Long noticeId
+    ) {
+        noticeService.removeNotice(user.id(), noticeId);
+        return ResponseEntity.ok().build();
+    }
 }
