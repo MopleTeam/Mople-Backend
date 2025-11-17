@@ -1,4 +1,4 @@
-FROM openjdk:21-slim
+FROM openjdk:21-ea-oraclelinux8
 
 ENV TZ=Asia/Seoul
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
