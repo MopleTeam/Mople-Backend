@@ -35,34 +35,10 @@ public class PlanClientResponse {
     private final Integer commentCount;
 
     public static List<PlanClientResponse> ofViews(List<PlanViewResponse> viewResponses) {
-        return viewResponses.stream().map(response -> ofView(response, 0)).toList();
+        return viewResponses.stream().map(response -> ofView(response, true, 0)).toList();
     }
 
-    public static PlanClientResponse ofView(PlanViewResponse viewResponse, Integer commentCount) {
-        return PlanClientResponse.builder()
-                .planId(viewResponse.planId())
-                .version(viewResponse.version())
-                .meetId(viewResponse.meetId())
-                .meetName(viewResponse.meetName())
-                .meetImg(viewResponse.meetImage())
-                .planName(viewResponse.planName())
-                .planMemberCount(viewResponse.planMemberCount())
-                .planTime(viewResponse.planTime())
-                .planAddress(viewResponse.planAddress())
-                .title(viewResponse.title())
-                .description(viewResponse.description())
-                .creatorId(viewResponse.creatorId())
-                .lat(viewResponse.lat())
-                .lot(viewResponse.lot())
-                .weatherIcon(viewResponse.weatherIcon())
-                .weatherAddress(viewResponse.weatherAddress())
-                .temperature(viewResponse.temperature())
-                .pop(viewResponse.pop())
-                .commentCount(commentCount)
-                .build();
-    }
-
-    public static PlanClientResponse ofViewAndParticipant(PlanViewResponse viewResponse, boolean participant, Integer commentCount) {
+    public static PlanClientResponse ofView(PlanViewResponse viewResponse, boolean participant, Integer commentCount) {
         return PlanClientResponse.builder()
                 .planId(viewResponse.planId())
                 .version(viewResponse.version())
@@ -83,31 +59,6 @@ public class PlanClientResponse {
                 .temperature(viewResponse.temperature())
                 .pop(viewResponse.pop())
                 .participant(participant)
-                .commentCount(commentCount)
-                .build();
-    }
-
-    public static PlanClientResponse ofUpdate(PlanViewResponse viewResponse, Integer commentCount) {
-        return PlanClientResponse.builder()
-                .planId(viewResponse.planId())
-                .version(viewResponse.version())
-                .meetId(viewResponse.meetId())
-                .meetName(viewResponse.meetName())
-                .meetImg(viewResponse.meetImage())
-                .planName(viewResponse.planName())
-                .planMemberCount(viewResponse.planMemberCount())
-                .planTime(viewResponse.planTime())
-                .planAddress(viewResponse.planAddress())
-                .title(viewResponse.title())
-                .description(viewResponse.description())
-                .creatorId(viewResponse.creatorId())
-                .lat(viewResponse.lat())
-                .lot(viewResponse.lot())
-                .weatherIcon(viewResponse.weatherIcon())
-                .weatherAddress(viewResponse.weatherAddress())
-                .temperature(viewResponse.temperature())
-                .pop(viewResponse.pop())
-                .participant(true)
                 .commentCount(commentCount)
                 .build();
     }
