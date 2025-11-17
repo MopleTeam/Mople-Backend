@@ -1,7 +1,7 @@
 package com.mople.dto.client;
 
 import com.mople.entity.meet.notice.MeetNotice;
-import com.mople.global.enums.NoticeType;
+import com.mople.global.enums.notice.NoticeType;
 import lombok.Builder;
 import lombok.Getter;
 

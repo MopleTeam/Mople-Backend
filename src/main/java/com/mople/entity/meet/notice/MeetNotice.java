@@ -1,7 +1,7 @@
 package com.mople.entity.meet.notice;
 
 import com.mople.entity.common.BaseTimeEntity;
-import com.mople.global.enums.NoticeType;
+import com.mople.global.enums.notice.NoticeType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -45,16 +45,16 @@ public class MeetNotice extends BaseTimeEntity {
 
     public static MeetNotice ofCustom(String content, Long creatorId, Long meetId) {
         return MeetNotice.builder()
-                .type(NoticeType.HOST_CUSTOM)
+                .type(NoticeType.CUSTOM)
                 .content(content)
                 .creatorId(creatorId)
                 .meetId(meetId)
                 .build();
     }
 
-    public static MeetNotice ofSystem(NoticeType type, String content, Long meetId) {
+    public static MeetNotice ofSystem(String content, Long meetId) {
         return MeetNotice.builder()
-                .type(type)
+                .type(NoticeType.SYSTEM)
                 .content(content)
                 .creatorId(null)
                 .meetId(meetId)
