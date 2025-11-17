@@ -3,6 +3,7 @@ package com.mople.meet.controller;
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.NoticeClientResponse;
 import com.mople.dto.request.meet.notice.NoticeCreateRequest;
+import com.mople.dto.request.meet.notice.NoticeUpdateRequest;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.meet.service.notice.NoticeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,6 +33,24 @@ public class NoticeController {
             @RequestBody @Valid NoticeCreateRequest request
     ) {
         var body = noticeService.createNotice(user.id(), meetId, request);
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.getVersion() + "\"")
+                .body(body);
+    }
+
+    @Operation(
+            summary = "공지 수정 API",
+            description = "모임장이 공지 내용을 수정하고, 수정된 공지 정보를 반환합니다."
+    )
+    @PatchMapping("/{noticeId}")
+    public ResponseEntity<NoticeClientResponse> updateMeetNotice(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @PathVariable Long meetId,
+            @PathVariable Long noticeId,
+            @RequestBody @Valid NoticeUpdateRequest request
+    ) {
+        var body = noticeService.updateNotice(user.id(), meetId, noticeId, request);
 
         return ResponseEntity.ok()
                 .eTag("\"" + body.getVersion() + "\"")

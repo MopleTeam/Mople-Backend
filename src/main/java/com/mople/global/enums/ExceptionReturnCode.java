@@ -67,6 +67,9 @@ public enum ExceptionReturnCode {
     NOT_FOUND_COMMENT_STATS("404", "댓글 정보를 찾을 수 없습니다."),
     INVALID_COMMENT("400", "유효하지 않은 댓글입니다."),
 
+    // notice
+    NOT_FOUND_NOTICE("404", "공지를 찾을 수 없습니다."),
+
     // cursor
     INVALID_CURSOR("400", "잘못된 커서입니다."),
     FAIL_DECODING_CURSOR("400", "커서를 디코딩할 수 없습니다."),
