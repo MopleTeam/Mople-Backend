@@ -7,6 +7,8 @@ import lombok.Builder;
 
 import java.util.Map;
 
+import static com.mople.global.utils.text.HighlightUtils.highlight;
+
 @Builder
 public record ReviewUploadNotifyEvent(
         String meetName,
@@ -17,7 +19,7 @@ public record ReviewUploadNotifyEvent(
     @Override
     public NotificationPayload payload() {
         return new NotificationPayload(
-                meetName + "의 일정은 어떠셨나요?",
+                highlight(meetName) + "의 일정은 어떠셨나요?",
                 reviewName + "의 사진을 확인해보세요"
         );
     }

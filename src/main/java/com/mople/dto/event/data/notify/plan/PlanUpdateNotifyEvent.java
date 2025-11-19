@@ -7,6 +7,8 @@ import lombok.Builder;
 
 import java.util.Map;
 
+import static com.mople.global.utils.text.HighlightUtils.highlight;
+
 @Builder
 public record PlanUpdateNotifyEvent(
         String meetName,
@@ -17,7 +19,7 @@ public record PlanUpdateNotifyEvent(
     @Override
     public NotificationPayload payload() {
         return new NotificationPayload(
-                meetName + "의 일정변경",
+                highlight(meetName) + "의 일정변경",
                 planName + " 일정이 변경됐어요"
         );
     }

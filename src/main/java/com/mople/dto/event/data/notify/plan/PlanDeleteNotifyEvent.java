@@ -7,6 +7,8 @@ import lombok.Builder;
 
 import java.util.Map;
 
+import static com.mople.global.utils.text.HighlightUtils.highlight;
+
 @Builder
 public record PlanDeleteNotifyEvent(
         Long meetId,
@@ -17,7 +19,7 @@ public record PlanDeleteNotifyEvent(
     @Override
     public NotificationPayload payload() {
         return new NotificationPayload(
-                meetName + "의 일정취소",
+                highlight(meetName) + "의 일정취소",
                 planName + " 일정이 취소됐어요"
         );
     }
