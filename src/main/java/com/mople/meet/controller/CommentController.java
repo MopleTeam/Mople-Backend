@@ -2,6 +2,7 @@ package com.mople.meet.controller;
 
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.CommentClientResponse;
+import com.mople.dto.client.UserRoleClientResponse;
 import com.mople.dto.request.meet.comment.CommentUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
@@ -11,6 +12,7 @@ import com.mople.meet.service.comment.CommentService;
 import com.mople.dto.request.meet.comment.CommentCreateRequest;
 import com.mople.dto.request.meet.comment.CommentReportRequest;
 
+import com.mople.meet.service.meet.MeetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "COMMENT", description = "댓글 API")
 public class CommentController {
     private final CommentService commentService;
+    private final MeetService meetService;
 
     @Operation(
             summary = "댓글 조회 API",
@@ -145,5 +148,20 @@ public class CommentController {
     ) {
         commentService.commentReport(user.id(), CommentReportRequest);
         return ResponseEntity.ok().build();
+    }
+
+    // 과거에 배포된 url
+    @Operation(
+            summary = "멘션 자동 완성 API",
+            description = "입력한 키워드에 맞는 모임 멤버 닉네임을 자동 완성합니다."
+    )
+    @GetMapping("/{postId}/mention")
+    public CursorPageResponse<UserRoleClientResponse> searchMention(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @PathVariable Long postId,
+            @RequestParam String keyword,
+            @ParameterObject @Valid CursorPageRequest request
+    ) {
+        return meetService.searchMeetMember(user.id(), postId, keyword, request);
     }
 }

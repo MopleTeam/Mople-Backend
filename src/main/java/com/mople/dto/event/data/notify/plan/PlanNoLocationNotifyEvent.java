@@ -7,6 +7,8 @@ import lombok.Builder;
 
 import java.util.Map;
 
+import static com.mople.global.utils.text.HighlightUtils.highlight;
+
 @Builder
 public record PlanNoLocationNotifyEvent(
         String meetName,
@@ -17,7 +19,7 @@ public record PlanNoLocationNotifyEvent(
     @Override
     public NotificationPayload payload() {
         return new NotificationPayload(
-                meetName + "의 약속장소를 정하지 않았어요! 🙈",
+                highlight(meetName) + "의 약속장소를 정하지 않았어요! 🙈",
                 planName + " 장소 확정이 필요해요"
         );
     }
