@@ -51,7 +51,7 @@ public class MeetJoinNotifier implements DomainEventHandler<MeetJoinedEvent> {
                 .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
 
         User user = userRepository.findByIdAndStatus(event.newMemberId(), Status.ACTIVE)
-                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_USER));
+                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_USER));
 
         MeetJoinNotifyEvent notifyEvent = MeetJoinNotifyEvent.builder()
                 .meetId(event.meetId())

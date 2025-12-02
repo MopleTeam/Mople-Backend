@@ -30,16 +30,16 @@ public class PostContextFinder {
             MeetPlan plan = planOptional.get();
 
             Meet meet = meetRepository.findByIdAndStatus(plan.getMeetId(), Status.ACTIVE)
-                    .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_MEET));
+                    .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_PLAN));
 
             return PostContext.plan(meet, plan);
         }
 
         PlanReview review = reviewRepository.findByPlanIdAndStatus(postId, Status.ACTIVE)
-                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_REVIEW));
+                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_REVIEW));
 
         Meet meet = meetRepository.findByIdAndStatus(review.getMeetId(), Status.ACTIVE)
-                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_MEET));
+                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_MEET));
 
         return PostContext.review(meet, review);
     }
