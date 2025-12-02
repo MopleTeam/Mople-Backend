@@ -267,7 +267,7 @@ public class ReviewService {
                 .map(PlanParticipant::getUserId)
                 .toList();
 
-        Map<Long, UserInfo> userInfoById = ofMap(userRepository.findByIdInAndStatus(userIds, Status.ACTIVE));
+        Map<Long, UserInfo> userInfoById = ofMap(userRepository.findByIdIn(userIds));
 
         return buildCursorPage(
                 participants,
