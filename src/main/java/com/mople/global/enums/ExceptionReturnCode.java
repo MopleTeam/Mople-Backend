@@ -30,16 +30,16 @@ public enum ExceptionReturnCode {
     FORCE_UPDATE("426", "업데이트가 필요합니다."),
 
     // Meet
-    NOT_CREATOR("401", "접근 권한이 없습니다."),
-    NOT_HOST("401", "접근 권한이 없습니다."),
-    UNAUTHORIZED_DELETE("401", "삭제 권한이 없습니다."),
+    NOT_CREATOR("403", "접근 권한이 없습니다."),
+    NOT_HOST("403", "접근 권한이 없습니다."),
+    UNAUTHORIZED_DELETE("403", "삭제 권한이 없습니다."),
     NOT_FOUND_MEET("404", "모임을 찾을 수 없습니다."),
     INVALID_INVITE_CODE("400", "유효하지 않은 초대 코드입니다."),
     CURRENT_MEMBER("400", "이미 존재하는 멤버입니다."),
     CURRENT_HOST("400", "현재 모임장입니다."),
     NOT_FOUND_MEMBER("404", "멤버를 찾을 수 없습니다."),
     NOT_FOUND_INVITE("404", "모임 초대정보를 찾을 수 없습니다."),
-    NOT_MEMBER("401", "접근 권한이 없습니다."),
+    NOT_MEMBER("403", "접근 권한이 없습니다."),
 
     // Post
     NOT_FOUND_POST("404", "게시글을 찾을 수 없습니다."),
@@ -47,7 +47,7 @@ public enum ExceptionReturnCode {
     // Plan
     NOT_FOUND_PLAN("404", "일정을 찾을 수 없습니다."),
     CURRENT_PARTICIPANT("400", "이미 존재하는 멤버입니다."),
-    NOT_PARTICIPANT("401", "일정에 참가한 유저만 접근할 수 있습니다."),
+    NOT_PARTICIPANT("403", "일정에 참가한 유저만 접근할 수 있습니다."),
 
     // Review
     CURRENT_REVIEW("400", "이미 후기가 존재합니다."),
@@ -77,7 +77,7 @@ public enum ExceptionReturnCode {
     // Notification
     NOT_FOUND_NOTIFY("404", "알림을 찾을 수 없습니다."),
     NOT_FOUND_NOTIFY_TYPE("400", "지원하지 않는 알림 유형입니다."),
-    NOT_OWNER_OF_NOTIFICATION("401", "접근 권한이 없습니다."),
+    NOT_OWNER_OF_NOTIFICATION("403", "접근 권한이 없습니다."),
 
     // Request
     WRONG_PARAMETER("400", "잘못된 파라미터 입니다."),
