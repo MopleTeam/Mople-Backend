@@ -32,7 +32,7 @@ public class NoticeRepositorySupport {
 
             whereCondition.and(
                     Expressions.booleanTemplate(
-                            "( {0}, {1} ) < ({2}, {3})",
+                            "( {0}, {1} ) < ( {2}, {3} )",
                             notice.createdAt, notice.id, cursorWriteTime, cursorId
                     )
             );

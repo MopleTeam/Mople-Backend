@@ -34,7 +34,7 @@ public class CommentRepositorySupport {
 
             whereCondition.and(
                     Expressions.booleanTemplate(
-                            "( {0}, {1} ) < ({2}, {3})",
+                            "( {0}, {1} ) < ( {2}, {3} )",
                             comment.writeTime, comment.id, cursorWriteTime, cursorId
                     )
             );

@@ -26,7 +26,7 @@ public class ParticipantRepositorySupport {
         if (cursor != null) {
             whereCondition.and(
                     Expressions.booleanTemplate(
-                            "( {0}, {1}, {2}, {3} ) > ({4}, {5}, {6}, {7})",
+                            "( {0}, {1}, {2}, {3} ) > ( {4}, {5}, {6}, {7} )",
                             participant.roleOrder, participant.nicknameTypeOrder, participant.nicknameLower, participant.id,
                             cursor.roleOrder(), cursor.nicknameTypeOrder(), cursor.nicknameLower(), cursor.id()
                     )

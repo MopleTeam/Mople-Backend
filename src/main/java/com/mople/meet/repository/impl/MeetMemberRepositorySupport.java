@@ -28,7 +28,7 @@ public class MeetMemberRepositorySupport {
         if (cursor != null) {
             whereCondition.and(
                     Expressions.booleanTemplate(
-                            "( {0}, {1}, {2}, {3} ) > ({4}, {5}, {6}, {7})",
+                            "( {0}, {1}, {2}, {3} ) > ( {4}, {5}, {6}, {7} )",
                             member.roleOrder, member.nicknameTypeOrder, member.nicknameLower, member.id,
                             cursor.roleOrder(), cursor.nicknameTypeOrder(), cursor.nicknameLower(), cursor.id()
                     )
