@@ -1,6 +1,7 @@
 package com.mople.meet.repository.impl.plan;
 
 import com.mople.entity.user.QUser;
+import com.mople.global.enums.Status;
 import com.mople.global.utils.cursor.custom.UserCursor;
 import com.mople.entity.meet.plan.PlanParticipant;
 import com.mople.entity.meet.plan.QPlanParticipant;
@@ -51,11 +52,10 @@ public class ParticipantRepositorySupport {
                 .fetch();
     }
 
-    public List<PlanParticipant> findReviewParticipantPage(Long reviewId, UserCursor cursor, int size) {
+    public List<PlanParticipant> findReviewParticipantPage(Long reviewId, UserCursor cursor, int size, List<Long> deletedIds) {
         QPlanParticipant participant = QPlanParticipant.planParticipant;
-        QUser user = QUser.user;
 
-        NumberExpression<Integer> deletedOrder = deletedOrder(user);
+        NumberExpression<Integer> deletedOrder = deletedOrder(participant, deletedIds);
 
         BooleanBuilder whereCondition = new BooleanBuilder()
                 .and(participant.reviewId.eq(reviewId));
@@ -83,7 +83,6 @@ public class ParticipantRepositorySupport {
         return queryFactory
                 .select(participant)
                 .from(participant)
-                .join(user).on(participant.userId.eq(user.id))
                 .where(whereCondition)
                 .orderBy(
                         deletedOrder.asc(),
@@ -143,5 +142,20 @@ public class ParticipantRepositorySupport {
                         )
                         .fetch()
         );
+    }
+
+    public List<Long> findDeletedUserIdsByReviewId(Long reviewId) {
+        QPlanParticipant participant = QPlanParticipant.planParticipant;
+        QUser user = QUser.user;
+
+        return queryFactory
+                .select(participant.userId)
+                .from(participant)
+                .join(user).on(participant.userId.eq(user.id))
+                .where(
+                        participant.reviewId.eq(reviewId),
+                        user.status.eq(Status.DELETED)
+                )
+                .fetch();
     }
 }

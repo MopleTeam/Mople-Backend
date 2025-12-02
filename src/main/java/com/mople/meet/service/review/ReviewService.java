@@ -51,7 +51,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static com.mople.dto.client.ReviewClientResponse.*;
-import static com.mople.dto.client.UserRoleClientResponse.ofParticipants;
+import static com.mople.dto.client.UserRoleClientResponse.*;
 import static com.mople.dto.response.meet.review.ReviewImageListResponse.ofReviewImageResponses;
 import static com.mople.dto.response.user.UserInfo.ofMap;
 import static com.mople.global.enums.event.AggregateType.REVIEW;
@@ -263,7 +263,9 @@ public class ReviewService {
             cursor = forReview(participant, deletedOrder(status));
         }
 
-        return participantRepositorySupport.findReviewParticipantPage(reviewId, cursor, size);
+        List<Long> deletedIds = participantRepositorySupport.findDeletedUserIdsByReviewId(reviewId);
+
+        return participantRepositorySupport.findReviewParticipantPage(reviewId, cursor, size, deletedIds);
     }
 
     private CursorPageResponse<UserRoleClientResponse> buildParticipantCursorPage(int size, List<PlanParticipant> participants) {

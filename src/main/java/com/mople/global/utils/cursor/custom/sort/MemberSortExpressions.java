@@ -1,11 +1,13 @@
 package com.mople.global.utils.cursor.custom.sort;
 
 import com.mople.entity.meet.QMeetMember;
-import com.mople.entity.user.QUser;
+import com.mople.entity.meet.plan.QPlanParticipant;
 import com.mople.global.enums.Status;
 import com.mople.global.enums.UserRole;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
+
+import java.util.List;
 
 public class MemberSortExpressions {
 
@@ -23,9 +25,9 @@ public class MemberSortExpressions {
         return 2;
     }
 
-    public static NumberExpression<Integer> deletedOrder(QUser user) {
+    public static NumberExpression<Integer> deletedOrder(QPlanParticipant participant, List<Long> deletedIds) {
         return new CaseBuilder()
-                        .when(user.status.eq(Status.DELETED)).then(1)
+                        .when(participant.userId.in(deletedIds)).then(1)
                         .otherwise(0);
     }
 
