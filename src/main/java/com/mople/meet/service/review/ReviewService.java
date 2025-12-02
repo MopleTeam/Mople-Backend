@@ -58,7 +58,8 @@ import static com.mople.global.enums.event.AggregateType.REVIEW;
 import static com.mople.global.enums.event.EventTypeNames.*;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
-import static com.mople.global.utils.cursor.custom.UserCursor.ofUserCursor;
+import static com.mople.global.utils.cursor.custom.UserCursor.forReview;
+import static com.mople.global.utils.cursor.custom.sort.MemberSortExpressions.deletedOrder;
 
 @Service
 @RequiredArgsConstructor
@@ -256,7 +257,10 @@ public class ReviewService {
                 throw new CursorException(INVALID_CURSOR);
             }
 
-            cursor = ofUserCursor(participant);
+            Status status = userRepository.findById(participant.getUserId())
+                    .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_USER)).getStatus();
+
+            cursor = forReview(participant, deletedOrder(status));
         }
 
         return participantRepositorySupport.findReviewParticipantPage(reviewId, cursor, size);

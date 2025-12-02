@@ -1,6 +1,8 @@
 package com.mople.global.utils.cursor.custom.sort;
 
 import com.mople.entity.meet.QMeetMember;
+import com.mople.entity.user.QUser;
+import com.mople.global.enums.Status;
 import com.mople.global.enums.UserRole;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
@@ -19,6 +21,20 @@ public class MemberSortExpressions {
         }
 
         return 2;
+    }
+
+    public static NumberExpression<Integer> deletedOrder(QUser user) {
+        return new CaseBuilder()
+                        .when(user.status.eq(Status.DELETED)).then(1)
+                        .otherwise(0);
+    }
+
+    public static Integer deletedOrder(Status status) {
+        if (status.equals(Status.DELETED)) {
+            return 1;
+        }
+
+        return 0;
     }
 
     public static Integer calculateRoleOrder(Long userId, Long hostId, Long creatorId) {
