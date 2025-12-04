@@ -19,8 +19,9 @@ public record ReviewRemindNotifyEvent(
     @Override
     public NotificationPayload payload() {
         return new NotificationPayload(
-                highlight(meetName) + "의 일정은 어떠셨나요?",
-                reviewName + "의 사진을 공유해보세요"
+                meetName + "의 일정은 어떠셨나요?",
+                reviewName + "의 사진을 공유해보세요",
+                highlight(reviewName) + "의 사진을 공유해보세요"
         );
     }
 

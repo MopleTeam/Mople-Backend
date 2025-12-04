@@ -19,8 +19,9 @@ public record PlanUpdateNotifyEvent(
     @Override
     public NotificationPayload payload() {
         return new NotificationPayload(
-                highlight(meetName) + "의 일정변경",
-                planName + " 일정이 변경됐어요"
+                meetName + "의 일정변경",
+                planName + " 일정이 변경됐어요",
+                highlight(planName) + " 일정이 변경됐어요"
         );
     }
 
