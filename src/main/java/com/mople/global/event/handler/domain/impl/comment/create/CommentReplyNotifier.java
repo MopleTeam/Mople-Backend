@@ -55,7 +55,7 @@ public class CommentReplyNotifier implements DomainEventHandler<CommentCreatedEv
         }
 
         User sender = userRepository.findByIdAndStatus(event.commentWriterId(), Status.ACTIVE)
-                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_USER));
+                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_USER));
 
         if (event.isExistMention()) {
             List<Long> mentionedUsers = userReader.findCreatedMentionedUsers(

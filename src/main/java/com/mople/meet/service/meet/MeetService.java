@@ -42,6 +42,7 @@ import static com.mople.global.enums.event.AggregateType.MEET;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.enums.event.EventTypeNames.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
+import static com.mople.global.utils.cursor.custom.UserCursor.forMeetMember;
 
 @Service
 public class MeetService {
@@ -247,7 +248,7 @@ public class MeetService {
                 throw new CursorException(INVALID_CURSOR);
             }
 
-            cursor = UserCursor.ofUserCursor(member);
+            cursor = forMeetMember(member);
         }
 
         return meetMemberRepositorySupport.findMemberPage(meetId, cursor, size);

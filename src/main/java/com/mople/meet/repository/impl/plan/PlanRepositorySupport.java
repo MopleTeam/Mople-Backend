@@ -108,7 +108,7 @@ public class PlanRepositorySupport {
 
             whereCondition.and(
                     Expressions.booleanTemplate(
-                            "( {0}, {1} ) > ({2}, {3})",
+                            "( {0}, {1} ) > ( {2}, {3} )",
                             plan.planTime, plan.id, cursorPlanTime, cursorId
                     )
             );

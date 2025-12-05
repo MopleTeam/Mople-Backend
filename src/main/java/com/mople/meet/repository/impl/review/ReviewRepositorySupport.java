@@ -33,7 +33,7 @@ public class ReviewRepositorySupport {
 
             whereCondition.and(
                     Expressions.booleanTemplate(
-                            "( {0}, {1} ) < ({2}, {3})",
+                            "( {0}, {1} ) < ( {2}, {3} )",
                             review.planTime, review.id, cursorPlanTime, cursorId
                     )
             );

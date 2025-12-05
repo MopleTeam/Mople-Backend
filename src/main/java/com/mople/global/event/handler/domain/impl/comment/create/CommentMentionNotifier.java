@@ -56,7 +56,7 @@ public class CommentMentionNotifier implements DomainEventHandler<CommentCreated
         }
 
         User sender = userRepository.findByIdAndStatus(event.commentWriterId(), Status.ACTIVE)
-                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.INVALID_USER));
+                .orElseThrow(() -> new NonRetryableOutboxException(ExceptionReturnCode.NOT_FOUND_USER));
 
         CommentMentionNotifyEvent.CommentMentionNotifyEventBuilder eventBuilder = CommentMentionNotifyEvent.builder()
                 .meetName(postContext.getMeet().getName())

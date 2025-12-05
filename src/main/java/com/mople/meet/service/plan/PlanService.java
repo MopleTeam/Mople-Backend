@@ -63,7 +63,7 @@ import static com.mople.global.enums.event.AggregateType.PLAN;
 import static com.mople.global.enums.event.EventTypeNames.*;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
-import static com.mople.global.utils.cursor.custom.UserCursor.ofUserCursor;
+import static com.mople.global.utils.cursor.custom.UserCursor.forPlan;
 
 @Service
 @RequiredArgsConstructor
@@ -415,7 +415,7 @@ public class PlanService {
                 throw new CursorException(INVALID_CURSOR);
             }
 
-            cursor = ofUserCursor(participant);
+            cursor = forPlan(participant);
         }
 
         return participantRepositorySupport.findPlanParticipantPage(planId, cursor, size);
