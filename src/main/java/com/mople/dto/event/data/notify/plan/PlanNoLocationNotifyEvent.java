@@ -19,8 +19,9 @@ public record PlanNoLocationNotifyEvent(
     @Override
     public NotificationPayload payload() {
         return new NotificationPayload(
-                highlight(meetName) + "의 약속장소를 정하지 않았어요! 🙈",
-                planName + " 장소 확정이 필요해요"
+                meetName + "의 약속장소를 정하지 않았어요! 🙈",
+                planName + " 장소 확정이 필요해요",
+                highlight(planName) + " 장소 확정이 필요해요"
         );
     }
 

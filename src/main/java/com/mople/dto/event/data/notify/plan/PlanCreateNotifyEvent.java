@@ -19,8 +19,9 @@ public record PlanCreateNotifyEvent(
     @Override
     public NotificationPayload payload() {
         return new NotificationPayload(
-                highlight(meetName) + "의 일정등록 \uD83D\uDCC6",
-                planName + "에 참여해보세요!"
+                meetName + "의 일정등록 \uD83D\uDCC6",
+                planName + "에 참여해보세요!",
+                highlight(planName) + "에 참여해보세요!"
         );
     }
 

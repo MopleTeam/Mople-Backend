@@ -19,8 +19,9 @@ public record MeetJoinNotifyEvent(
     @Override
     public NotificationPayload payload() {
         return new NotificationPayload(
-                highlight(meetName) + "의 새 멤버 \uD83C\uDF89",
-                newMemberNickname + "님이 가입했어요!"
+                meetName + "의 새 멤버 \uD83C\uDF89",
+                newMemberNickname + "님이 가입했어요!",
+                highlight(newMemberNickname) + "님이 가입했어요!"
         );
     }
 

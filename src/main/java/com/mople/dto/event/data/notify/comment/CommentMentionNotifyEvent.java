@@ -20,8 +20,9 @@ public record CommentMentionNotifyEvent(
     @Override
     public NotificationPayload payload() {
         return new NotificationPayload(
-                highlight(meetName) + "의 새로운 멘션 👀",
-                meetName + "에서 " + senderNickname + "님이 회원님을 멘션했어요!"
+                meetName + "의 새로운 멘션 👀",
+                senderNickname + "님이 회원님을 멘션했어요!",
+                highlight(senderNickname) + "님이 회원님을 멘션했어요!"
         );
     }
 

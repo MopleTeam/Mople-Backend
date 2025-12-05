@@ -17,7 +17,7 @@ public record NotificationResponse(
         String meetName,
         String meetImg,
         NotifyType type,
-        NotificationPayload payload,
+        String message,
         String sendAt,
         boolean isRead,
         LocalDateTime planDate
@@ -40,7 +40,7 @@ public record NotificationResponse(
                                         notification.getMeetName(),
                                         notification.getMeetImg(),
                                         notification.getType(),
-                                        mapper.readValue(notification.getPayload(), NotificationPayload.class),
+                                        mapper.readValue(notification.getPayload(), NotificationPayload.class).tagMessage(),
                                         notification.getSendAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
                                         notification.getReadAt() != null,
                                         getDate(notification.getPlanId(), notification.getReviewId(), timeMap)

@@ -20,8 +20,9 @@ public record CommentReplyNotifyEvent(
     @Override
     public NotificationPayload payload() {
         return new NotificationPayload(
-                highlight(meetName) + "의 새로운 대댓글 👀",
-                meetName + "에서 " + senderNickname + "님이 답글을 남겼어요!"
+                meetName + "의 새로운 대댓글 👀",
+                senderNickname + "님이 답글을 남겼어요!",
+                highlight(senderNickname) + "님이 답글을 남겼어요!"
         );
     }
 

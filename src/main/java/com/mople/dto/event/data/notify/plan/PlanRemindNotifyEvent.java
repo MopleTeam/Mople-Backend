@@ -19,8 +19,9 @@ public record PlanRemindNotifyEvent(
     @Override
     public NotificationPayload payload() {
         return new NotificationPayload(
-                highlight(meetName) + "의 일정 알림 ⏰",
-                planName + " 곧 시작돼요!"
+                meetName + "의 일정 알림 ⏰",
+                planName + " 곧 시작돼요!",
+                highlight(planName) + " 곧 시작돼요!"
         );
     }
 

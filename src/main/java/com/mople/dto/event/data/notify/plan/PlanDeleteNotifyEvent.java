@@ -19,8 +19,9 @@ public record PlanDeleteNotifyEvent(
     @Override
     public NotificationPayload payload() {
         return new NotificationPayload(
-                highlight(meetName) + "의 일정취소",
-                planName + " 일정이 취소됐어요"
+                meetName + "의 일정취소",
+                planName + " 일정이 취소됐어요",
+                highlight(planName) + " 일정이 취소됐어요"
         );
     }
 
