@@ -4,6 +4,7 @@ import com.mople.global.enums.Status;
 
 import jakarta.persistence.*;
 
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -22,7 +23,8 @@ public class PlanComment {
     @Version
     private Long version;
 
-    @Column(name = "content", nullable = false, length = 700)
+    @Size(max = 2000)
+    @Column(name = "content", nullable = false, columnDefinition = "text")
     private String content;
 
     @Column(name = "post_id")
