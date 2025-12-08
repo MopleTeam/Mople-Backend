@@ -38,7 +38,7 @@ public class MeetPlan extends BaseTimeEntity {
     @Column(name = "title", length = 50)
     private String title;
 
-    @Column(name = "description", columnDefinition = "TEXT")
+    @Column(name = "description", length = 100)
     private String description;
 
     @Column(name = "lat", precision = 10, scale = 8)
