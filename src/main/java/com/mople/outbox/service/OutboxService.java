@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static com.mople.global.enums.ExceptionReturnCode.INTERNAL_SERVER_ERROR;
@@ -26,6 +27,11 @@ public class OutboxService {
     @Transactional
     public int cancel(String eventType, AggregateType aggregateType, Long aggregateId) {
         return eventRepository.eventCanceled(eventType, aggregateType, aggregateId);
+    }
+
+    @Transactional
+    public int cancelAll(String eventType, AggregateType aggregateType, List<Long> aggregateIds) {
+        return eventRepository.eventCanceledAll(eventType, aggregateType, aggregateIds);
     }
 
     @Transactional

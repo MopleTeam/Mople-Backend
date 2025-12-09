@@ -4,6 +4,7 @@ import com.mople.entity.meet.comment.PlanComment;
 import com.mople.entity.meet.comment.QPlanComment;
 import com.mople.global.enums.Status;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -32,9 +33,10 @@ public class CommentRepositorySupport {
                     .fetchOne();
 
             whereCondition.and(
-                    comment.writeTime.lt(cursorWriteTime)
-                            .or(comment.writeTime.eq(cursorWriteTime)
-                                    .and(comment.id.lt(cursorId)))
+                    Expressions.booleanTemplate(
+                            "( {0}, {1} ) < ( {2}, {3} )",
+                            comment.writeTime, comment.id, cursorWriteTime, cursorId
+                    )
             );
         }
 
@@ -77,9 +79,11 @@ public class CommentRepositorySupport {
                     .where(comment.id.eq(cursorId))
                     .fetchOne();
 
-            whereCondition.and(comment.writeTime.gt(cursorWriteTime)
-                    .or(comment.writeTime.eq(cursorWriteTime)
-                            .and(comment.id.gt(cursorId)))
+            whereCondition.and(
+                    Expressions.booleanTemplate(
+                            "( {0}, {1} ) > ({2}, {3})",
+                            comment.writeTime, comment.id, cursorWriteTime, cursorId
+                    )
             );
         }
 

@@ -7,6 +7,8 @@ import lombok.Builder;
 
 import java.util.Map;
 
+import static com.mople.global.utils.text.HighlightUtils.highlight;
+
 @Builder
 public record CommentMentionNotifyEvent(
         String meetName,
@@ -19,7 +21,8 @@ public record CommentMentionNotifyEvent(
     public NotificationPayload payload() {
         return new NotificationPayload(
                 meetName + "의 새로운 멘션 👀",
-                 senderNickname + "님이 회원님을 멘션했어요!"
+                senderNickname + "님이 회원님을 멘션했어요!",
+                highlight(senderNickname) + "님이 회원님을 멘션했어요!"
         );
     }
 

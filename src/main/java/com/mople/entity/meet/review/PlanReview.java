@@ -39,10 +39,13 @@ public class PlanReview extends BaseTimeEntity {
     @Column(name = "title", length = 50)
     private String title;
 
-    @Column(name = "lat", nullable = false, precision = 10, scale = 8)
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "lat", precision = 10, scale = 8)
     private BigDecimal latitude;
 
-    @Column(name = "lot", nullable = false, precision = 11, scale = 8)
+    @Column(name = "lot", precision = 11, scale = 8)
     private BigDecimal longitude;
 
     @Column(name = "weather_icon")
@@ -77,12 +80,13 @@ public class PlanReview extends BaseTimeEntity {
     private Long deletedBy;
 
     @Builder
-    public PlanReview(Long planId, String name, BigDecimal latitude, BigDecimal longitude, LocalDateTime planTime, String address, String title, String weatherIcon, String weatherAddress, Double temperature, Double pop, Long creatorId, Long meetId) {
+    public PlanReview(Long planId, String name, String description, BigDecimal latitude, BigDecimal longitude, LocalDateTime planTime, String address, String title, String weatherIcon, String weatherAddress, Double temperature, Double pop, Long creatorId, Long meetId) {
         this.planId = planId;
         this.name = name;
         this.planTime = planTime;
         this.address = address;
         this.title = title;
+        this.description = description;
         this.latitude = latitude;
         this.longitude = longitude;
         this.weatherIcon = weatherIcon;

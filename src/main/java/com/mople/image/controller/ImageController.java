@@ -4,7 +4,7 @@ import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.request.meet.review.ReviewImageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.image.service.ImageService;
-import com.mople.meet.service.ReviewService;
+import com.mople.meet.service.review.ReviewService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

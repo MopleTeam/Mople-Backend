@@ -60,7 +60,7 @@ public class SignService {
         }
 
         final User user = userRepository.loginCheck(sign.email())
-                .orElseThrow(() -> new AuthException(ExceptionReturnCode.NOT_USER));
+                .orElseThrow(() -> new AuthException(ExceptionReturnCode.NOT_FOUND_USER));
 
         if (!user.getSocialProvider().equals(sign.socialProvider())) {
             throw new AuthException(ExceptionReturnCode.ANOTHER_PROVIDER);

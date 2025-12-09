@@ -1,7 +1,6 @@
 package com.mople.meet.reader;
 
 import com.mople.core.exception.custom.AuthException;
-import com.mople.core.exception.custom.BadRequestException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.comment.PlanComment;
@@ -30,68 +29,32 @@ public class EntityReader {
     private final PlanCommentRepository commentRepository;
 
     public User findUser(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new AuthException(NOT_USER));
-
-        if (user.getStatus() == Status.ACTIVE) {
-            return user;
-        }
-
-        throw new BadRequestException(INVALID_USER);
+        return userRepository.findByIdAndStatus(userId, Status.ACTIVE)
+                .orElseThrow(() -> new AuthException(NOT_FOUND_USER));
     }
 
     public Meet findMeet(Long meetId) {
-        Meet meet = meetRepository.findById(meetId)
+        return meetRepository.findByIdAndStatus(meetId, Status.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_MEET));
-
-        if (meet.getStatus() == Status.ACTIVE) {
-            return meet;
-        }
-
-        throw new BadRequestException(INVALID_MEET);
     }
 
     public MeetPlan findPlan(Long planId) {
-        MeetPlan plan = planRepository.findById(planId)
+        return planRepository.findByIdAndStatus(planId, Status.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_PLAN));
-
-        if (plan.getStatus() == Status.ACTIVE) {
-            return plan;
-        }
-
-        throw new BadRequestException(INVALID_PLAN);
     }
 
     public PlanReview findReview(Long reviewId) {
-        PlanReview review = planReviewRepository.findById(reviewId)
+        return planReviewRepository.findByIdAndStatus(reviewId, Status.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_REVIEW));
-
-        if (review.getStatus() == Status.ACTIVE) {
-            return review;
-        }
-
-        throw new BadRequestException(INVALID_REVIEW);
     }
 
     public PlanReview findReviewByPostId(Long postId) {
-        PlanReview review = planReviewRepository.findReviewByPostId(postId)
+        return planReviewRepository.findByPlanIdAndStatus(postId, Status.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_REVIEW));
-
-        if (review.getStatus() == Status.ACTIVE) {
-            return review;
-        }
-
-        throw new BadRequestException(INVALID_REVIEW);
     }
 
     public PlanComment findComment(Long commentId) {
-        PlanComment comment = commentRepository.findById(commentId)
+        return commentRepository.findByIdAndStatus(commentId, Status.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_COMMENT));
-
-        if (comment.getStatus() == Status.ACTIVE) {
-            return comment;
-        }
-
-        throw new BadRequestException(INVALID_COMMENT);
     }
 }

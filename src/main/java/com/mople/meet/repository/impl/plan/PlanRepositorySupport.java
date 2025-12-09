@@ -4,7 +4,6 @@ import com.mople.dto.response.meet.PlanPageResponse;
 import com.mople.dto.response.meet.ReviewPageResponse;
 import com.mople.dto.response.meet.UserAllDateResponse;
 import com.mople.dto.response.meet.UserPageResponse;
-import com.mople.dto.response.meet.plan.PlanListResponse;
 import com.mople.dto.response.meet.plan.PlanViewResponse;
 import com.mople.entity.meet.*;
 import com.mople.entity.meet.plan.MeetPlan;
@@ -26,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
@@ -59,6 +59,7 @@ public class PlanRepositorySupport {
                                 plan.planTime,
                                 plan.address,
                                 plan.title,
+                                plan.description,
                                 plan.latitude,
                                 plan.longitude,
                                 plan.weatherIcon,
@@ -87,15 +88,11 @@ public class PlanRepositorySupport {
                 .fetch();
     }
 
-    public List<PlanListResponse> findPlanPage(Long userId, Long meetId, Long cursorId, int size) {
-        QMeet meet = QMeet.meet;
+    public List<MeetPlan> findPlanPage(Long meetId, Long cursorId, int size) {
         QMeetPlan plan = QMeetPlan.meetPlan;
-        QPlanParticipant participant = QPlanParticipant.planParticipant;
-        QPlanParticipant ppAll = new QPlanParticipant("ppAll");
 
         BooleanBuilder whereCondition = new BooleanBuilder()
                 .and(plan.status.eq(Status.ACTIVE))
-                .and(meet.status.eq(Status.ACTIVE))
                 .and(plan.meetId.eq(meetId))
                 .and(plan.planTime.after(
                         Expressions.dateTimeOperation(
@@ -109,47 +106,16 @@ public class PlanRepositorySupport {
                     .where(plan.id.eq(cursorId))
                     .fetchOne();
 
-            whereCondition.and(plan.planTime.gt(cursorPlanTime)
-                    .or(plan.planTime.eq(cursorPlanTime).and(plan.id.gt(cursorId)))
+            whereCondition.and(
+                    Expressions.booleanTemplate(
+                            "( {0}, {1} ) > ( {2}, {3} )",
+                            plan.planTime, plan.id, cursorPlanTime, cursorId
+                    )
             );
         }
 
-        BooleanExpression joinedByUser = JPAExpressions
-                .selectOne()
-                .from(participant)
-                .where(
-                        participant.planId.eq(plan.id)
-                                .and(participant.userId.eq(userId))
-                )
-                .exists();
-
         return queryFactory
-                .select(
-                        Projections.constructor(
-                                PlanListResponse.class,
-                                plan.id,
-                                plan.version,
-                                meet.id,
-                                meet.name,
-                                meet.meetImage,
-                                plan.name,
-                                JPAExpressions
-                                        .select(ppAll.count().intValue())
-                                        .from(ppAll)
-                                        .where(ppAll.planId.eq(plan.id)),
-                                plan.planTime,
-                                plan.address,
-                                plan.title,
-                                plan.creatorId,
-                                plan.weatherIcon,
-                                plan.weatherAddress,
-                                plan.temperature,
-                                plan.pop,
-                                joinedByUser
-                        )
-                )
-                .from(plan)
-                .join(meet).on(meet.id.eq(plan.meetId))
+                .selectFrom(plan)
                 .where(whereCondition)
                 .orderBy(plan.planTime.asc(), plan.id.asc())
                 .limit(size + 1)
@@ -189,6 +155,7 @@ public class PlanRepositorySupport {
                                 meet.meetImage,
                                 plan.id,
                                 plan.name,
+                                plan.creatorId,
                                 plan.planTime,
                                 JPAExpressions
                                         .select(ppAll.count().intValue())
@@ -226,6 +193,7 @@ public class PlanRepositorySupport {
                                 meet.meetImage,
                                 review.id,
                                 review.name,
+                                review.creatorId,
                                 review.planTime,
                                 JPAExpressions
                                         .select(ppAll.count().intValue())
@@ -328,7 +296,9 @@ public class PlanRepositorySupport {
                 .where(
                         plan.status.eq(Status.ACTIVE),
                         plan.planTime.after(now),
-                        plan.planTime.before(now.plusDays(5))
+                        plan.planTime.before(now.plusDays(5)),
+                        plan.latitude.isNotNull(),
+                        plan.longitude.isNotNull()
                 )
                 .orderBy(
                         new CaseBuilder()
@@ -338,6 +308,37 @@ public class PlanRepositorySupport {
                                 .asc()
                 )
                 .limit(40)
+                .fetch();
+    }
+
+    public List<Long> findPreviousPlanAll() {
+        QMeetPlan plan = QMeetPlan.meetPlan;
+
+        return queryFactory
+                .select(plan.id)
+                .from(plan)
+                .where(
+                        plan.status.eq(Status.ACTIVE),
+                        plan.planTime.lt(LocalDateTime.now())
+                )
+                .orderBy(plan.planTime.desc())
+                .fetch();
+    }
+
+    public List<Long> findNoLocationPlanAll() {
+        QMeetPlan plan = QMeetPlan.meetPlan;
+        var now = LocalDate.now();
+
+        return queryFactory
+                .select(plan.id)
+                .from(plan)
+                .where(
+                        plan.status.eq(Status.ACTIVE),
+                        plan.planTime.goe(now.plusDays(2).atStartOfDay()),
+                        plan.planTime.lt(now.plusDays(3).atStartOfDay()),
+                        plan.latitude.isNull().or(plan.longitude.isNull())
+                )
+                .orderBy(plan.planTime.asc())
                 .fetch();
     }
 }

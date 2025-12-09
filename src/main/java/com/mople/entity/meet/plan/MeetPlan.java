@@ -10,6 +10,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 @Table(name = "meet_plan")
@@ -31,16 +32,19 @@ public class MeetPlan extends BaseTimeEntity {
     @Column(name = "plan_time", nullable = false)
     private LocalDateTime planTime;
 
-    @Column(name = "address", nullable = false, length = 100)
+    @Column(name = "address", length = 100)
     private String address;
 
     @Column(name = "title", length = 50)
     private String title;
 
-    @Column(name = "lat", nullable = false, precision = 10, scale = 8)
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "lat", precision = 10, scale = 8)
     private BigDecimal latitude;
 
-    @Column(name = "lot", nullable = false, precision = 11, scale = 8)
+    @Column(name = "lot", precision = 11, scale = 8)
     private BigDecimal longitude;
 
     @Column(name = "weather_icon")
@@ -75,11 +79,12 @@ public class MeetPlan extends BaseTimeEntity {
     private Long deletedBy;
 
     @Builder
-    public MeetPlan(String name, LocalDateTime planTime, String address, String title, BigDecimal latitude, BigDecimal longitude, String weatherAddress, Long creatorId, Long meetId) {
+    public MeetPlan(String name, LocalDateTime planTime, String address, String title, String description, BigDecimal latitude, BigDecimal longitude, String weatherAddress, Long creatorId, Long meetId) {
         this.name = name;
         this.planTime = planTime;
         this.address = address;
         this.title = title;
+        this.description = description;
         this.latitude = latitude;
         this.longitude = longitude;
         this.weatherAddress = weatherAddress;
@@ -93,12 +98,13 @@ public class MeetPlan extends BaseTimeEntity {
     }
 
     public boolean updatePlan(PlanUpdateRequest request) {
-        boolean flag = latitude.equals(request.lat()) && longitude.equals(request.lot());
+        boolean flag = Objects.equals(latitude, request.lat()) && Objects.equals(longitude, request.lot());
 
         name = request.name();
         planTime = request.planTime();
         address = request.planAddress();
         title = request.title();
+        description = request.description();
         latitude = request.lat();
         longitude = request.lot();
         weatherAddress = request.weatherAddress();
@@ -114,5 +120,9 @@ public class MeetPlan extends BaseTimeEntity {
         this.status = Status.DELETED;
         this.deletedAt = LocalDateTime.now();
         this.deletedBy = deletedBy;
+    }
+
+    public boolean hasLocation() {
+        return latitude != null && longitude != null;
     }
 }

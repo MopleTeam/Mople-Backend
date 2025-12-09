@@ -9,7 +9,7 @@ import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.response.meet.review.ReviewImageListResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
-import com.mople.meet.service.ReviewService;
+import com.mople.meet.service.review.ReviewService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

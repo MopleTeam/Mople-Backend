@@ -4,18 +4,23 @@ import com.mople.entity.meet.comment.CommentMention;
 import com.mople.entity.user.User;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.comment.CommentMentionRepository;
+import com.mople.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class CommentMentionService {
 
     private final CommentMentionRepository mentionRepository;
+    private final UserRepository userRepository;
     private final EntityReader reader;
 
     @Transactional
@@ -49,6 +54,26 @@ public class CommentMentionService {
                 .map(CommentMention::getUserId)
                 .map(reader::findUser)
                 .toList();
+    }
+
+    public Map<Long, List<User>> findMentionedUsersInBatch(List<Long> commentIds) {
+        List<CommentMention> mentions = mentionRepository.findAllByCommentIdIn(commentIds);
+
+        List<Long> mentionedUserIds = mentions.stream()
+                .map(CommentMention::getUserId)
+                .distinct()
+                .toList();
+
+        Map<Long, User> userMap = userRepository.findAllById(mentionedUserIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        return mentions.stream()
+                .collect(
+                        Collectors.groupingBy(
+                                CommentMention::getCommentId,
+                                Collectors.mapping(m -> userMap.get(m.getUserId()), Collectors.toList())
+                        )
+                );
     }
 
     public List<Long> findUserIdByCommentId(Long commentId) {

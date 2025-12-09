@@ -1,6 +1,6 @@
 package com.mople.meet.controller;
 
-import com.mople.meet.service.MeetService;
+import com.mople.meet.service.meet.MeetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

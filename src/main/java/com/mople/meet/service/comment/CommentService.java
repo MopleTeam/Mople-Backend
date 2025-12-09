@@ -3,7 +3,6 @@ package com.mople.meet.service.comment;
 import com.mople.core.exception.custom.ConcurrencyConflictException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.CommentClientResponse;
-import com.mople.dto.client.UserRoleClientResponse;
 import com.mople.dto.event.data.domain.comment.CommentCreatedEvent;
 import com.mople.dto.event.data.domain.comment.CommentMentionAddedEvent;
 import com.mople.dto.event.data.domain.comment.CommentsSoftDeletedEvent;
@@ -15,7 +14,6 @@ import com.mople.dto.response.meet.comment.CommentUpdateResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.entity.meet.Meet;
-import com.mople.entity.meet.MeetMember;
 import com.mople.entity.meet.comment.CommentReport;
 import com.mople.entity.meet.comment.CommentStats;
 import com.mople.entity.meet.comment.PlanComment;
@@ -31,6 +29,7 @@ import com.mople.dto.request.meet.comment.CommentReportRequest;
 import com.mople.meet.repository.impl.comment.CommentRepositorySupport;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.outbox.service.OutboxService;
+import com.mople.user.repository.UserRepository;
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 
@@ -41,6 +40,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.mople.dto.client.CommentClientResponse.*;
 import static com.mople.global.enums.ExceptionReturnCode.NOT_FOUND_COMMENT_STATS;
@@ -56,6 +57,7 @@ public class CommentService {
     private static final int COMMENT_CURSOR_FIELD_COUNT = 1;
 
     private final MeetPlanRepository planRepository;
+    private final UserRepository userRepository;
     private final PlanCommentRepository commentRepository;
     private final CommentRepositorySupport commentRepositorySupport;
     private final CommentReportRepository commentReportRepository;
@@ -65,7 +67,6 @@ public class CommentService {
 
     private final CommentMentionService mentionService;
     private final CommentLikeService likeService;
-    private final CommentAutoCompleteService autoCompleteService;
     private final OutboxService outboxService;
 
     @Transactional(readOnly = true)
@@ -144,23 +145,29 @@ public class CommentService {
                 .map(PlanComment::getId)
                 .toList();
 
+        List<Long> writerIds = comments.stream()
+                .map(PlanComment::getWriterId)
+                .distinct()
+                .toList();
+
+        Map<Long, CommentStats> statsMap = statsRepository.findAllById(commentIds).stream()
+                .collect(Collectors.toMap(CommentStats::getCommentId, Function.identity()));
+
+        Map<Long, User> userMap = userRepository.findAllById(writerIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        Map<Long, List<User>> mentionsMap = mentionService.findMentionedUsersInBatch(commentIds);
+
         List<Long> likedCommentIds = likeService.findLikedCommentIds(userId, commentIds);
 
         return comments.stream()
-                .map(comment -> {
-                    CommentStats stats = statsRepository.findById(comment.getId())
-                            .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_COMMENT_STATS));
-
-                    User writer = reader.findUser(comment.getWriterId());
-
-                    return new CommentResponse(
-                            comment,
-                            stats,
-                            writer,
-                            mentionService.findMentionedUsers(comment.getId()),
-                            likedCommentIds.contains(comment.getId())
-                    );
-                })
+                .map(comment -> new CommentResponse(
+                        comment,
+                        statsMap.get(comment.getId()),
+                        userMap.get(comment.getWriterId()),
+                        mentionsMap.getOrDefault(comment.getId(), List.of()),
+                        likedCommentIds.contains(comment.getId())
+                ))
                 .toList();
     }
 
@@ -257,9 +264,9 @@ public class CommentService {
             CommentUpdateRequest request
     ) {
         PlanComment comment = reader.findComment(commentId);
-        User user = reader.findUser(userId);
+        reader.findUser(userId);
 
-        commentValidator.validateWriter(comment, user);
+        commentValidator.validateWriter(comment, userId);
 
         comment.updateContent(request.contents());
 
@@ -306,10 +313,11 @@ public class CommentService {
 
     @Transactional
     public void deleteComment(Long userId, Long commentId) {
-        User user = reader.findUser(userId);
+        reader.findUser(userId);
         PlanComment comment = reader.findComment(commentId);
+        Meet meet = reader.findMeet(getMeetId(comment.getPostId()));
 
-        commentValidator.validateWriter(comment, user);
+        commentValidator.validateDeletion(comment, meet.getHostId(), userId);
 
         comment.softDelete(userId);
 
@@ -372,23 +380,6 @@ public class CommentService {
         return getCommentClientResponse(updatedComment, likedByMe);
     }
 
-    @Transactional(readOnly = true)
-    public CursorPageResponse<UserRoleClientResponse> searchMeetMember(Long userId, Long postId, String keyword, CursorPageRequest request) {
-        reader.findUser(userId);
-        commentValidator.validatePostId(postId);
-
-        Meet meet = getMeet(postId);
-
-        Long meetId = meet.getId();
-        Long hostId = meet.getCreatorId();
-        Long creatorId = getMeetId(postId);
-
-        int size = request.getSafeSize();
-        List<MeetMember> meetMembers = autoCompleteService.getMeetMembers(meetId, hostId, creatorId, keyword, request.cursor(), size);
-
-        return autoCompleteService.buildAutoCompleteCursorPage(size, meetMembers, hostId, creatorId);
-    }
-
     private Long getMeetId(Long postId) {
         boolean existsInPlan = planRepository.existsByIdAndStatus(postId, Status.ACTIVE);
 
@@ -396,12 +387,6 @@ public class CommentService {
             return reader.findPlan(postId).getMeetId();
         }
         return reader.findReviewByPostId(postId).getMeetId();
-    }
-
-    private Meet getMeet(Long postId) {
-        Long meetId = getMeetId(postId);
-
-        return reader.findMeet(meetId);
     }
 
     @Transactional

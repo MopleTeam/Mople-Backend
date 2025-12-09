@@ -7,6 +7,8 @@ import lombok.Builder;
 
 import java.util.Map;
 
+import static com.mople.global.utils.text.HighlightUtils.highlight;
+
 @Builder
 public record MeetJoinNotifyEvent(
         Long meetId,
@@ -18,7 +20,8 @@ public record MeetJoinNotifyEvent(
     public NotificationPayload payload() {
         return new NotificationPayload(
                 meetName + "의 새 멤버 \uD83C\uDF89",
-                newMemberNickname + "님이 가입했어요!"
+                newMemberNickname + "님이 가입했어요!",
+                highlight(newMemberNickname) + "님이 가입했어요!"
         );
     }
 

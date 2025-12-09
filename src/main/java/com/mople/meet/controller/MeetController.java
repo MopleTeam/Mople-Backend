@@ -3,13 +3,14 @@ package com.mople.meet.controller;
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.MeetClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
+import com.mople.dto.request.meet.HostChangeRequest;
 import com.mople.dto.request.meet.MeetCreateRequest;
 import com.mople.dto.request.meet.MeetUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
-import com.mople.meet.service.MeetService;
+import com.mople.meet.service.meet.MeetService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -101,6 +102,34 @@ public class MeetController {
             @ParameterObject @Valid CursorPageRequest request
     ) {
         return ResponseEntity.ok(meetService.meetMemberList(user.id(), meetId, request));
+    }
+
+    @Operation(
+            summary = "모임 멤버 검색 자동 완성 API",
+            description = "입력한 키워드에 맞는 모임 멤버 닉네임을 자동 완성합니다."
+    )
+    @GetMapping("/members/search/{meetId}")
+    public CursorPageResponse<UserRoleClientResponse> searchMeetMembers(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @PathVariable Long meetId,
+            @RequestParam String keyword,
+            @ParameterObject @Valid CursorPageRequest request
+    ) {
+        return meetService.searchMeetMember(user.id(), meetId, keyword, request);
+    }
+
+    @Operation(
+            summary = "모임장 양도 API",
+            description = "해당 모임의 모임장 권한을 다른 모임 멤버에게 양도합니다."
+    )
+    @PatchMapping("/host/{meetId}")
+    public ResponseEntity<Void> changeHost(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @PathVariable Long meetId,
+            @RequestBody HostChangeRequest request
+    ) {
+        meetService.changeMeetHost(user.id(), meetId, request);
+        return ResponseEntity.ok().build();
     }
 
     @Operation(

@@ -59,6 +59,12 @@ dependencies {
 
     implementation(libs.logstash.logback.encoder) // Logstash Logback Encoder (로그를 JSON 형태로 변환)
 
+    implementation(libs.spring.boot.starter.cache) // 캐시 추상화
+    implementation(libs.caffeine)  // Caffeine 로컬 캐시 구현체
+
+    implementation(libs.spring.boot.starter.actuator)  // actuator
+    implementation(libs.micrometer.registry.prometheus)  // prometheus
+
     implementation(libs.firebase.admin) // io.netty 4.1.115 미만 windows dos 공격 취약점 spring netty 4.1.115 이상 지원할 때 변경 - spring 3.4.0에서 해결
 
     implementation(libs.datafaker) // test dummy

@@ -14,6 +14,7 @@ import com.mople.dto.event.data.domain.review.*;
 import com.mople.dto.event.data.domain.user.UserDeletedEvent;
 import com.mople.dto.event.data.domain.user.UserImageChangedEvent;
 import com.mople.dto.event.data.domain.global.WeatherRefreshRequestedEvent;
+import com.mople.dto.event.data.domain.user.UserNicknameChangedEvent;
 
 import static com.mople.global.enums.event.EventTypeNames.*;
 
@@ -26,11 +27,13 @@ import static com.mople.global.enums.event.EventTypeNames.*;
         // User
         @JsonSubTypes.Type(value = UserDeletedEvent.class, name = USER_DELETED),
         @JsonSubTypes.Type(value = UserImageChangedEvent.class, name = USER_IMAGE_CHANGED),
+        @JsonSubTypes.Type(value = UserNicknameChangedEvent.class, name = USER_NICKNAME_CHANGED),
 
         // Meet
         @JsonSubTypes.Type(value = MeetSoftDeletedEvent.class, name = MEET_SOFT_DELETED),
         @JsonSubTypes.Type(value = MeetPurgeEvent.class, name = MEET_PURGE),
         @JsonSubTypes.Type(value = MeetLeftEvent.class, name = MEET_LEFT),
+        @JsonSubTypes.Type(value = HostChangedEvent.class, name = MEET_HOST_CHANGED),
         @JsonSubTypes.Type(value = MeetJoinedEvent.class, name = MEET_JOINED),
         @JsonSubTypes.Type(value = MeetImageChangedEvent.class, name = MEET_IMAGE_CHANGED),
 
@@ -39,6 +42,7 @@ import static com.mople.global.enums.event.EventTypeNames.*;
         @JsonSubTypes.Type(value = PlanPurgeEvent.class, name = PLAN_PURGE),
         @JsonSubTypes.Type(value = PlanCreatedEvent.class, name = PLAN_CREATED),
         @JsonSubTypes.Type(value = PlanRemindEvent.class, name = PLAN_REMIND),
+        @JsonSubTypes.Type(value = PlanNoLocationEvent.class, name = PLAN_NO_LOCATION),
         @JsonSubTypes.Type(value = PlanTimeChangedEvent.class, name = PLAN_TIME_CHANGED),
         @JsonSubTypes.Type(value = PlanTransitionRequestedEvent.class, name = PLAN_TRANSITION_REQUESTED),
         @JsonSubTypes.Type(value = PlanTransitionedEvent.class, name = PLAN_TRANSITIONED),

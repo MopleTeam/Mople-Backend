@@ -7,6 +7,8 @@ import lombok.Builder;
 
 import java.util.Map;
 
+import static com.mople.global.utils.text.HighlightUtils.highlight;
+
 @Builder
 public record ReviewRemindNotifyEvent(
         String meetName,
@@ -18,7 +20,8 @@ public record ReviewRemindNotifyEvent(
     public NotificationPayload payload() {
         return new NotificationPayload(
                 meetName + "의 일정은 어떠셨나요?",
-                reviewName + "의 사진을 공유해보세요"
+                reviewName + "의 사진을 공유해보세요",
+                highlight(reviewName) + "의 사진을 공유해보세요"
         );
     }
 

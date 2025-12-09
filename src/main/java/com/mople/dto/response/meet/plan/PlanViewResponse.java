@@ -19,6 +19,7 @@ public record PlanViewResponse(
         LocalDateTime planTime,
         String planAddress,
         String title,
+        String description,
         BigDecimal lat,
         BigDecimal lot,
         String weatherIcon,
@@ -39,6 +40,7 @@ public record PlanViewResponse(
                 .planTime(plan.getPlanTime())
                 .planAddress(plan.getAddress())
                 .title(plan.getTitle())
+                .description(plan.getDescription())
                 .lat(plan.getLatitude())
                 .lot(plan.getLongitude())
                 .weatherIcon(plan.getWeatherIcon())
