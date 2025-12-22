@@ -14,14 +14,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Component
-public class DiscordAlertFilter {
+public class HttpDiscordAlertFilter {
 
     // 인증 실패 카운터 (IP 기준 카운트)
     private final Map<String, AtomicInteger> authFailureCounters = new ConcurrentHashMap<>();
     private static final int AUTH_FAILURE_THRESHOLD = 3;
-    private static final long RESET_INTERVAL_MS = 600000; // 10분
+    private static final long RESET_INTERVAL_MS = 10 * 60 * 1000; // 10분
 
     public boolean shouldAlert(Throwable ex, HttpServletRequest request) {
+
         // 5XX 서버 에러
         if (isServerError(ex)) {
             log.debug("Discord alert: Server error - {}", ex.getClass().getSimpleName());

@@ -1,6 +1,7 @@
 package com.mople.outbox.service;
 
 import com.mople.entity.event.OutboxEvent;
+import com.mople.global.event.notifier.OutboxDiscordAlertNotifier;
 import com.mople.global.logging.logger.BusinessLogicLogger;
 import com.mople.outbox.repository.OutboxEventRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ public class OutboxPublisher {
     private final OutboxEventRepository outboxEventRepository;
     private final BusinessLogicLogger logicLogger;
     private final Executor outboxExecutor;
+    private final OutboxDiscordAlertNotifier outboxDiscordAlertNotifier;
 
     @Value("${outbox.batch-size}")
     private int batchSize;
@@ -29,20 +31,28 @@ public class OutboxPublisher {
 
     @Scheduled(fixedDelayString = "${outbox.fixed-delay-ms}")
     public void publishBatch() {
-        List<OutboxEvent> outboxEvents = outboxEventRepository.lockNextBatch(batchSize, leaseSec);
+        try {
+            List<OutboxEvent> outboxEvents = outboxEventRepository.lockNextBatch(batchSize, leaseSec);
 
-        List<CompletableFuture<Void>> futures = outboxEvents.stream()
-                .map(event -> CompletableFuture.runAsync(
-                        () -> processor.processOne(event),
-                        outboxExecutor
-                ).exceptionally(ex -> {
-                    logicLogger.logError("OutboxEvent 처리 실패");
-                    return null;
-                }))
-                .toList();
+            List<CompletableFuture<Void>> futures = outboxEvents.stream()
+                    .map(event -> CompletableFuture.runAsync(
+                            () -> processor.processOne(event),
+                            outboxExecutor
+                    ).whenComplete((v, ex) -> {
+                        if (ex != null) {
+                            outboxDiscordAlertNotifier.notifyOutboxFailure("OutboxEvent 처리 실패", event, ex);
+                            logicLogger.logError("OutboxEvent 처리 실패");
+                        }
+                    }))
+                    .toList();
 
-        CompletableFuture
-                .allOf(futures.toArray(new CompletableFuture[0]))
-                .join();
+            CompletableFuture
+                    .allOf(futures.toArray(new CompletableFuture[0]))
+                    .join();
+
+        } catch (Throwable ex) {
+            outboxDiscordAlertNotifier.notifyOutboxBatchFailure("OutboxEvent 배치 처리 실패", ex);
+            logicLogger.logError("OutboxEvent 배치 처리 실패");
+        }
     }
 }
