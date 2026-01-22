@@ -18,7 +18,7 @@ public class MeetClientResponse {
     private final String meetName;
     private final String meetImage;
     private final Long sinceDays;
-    private final Long creatorId;
+    private final Long hostId;
     private final int memberCount;
     private final LocalDateTime lastPlanDay;
 
@@ -32,6 +32,7 @@ public class MeetClientResponse {
                 .version(listResponse.version())
                 .meetName(listResponse.meetName())
                 .meetImage(listResponse.meetImage())
+                .hostId(listResponse.hostId())
                 .memberCount(listResponse.memberCount())
                 .lastPlanDay(listResponse.lastPlanDays())
                 .build();
@@ -43,7 +44,7 @@ public class MeetClientResponse {
                 .version(infoResponse.version())
                 .meetName(infoResponse.meetName())
                 .meetImage(infoResponse.meetImage())
-                .creatorId(infoResponse.creatorId())
+                .hostId(infoResponse.hostId())
                 .sinceDays(infoResponse.meetStartDate())
                 .memberCount(infoResponse.memberCount())
                 .build();

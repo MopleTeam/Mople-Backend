@@ -99,6 +99,7 @@ public class MeetRepositorySupport {
                                 m.getVersion(),
                                 m.getName(),
                                 m.getMeetImage(),
+                                m.getHostId(),
                                 countMeetMember(m.getId()),
                                 meetPlan.getPlanTime()
                         );
@@ -112,6 +113,7 @@ public class MeetRepositorySupport {
                                 m.getVersion(),
                                 m.getName(),
                                 m.getMeetImage(),
+                                m.getHostId(),
                                 countMeetMember(m.getId()),
                                 planReview.getPlanTime()
                         );
@@ -122,6 +124,7 @@ public class MeetRepositorySupport {
                             m.getVersion(),
                             m.getName(),
                             m.getMeetImage(),
+                            m.getHostId(),
                             countMeetMember(m.getId()),
                             null
                     );

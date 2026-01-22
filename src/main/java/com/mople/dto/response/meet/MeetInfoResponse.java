@@ -10,7 +10,7 @@ public record MeetInfoResponse(
         Long version,
         String meetName,
         String meetImage,
-        Long creatorId,
+        Long hostId,
         Long meetStartDate,
         Integer memberCount
 ) {
