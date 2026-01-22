@@ -95,7 +95,7 @@ public class PlanService {
 
         return new PlanHomeViewResponse(
                 ofViews(homeViewPlan),
-                meetRepositorySupport.findMeetUseMember(userId)
+                meetRepositorySupport.hasJoinedMeet(userId)
         );
     }
 
