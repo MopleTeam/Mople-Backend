@@ -1,4 +1,4 @@
-package com.mople.meet.service.meet;
+package com.mople.meet.service.meet.member;
 
 import com.mople.core.exception.custom.CursorException;
 import com.mople.dto.client.UserRoleClientResponse;

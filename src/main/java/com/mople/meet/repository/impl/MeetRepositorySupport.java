@@ -46,6 +46,25 @@ public class MeetRepositorySupport {
                 .fetch();
     }
 
+    public List<Meet> findHostedMeetPage(Long userId, Long cursorId, int size) {
+        QMeet meet = QMeet.meet;
+
+        BooleanBuilder whereCondition = new BooleanBuilder()
+                .and(meet.hostId.eq(userId))
+                .and(meet.status.eq(Status.ACTIVE));
+
+        if (cursorId != null) {
+            whereCondition.and(meet.id.gt(cursorId));
+        }
+
+        return queryFactory
+                .selectFrom(meet)
+                .where(whereCondition)
+                .orderBy(meet.id.asc())
+                .limit(size + 1)
+                .fetch();
+    }
+
     public List<MeetListResponse> mapToMeetListResponses(List<Meet> meets) {
         QMeetPlan plan = QMeetPlan.meetPlan;
         QPlanReview review = QPlanReview.planReview;

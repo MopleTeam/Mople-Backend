@@ -119,6 +119,18 @@ public class MeetController {
     }
 
     @Operation(
+            summary = "모임장인 모임 조회 API",
+            description = "유저가 모임장인 모임 목록을 조회합니다."
+    )
+    @GetMapping("/host/list")
+    public ResponseEntity<CursorPageResponse<MeetClientResponse>> getHostedMeetList(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @ParameterObject @Valid CursorPageRequest request
+    ) {
+        return ResponseEntity.ok(meetService.getHostedMeet(user.id(), request));
+    }
+
+    @Operation(
             summary = "모임장 양도 API",
             description = "해당 모임의 모임장 권한을 다른 모임 멤버에게 양도합니다."
     )

@@ -14,7 +14,6 @@ import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.dto.response.user.UserInfo;
 import com.mople.entity.user.User;
 import com.mople.global.enums.Status;
-import com.mople.global.enums.UserRole;
 import com.mople.global.utils.cursor.custom.UserCursor;
 import com.mople.global.utils.cursor.CursorUtils;
 import com.mople.meet.reader.EntityReader;
@@ -23,6 +22,7 @@ import com.mople.meet.repository.impl.MeetRepositorySupport;
 import com.mople.entity.meet.*;
 import com.mople.meet.repository.*;
 
+import com.mople.meet.service.meet.member.MeetMemberAutoCompleteService;
 import com.mople.outbox.service.OutboxService;
 import com.mople.user.repository.UserRepository;
 import jakarta.persistence.OptimisticLockException;
@@ -59,6 +59,7 @@ public class MeetService {
     private final OutboxService outboxService;
     private final MeetRemoveService meetRemoveService;
     private final MeetMemberAutoCompleteService autoCompleteService;
+    private final MeetHostTransferService meetHostTransferService;
     private final EntityReader reader;
 
     private final String inviteUrl;
@@ -73,6 +74,7 @@ public class MeetService {
             OutboxService outboxService,
             MeetRemoveService meetRemoveService,
             MeetMemberAutoCompleteService autoCompleteService,
+            MeetHostTransferService meetHostTransferService,
             EntityReader reader,
             @Value("${mople.url}") String inviteUrl
     ) {
@@ -85,6 +87,7 @@ public class MeetService {
         this.outboxService = outboxService;
         this.meetRemoveService = meetRemoveService;
         this.autoCompleteService = autoCompleteService;
+        this.meetHostTransferService = meetHostTransferService;
         this.reader = reader;
         this.inviteUrl = inviteUrl;
     }
@@ -294,41 +297,12 @@ public class MeetService {
 
     @Transactional
     public void changeMeetHost(Long userId, Long meetId, HostChangeRequest request) {
-        Long newHostId = request.newHostId();
+        meetHostTransferService.changeMeetHost(userId, meetId, request);
+    }
 
-        reader.findUser(userId);
-        reader.findUser(newHostId);
-        Meet meet = reader.findMeet(meetId);
-
-        if (!meetMemberRepository.existsByMeetIdAndUserId(meetId, userId) ||
-                !meetMemberRepository.existsByMeetIdAndUserId(meetId, newHostId)
-        ) {
-            throw new BadRequestException(NOT_MEMBER);
-        }
-
-        if (!meet.matchHost(userId)) {
-            throw new AuthException(NOT_CREATOR);
-        }
-
-        if (newHostId.equals(userId)) {
-            throw new BadRequestException(CURRENT_HOST);
-        }
-
-        meet.changeHost(newHostId);
-
-        MeetMember oldHostMember = meetMemberRepository.findMeetIdAndUserId(meetId, userId);
-        MeetMember newHostMember = meetMemberRepository.findMeetIdAndUserId(meetId, newHostId);
-
-        oldHostMember.changeRole(UserRole.PARTICIPANT);
-        newHostMember.changeRole(UserRole.HOST);
-
-        HostChangedEvent changedEvent = HostChangedEvent.builder()
-                .meetId(meetId)
-                .oldHostId(userId)
-                .newHostId(newHostId)
-                .build();
-
-        outboxService.save(MEET_HOST_CHANGED, MEET, meetId, changedEvent);
+    @Transactional(readOnly = true)
+    public CursorPageResponse<MeetClientResponse> getHostedMeet(Long userId, CursorPageRequest request) {
+        return meetHostTransferService.getHostedMeet(userId, request);
     }
 
     @Transactional
