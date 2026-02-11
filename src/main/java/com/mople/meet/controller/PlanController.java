@@ -2,6 +2,7 @@ package com.mople.meet.controller;
 
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.core.annotation.log.BusinessLogicLogging;
+import com.mople.core.annotation.version.ApiVersion;
 import com.mople.dto.client.PlanClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
 import com.mople.dto.request.meet.plan.PlanReportRequest;
@@ -36,6 +37,7 @@ import java.time.YearMonth;
 public class PlanController {
     private final PlanService planService;
 
+    @ApiVersion("v2")
     @Operation(
             summary = "홈화면 일정 조회 API",
             description = "홈화면에서 보여지는 일정 5개와 모임 리스트를 반환합니다."
@@ -45,6 +47,19 @@ public class PlanController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user
     ) {
         return ResponseEntity.ok(planService.getPlanView(user.id()));
+    }
+
+    // 강제 업데이트 시 삭제할 것
+    @ApiVersion("v1")
+    @Operation(
+            summary = "홈화면 일정 조회 API",
+            description = "홈화면에서 보여지는 일정 5개와 모임 리스트를 반환합니다."
+    )
+    @GetMapping("/view")
+    public ResponseEntity<PlanHomeViewResponse_old> planView_old(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user
+    ) {
+        return ResponseEntity.ok(planService.getPlanView_old(user.id()));
     }
 
     @Operation(

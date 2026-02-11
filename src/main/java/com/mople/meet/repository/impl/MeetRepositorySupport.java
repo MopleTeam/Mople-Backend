@@ -1,5 +1,6 @@
 package com.mople.meet.repository.impl;
 
+import com.mople.dto.response.meet.MeetListFindMemberResponse;
 import com.mople.dto.response.meet.MeetListResponse;
 
 import com.mople.entity.meet.plan.MeetPlan;
@@ -8,6 +9,7 @@ import com.mople.entity.meet.review.PlanReview;
 import com.mople.entity.meet.review.QPlanReview;
 import com.mople.global.enums.Status;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.mople.entity.meet.*;
 
@@ -147,6 +149,29 @@ public class MeetRepositorySupport {
                     );
                 })
                 .toList();
+    }
+
+    // 강제 업데이트 시 삭제할 것
+    public List<MeetListFindMemberResponse> findMeetUseMember(Long userId) {
+        QMeet meet = QMeet.meet;
+        QMeetMember meetMember = QMeetMember.meetMember;
+
+        return queryFactory.select(
+                        Projections.constructor(
+                                MeetListFindMemberResponse.class,
+                                meet.id,
+                                meet.name,
+                                meet.meetImage
+                        )
+                )
+                .from(meet)
+                .join(meetMember).on(meetMember.meetId.eq(meet.id))
+                .where(
+                        meet.status.eq(Status.ACTIVE),
+                        meetMember.userId.eq(userId)
+                )
+                .distinct()
+                .fetch();
     }
 
     public boolean hasJoinedMeet(Long userId) {

@@ -86,6 +86,20 @@ public class PlanService {
     private final EntityReader reader;
     private final OutboxService outboxService;
 
+    // 강제 업데이트 시 삭제할 것
+    @Cacheable(cacheNames = "homeViewPlan", key = "#userId")
+    @Transactional(readOnly = true)
+    public PlanHomeViewResponse_old getPlanView_old(Long userId) {
+        reader.findUser(userId);
+
+        List<PlanViewResponse> homeViewPlan = planRepositorySupport.findHomeViewPlan(userId, PLAN_HOME_VIEW_SIZE);
+
+        return new PlanHomeViewResponse_old(
+                ofViews(homeViewPlan),
+                meetRepositorySupport.findMeetUseMember(userId)
+        );
+    }
+
     @Cacheable(cacheNames = "homeViewPlan", key = "#userId")
     @Transactional(readOnly = true)
     public PlanHomeViewResponse getPlanView(Long userId) {
