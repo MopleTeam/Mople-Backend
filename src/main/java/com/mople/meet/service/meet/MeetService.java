@@ -2,6 +2,7 @@ package com.mople.meet.service.meet;
 
 import com.mople.core.exception.custom.*;
 import com.mople.dto.client.MeetClientResponse;
+import com.mople.dto.client.NoticeClientResponse;
 import com.mople.dto.client.UserRoleClientResponse;
 import com.mople.dto.event.data.domain.meet.*;
 import com.mople.dto.request.meet.HostChangeRequest;
@@ -12,6 +13,7 @@ import com.mople.dto.response.meet.*;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.dto.response.user.UserInfo;
+import com.mople.entity.meet.notice.MeetNotice;
 import com.mople.entity.user.User;
 import com.mople.global.enums.Status;
 import com.mople.global.utils.cursor.custom.UserCursor;
@@ -22,6 +24,7 @@ import com.mople.meet.repository.impl.MeetRepositorySupport;
 import com.mople.entity.meet.*;
 import com.mople.meet.repository.*;
 
+import com.mople.meet.repository.notice.MeetNoticeRepository;
 import com.mople.meet.service.meet.member.MeetMemberAutoCompleteService;
 import com.mople.outbox.service.OutboxService;
 import com.mople.user.repository.UserRepository;
@@ -36,6 +39,7 @@ import org.springframework.ui.Model;
 import java.util.*;
 
 import static com.mople.dto.client.MeetClientResponse.*;
+import static com.mople.dto.client.NoticeClientResponse.ofNotice;
 import static com.mople.dto.client.UserRoleClientResponse.ofMembers;
 import static com.mople.dto.response.user.UserInfo.ofMap;
 import static com.mople.global.enums.event.AggregateType.MEET;
@@ -54,6 +58,7 @@ public class MeetService {
     private final MeetMemberRepository meetMemberRepository;
     private final MeetInviteRepository meetInviteRepository;
     private final MeetRepositorySupport meetRepositorySupport;
+    private final MeetNoticeRepository meetNoticeRepository;
     private final MeetMemberRepositorySupport meetMemberRepositorySupport;
     private final UserRepository userRepository;
     private final OutboxService outboxService;
@@ -70,6 +75,7 @@ public class MeetService {
             MeetInviteRepository meetInviteRepository,
             MeetRepositorySupport meetRepositorySupport,
             MeetMemberRepositorySupport meetMemberRepositorySupport,
+            MeetNoticeRepository meetNoticeRepository,
             UserRepository userRepository,
             OutboxService outboxService,
             MeetRemoveService meetRemoveService,
@@ -83,6 +89,7 @@ public class MeetService {
         this.meetInviteRepository = meetInviteRepository;
         this.meetRepositorySupport = meetRepositorySupport;
         this.meetMemberRepositorySupport = meetMemberRepositorySupport;
+        this.meetNoticeRepository = meetNoticeRepository;
         this.userRepository = userRepository;
         this.outboxService = outboxService;
         this.meetRemoveService = meetRemoveService;
@@ -116,7 +123,13 @@ public class MeetService {
 
         Integer memberCount = meetRepositorySupport.countMeetMember(meet.getId());
 
-        return ofMeet(new MeetInfoResponse(meet, memberCount));
+        MeetNotice pinnedNotice = meetNoticeRepository.findPinnedNotice(meet.getId());
+        NoticeClientResponse pinnedNoticeResponse = pinnedNotice != null ? ofNotice(pinnedNotice) : null;
+
+        return ofMeet(
+                new MeetInfoResponse(meet, memberCount),
+                pinnedNoticeResponse
+        );
     }
 
     @Transactional
@@ -157,7 +170,13 @@ public class MeetService {
 
         Integer memberCount = meetRepositorySupport.countMeetMember(meet.getId());
 
-        return ofMeet(new MeetInfoResponse(meet, memberCount));
+        MeetNotice pinnedNotice = meetNoticeRepository.findPinnedNotice(meet.getId());
+        NoticeClientResponse pinnedNoticeResponse = pinnedNotice != null ? ofNotice(pinnedNotice) : null;
+
+        return ofMeet(
+                new MeetInfoResponse(meet, memberCount),
+                pinnedNoticeResponse
+        );
     }
 
     @Transactional(readOnly = true)
@@ -213,7 +232,13 @@ public class MeetService {
 
         Integer memberCount = meetRepositorySupport.countMeetMember(meetId);
 
-        return ofMeet(new MeetInfoResponse(meet, memberCount));
+        MeetNotice pinnedNotice = meetNoticeRepository.findPinnedNotice(meet.getId());
+        NoticeClientResponse pinnedNoticeResponse = pinnedNotice != null ? ofNotice(pinnedNotice) : null;
+
+        return ofMeet(
+                new MeetInfoResponse(meet, memberCount),
+                pinnedNoticeResponse
+        );
     }
 
     @Transactional(readOnly = true)
@@ -296,8 +321,18 @@ public class MeetService {
     }
 
     @Transactional
-    public void changeMeetHost(Long userId, Long meetId, HostChangeRequest request) {
-        meetHostTransferService.changeMeetHost(userId, meetId, request);
+    public MeetClientResponse changeMeetHost(Long userId, Long meetId, HostChangeRequest request) {
+        Meet meet = meetHostTransferService.changeMeetHost(userId, meetId, request);
+
+        Integer memberCount = meetRepositorySupport.countMeetMember(meetId);
+
+        MeetNotice pinnedNotice = meetNoticeRepository.findPinnedNotice(meet.getId());
+        NoticeClientResponse pinnedNoticeResponse = pinnedNotice != null ? ofNotice(pinnedNotice) : null;
+
+        return ofMeet(
+                new MeetInfoResponse(meet, memberCount),
+                pinnedNoticeResponse
+        );
     }
 
     @Transactional(readOnly = true)
@@ -388,7 +423,13 @@ public class MeetService {
 
         Integer memberCount = meetRepositorySupport.countMeetMember(meet.getId());
 
-        return ofMeet(new MeetInfoResponse(meet, memberCount));
+        MeetNotice pinnedNotice = meetNoticeRepository.findPinnedNotice(meet.getId());
+        NoticeClientResponse pinnedNoticeResponse = pinnedNotice != null ? ofNotice(pinnedNotice) : null;
+
+        return ofMeet(
+                new MeetInfoResponse(meet, memberCount),
+                pinnedNoticeResponse
+        );
     }
 
     @Transactional(readOnly = true)

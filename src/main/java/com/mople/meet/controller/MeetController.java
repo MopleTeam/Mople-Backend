@@ -135,13 +135,12 @@ public class MeetController {
             description = "해당 모임의 모임장 권한을 다른 모임 멤버에게 양도합니다."
     )
     @PatchMapping("/host/{meetId}")
-    public ResponseEntity<Void> changeHost(
+    public ResponseEntity<MeetClientResponse> changeHost(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long meetId,
             @RequestBody HostChangeRequest request
     ) {
-        meetService.changeMeetHost(user.id(), meetId, request);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(meetService.changeMeetHost(user.id(), meetId, request));
     }
 
     @Operation(

@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "meet_notice")
 @Getter
@@ -29,6 +31,12 @@ public class MeetNotice extends BaseTimeEntity {
     @Column(name = "content", columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    @Column(name = "pinned", nullable = false)
+    private boolean pinned;
+
+    @Column(name = "pinned_at")
+    private LocalDateTime pinnedAt;
+
     @Column(name = "creator_id")
     private Long creatorId;
 
@@ -41,6 +49,7 @@ public class MeetNotice extends BaseTimeEntity {
         this.content = content;
         this.creatorId = creatorId;
         this.meetId = meetId;
+        this.pinned = false;
     }
 
     public static MeetNotice ofCustom(String content, Long creatorId, Long meetId) {
@@ -67,5 +76,23 @@ public class MeetNotice extends BaseTimeEntity {
         }
 
         this.content = content;
+    }
+
+    public void pin() {
+        if (this.pinned) {
+            return;
+        }
+
+        this.pinned = true;
+        this.pinnedAt = LocalDateTime.now();
+    }
+
+    public void unpin() {
+        if (!this.pinned) {
+            return;
+        }
+
+        this.pinned = false;
+        this.pinnedAt = null;
     }
 }

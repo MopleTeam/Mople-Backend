@@ -12,7 +12,7 @@ import com.mople.global.utils.cursor.CursorUtils;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.MeetMemberRepository;
 import com.mople.meet.repository.impl.notice.NoticeRepositorySupport;
-import com.mople.meet.repository.notice.NoticeRepository;
+import com.mople.meet.repository.notice.MeetNoticeRepository;
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.StaleObjectStateException;
@@ -33,7 +33,7 @@ public class NoticeService {
     private static final int NOTICE_CURSOR_FIELD_COUNT = 1;
 
     private final EntityReader reader;
-    private final NoticeRepository noticeRepository;
+    private final MeetNoticeRepository meetNoticeRepository;
     private final MeetMemberRepository memberRepository;
     private final NoticeRepositorySupport noticeRepositorySupport;
 
@@ -94,7 +94,7 @@ public class NoticeService {
             throw new AuthException(NOT_HOST);
         }
 
-        MeetNotice customNotice = noticeRepository.save(
+        MeetNotice customNotice = meetNoticeRepository.save(
                 MeetNotice.ofCustom(request.content(), userId, meetId)
         );
 
@@ -112,7 +112,7 @@ public class NoticeService {
             throw new AuthException(NOT_HOST);
         }
 
-        MeetNotice customNotice = noticeRepository.findById(noticeId)
+        MeetNotice customNotice = meetNoticeRepository.findById(noticeId)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_NOTICE));
 
         if (!customNotice.getMeetId().equals(meetId)) {
@@ -122,14 +122,14 @@ public class NoticeService {
         customNotice.updateNotice(request.content());
 
         try {
-            noticeRepository.flush();
+            meetNoticeRepository.flush();
 
         } catch (
                 OptimisticLockException
                 | OptimisticLockingFailureException
                 | StaleObjectStateException e
         ) {
-            long currentVersion = noticeRepository.findVersion(meet.getId());
+            long currentVersion = meetNoticeRepository.findVersion(meet.getId());
             throw new ConcurrencyConflictException(REQUEST_CONFLICT, currentVersion);
         }
 
@@ -140,7 +140,7 @@ public class NoticeService {
     public void removeNotice(Long userId, Long noticeId) {
         reader.findUser(userId);
 
-        MeetNotice customNotice = noticeRepository.findById(noticeId)
+        MeetNotice customNotice = meetNoticeRepository.findById(noticeId)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_NOTICE));
 
         Meet meet = reader.findMeet(customNotice.getMeetId());
@@ -149,6 +149,54 @@ public class NoticeService {
             throw new AuthException(NOT_HOST);
         }
 
-        noticeRepository.delete(customNotice);
+        meetNoticeRepository.delete(customNotice);
+    }
+
+    @Transactional
+    public NoticeClientResponse pinNotice(Long userId, Long noticeId) {
+        reader.findUser(userId);
+
+        MeetNotice notice = meetNoticeRepository.findById(noticeId)
+                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_NOTICE));
+
+        Meet meet = reader.findMeet(notice.getMeetId());
+
+        if (!meet.matchHost(userId)) {
+            throw new AuthException(NOT_HOST);
+        }
+
+        if (notice.isPinned()) {
+            return ofNotice(notice);
+        }
+
+        meetNoticeRepository.unpinAllByMeetId(meet.getId());
+
+        notice.pin();
+        meetNoticeRepository.flush();
+
+        return ofNotice(notice);
+    }
+
+    @Transactional
+    public NoticeClientResponse unpinNotice(Long userId, Long noticeId) {
+        reader.findUser(userId);
+
+        MeetNotice notice = meetNoticeRepository.findById(noticeId)
+                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_NOTICE));
+
+        Meet meet = reader.findMeet(notice.getMeetId());
+
+        if (!meet.matchHost(userId)) {
+            throw new AuthException(NOT_HOST);
+        }
+
+        if (!notice.isPinned()) {
+            return ofNotice(notice);
+        }
+
+        notice.unpin();
+        meetNoticeRepository.flush();
+
+        return ofNotice(notice);
     }
 }
