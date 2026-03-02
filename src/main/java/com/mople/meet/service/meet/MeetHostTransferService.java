@@ -38,7 +38,7 @@ public class MeetHostTransferService {
     private final OutboxService outboxService;
     private final EntityReader reader;
 
-    public void changeMeetHost(Long userId, Long meetId, HostChangeRequest request) {
+    public Meet changeMeetHost(Long userId, Long meetId, HostChangeRequest request) {
         Long newHostId = request.newHostId();
 
         reader.findUser(userId);
@@ -74,6 +74,8 @@ public class MeetHostTransferService {
                 .build();
 
         outboxService.save(MEET_HOST_CHANGED, MEET, meetId, changedEvent);
+
+        return meet;
     }
 
     public CursorPageResponse<MeetClientResponse> getHostedMeet(Long userId, CursorPageRequest request) {

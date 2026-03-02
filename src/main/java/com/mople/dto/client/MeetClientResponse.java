@@ -21,6 +21,7 @@ public class MeetClientResponse {
     private final Long hostId;
     private final int memberCount;
     private final LocalDateTime lastPlanDay;
+    private NoticeClientResponse pinnedNotice;
 
     public static List<MeetClientResponse> ofListMeets(List<MeetListResponse> listResponses) {
         return listResponses.stream().map(MeetClientResponse::ofListMeet).toList();
@@ -38,7 +39,7 @@ public class MeetClientResponse {
                 .build();
     }
 
-    public static MeetClientResponse ofMeet(MeetInfoResponse infoResponse) {
+    public static MeetClientResponse ofMeet(MeetInfoResponse infoResponse, NoticeClientResponse noticeResponse) {
         return MeetClientResponse.builder()
                 .meetId(infoResponse.meetId())
                 .version(infoResponse.version())
@@ -47,6 +48,7 @@ public class MeetClientResponse {
                 .hostId(infoResponse.hostId())
                 .sinceDays(infoResponse.meetStartDate())
                 .memberCount(infoResponse.memberCount())
+                .pinnedNotice(noticeResponse)
                 .build();
     }
 }
