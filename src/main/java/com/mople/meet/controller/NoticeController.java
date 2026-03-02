@@ -26,7 +26,7 @@ public class NoticeController {
     private final NoticeService noticeService;
 
     @Operation(
-            summary = "공지 조회 API",
+            summary = "전체 공지 조회 API",
             description = "모임의 공지 목록을 조회합니다."
     )
     @GetMapping("/list/{meetId}")
@@ -82,5 +82,29 @@ public class NoticeController {
     ) {
         noticeService.removeNotice(user.id(), noticeId);
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(
+            summary = "공지 고정 API",
+            description = "모임장이 공지를 고정합니다."
+    )
+    @PatchMapping("pin/{noticeId}")
+    public ResponseEntity<NoticeClientResponse> pinMeetNotice(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @PathVariable Long noticeId
+    ) {
+        return ResponseEntity.ok(noticeService.pinNotice(user.id(), noticeId));
+    }
+
+    @Operation(
+            summary = "공지 고정해제 API",
+            description = "모임장이 공지를 고정해제합니다."
+    )
+    @DeleteMapping("pin/{noticeId}")
+    public ResponseEntity<NoticeClientResponse> unpinMeetNotice(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @PathVariable Long noticeId
+    ) {
+        return ResponseEntity.ok(noticeService.unpinNotice(user.id(), noticeId));
     }
 }

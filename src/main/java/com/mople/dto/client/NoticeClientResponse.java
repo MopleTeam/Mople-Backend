@@ -5,6 +5,7 @@ import com.mople.global.enums.notice.NoticeType;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Builder
@@ -15,6 +16,8 @@ public class NoticeClientResponse {
     private final Long meetId;
     private final NoticeType type;
     private final String content;
+    private final boolean pinned;
+    private final LocalDateTime createdAt;
 
     public static List<NoticeClientResponse> ofNotices(List<MeetNotice> notices) {
         return notices.stream().map(NoticeClientResponse::ofNotice).toList();
@@ -27,6 +30,8 @@ public class NoticeClientResponse {
                 .meetId(notice.getMeetId())
                 .type(notice.getType())
                 .content(notice.getContent())
+                .pinned(notice.isPinned())
+                .createdAt(notice.getCreatedAt())
                 .build();
     }
 }

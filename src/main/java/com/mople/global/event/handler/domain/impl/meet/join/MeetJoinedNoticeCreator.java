@@ -13,7 +13,8 @@ import org.springframework.stereotype.Component;
 
 import static com.mople.global.enums.ExceptionReturnCode.NOT_FOUND_MEMBER;
 
-@Component
+@Deprecated
+//@Component
 @RequiredArgsConstructor
 public class MeetJoinedNoticeCreator implements DomainEventHandler<MeetJoinedEvent> {
 

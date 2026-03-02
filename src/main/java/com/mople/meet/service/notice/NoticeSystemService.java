@@ -1,7 +1,7 @@
 package com.mople.meet.service.notice;
 
 import com.mople.global.enums.notice.SystemNotice;
-import com.mople.meet.repository.notice.NoticeRepository;
+import com.mople.meet.repository.notice.MeetNoticeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -13,11 +13,11 @@ import static com.mople.entity.meet.notice.MeetNotice.ofSystem;
 @RequiredArgsConstructor
 public class NoticeSystemService {
 
-    private final NoticeRepository noticeRepository;
+    private final MeetNoticeRepository meetNoticeRepository;
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void publishSystemNotice(Long meetId, SystemNotice notice, Object... args) {
-        noticeRepository.save(
+        meetNoticeRepository.save(
                 ofSystem(notice.format(args), meetId)
         );
     }
