@@ -10,6 +10,7 @@ import com.mople.entity.meet.review.QPlanReview;
 import com.mople.global.enums.Status;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.mople.entity.meet.*;
 
@@ -50,6 +51,7 @@ public class MeetRepositorySupport {
 
     public List<Meet> findHostedMeetPage(Long userId, Long cursorId, int size) {
         QMeet meet = QMeet.meet;
+        QMeetMember meetMember = QMeetMember.meetMember;
 
         BooleanBuilder whereCondition = new BooleanBuilder()
                 .and(meet.hostId.eq(userId))
@@ -61,7 +63,12 @@ public class MeetRepositorySupport {
 
         return queryFactory
                 .selectFrom(meet)
-                .where(whereCondition)
+                .where(whereCondition,
+                        JPAExpressions
+                                .select(meetMember.count())
+                                .from(meetMember)
+                                .where(meetMember.meetId.eq(meet.id))
+                                .gt(1L))
                 .orderBy(meet.id.asc())
                 .limit(size + 1)
                 .fetch();
