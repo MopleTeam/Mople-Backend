@@ -87,6 +87,5 @@ public class User {
         this.profileImg = null;
         this.lastLaunchAt = null;
         this.status = Status.DELETED;
-        this.socialProvider = null;
     }
 }

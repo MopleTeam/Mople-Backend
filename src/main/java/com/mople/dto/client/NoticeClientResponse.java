@@ -16,7 +16,7 @@ public class NoticeClientResponse {
     private final Long meetId;
     private final NoticeType type;
     private final String content;
-    private final boolean pinned;
+    private final boolean isPinned;
     private final LocalDateTime createdAt;
 
     public static List<NoticeClientResponse> ofNotices(List<MeetNotice> notices) {
@@ -30,7 +30,7 @@ public class NoticeClientResponse {
                 .meetId(notice.getMeetId())
                 .type(notice.getType())
                 .content(notice.getContent())
-                .pinned(notice.isPinned())
+                .isPinned(notice.isPinned())
                 .createdAt(notice.getCreatedAt())
                 .build();
     }
