@@ -7,14 +7,14 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface MeetNoticeRepository extends JpaRepository<MeetNotice, Long> {
 
-    @Query(value = "select version from meet where notice_id = :noticeId", nativeQuery = true)
+    @Query(value = "select version from meet_notice where notice_id = :noticeId", nativeQuery = true)
     long findVersion(Long noticeId);
 
     @Modifying
-    @Query("update MeetNotice n set n.pinned = false where n.meetId = :meetId and n.pinned = true")
+    @Query("update MeetNotice n set n.pinnedAt = null where n.meetId = :meetId and n.pinnedAt is not null")
     void unpinAllByMeetId(Long meetId);
 
-    @Query("select n from MeetNotice n where n.meetId = :meetId and n.pinned = true")
+    @Query("select n from MeetNotice n where n.meetId = :meetId and n.pinnedAt is not null")
     MeetNotice findPinnedNotice(Long meetId);
 
     void deleteByMeetId(Long meetId);

@@ -31,9 +31,6 @@ public class MeetNotice extends BaseTimeEntity {
     @Column(name = "content", columnDefinition = "TEXT", nullable = false)
     private String content;
 
-    @Column(name = "pinned", nullable = false)
-    private boolean pinned;
-
     @Column(name = "pinned_at")
     private LocalDateTime pinnedAt;
 
@@ -49,7 +46,7 @@ public class MeetNotice extends BaseTimeEntity {
         this.content = content;
         this.creatorId = creatorId;
         this.meetId = meetId;
-        this.pinned = false;
+        this.pinnedAt = null;
     }
 
     public static MeetNotice ofCustom(String content, Long creatorId, Long meetId) {
@@ -78,21 +75,23 @@ public class MeetNotice extends BaseTimeEntity {
         this.content = content;
     }
 
+    public boolean isPinned() {
+        return this.pinnedAt != null;
+    }
+
     public void pin() {
-        if (this.pinned) {
+        if (this.pinnedAt != null) {
             return;
         }
 
-        this.pinned = true;
         this.pinnedAt = LocalDateTime.now();
     }
 
     public void unpin() {
-        if (!this.pinned) {
+        if (this.pinnedAt == null) {
             return;
         }
 
-        this.pinned = false;
         this.pinnedAt = null;
     }
 }
