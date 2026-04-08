@@ -9,21 +9,21 @@ import com.mople.dto.event.data.domain.comment.CommentsSoftDeletedEvent;
 import com.mople.dto.request.meet.comment.CommentCreateRequest;
 import com.mople.dto.request.meet.comment.CommentUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
-import com.mople.dto.response.meet.comment.CommentResponse;
-import com.mople.dto.response.meet.comment.CommentUpdateResponse;
+import com.mople.dto.response.meet.comment.PostCommentResponse;
+import com.mople.dto.response.meet.comment.PostCommentUpdateResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.comment.CommentReport;
 import com.mople.entity.meet.comment.CommentStats;
-import com.mople.entity.meet.comment.PlanComment;
+import com.mople.entity.meet.comment.MeetComment;
 import com.mople.entity.user.User;
 import com.mople.global.enums.Status;
 import com.mople.global.utils.cursor.CursorUtils;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.comment.CommentReportRepository;
 import com.mople.meet.repository.comment.CommentStatsRepository;
-import com.mople.meet.repository.comment.PlanCommentRepository;
+import com.mople.meet.repository.comment.MeetCommentRepository;
 import com.mople.dto.request.meet.comment.CommentReportRequest;
 
 import com.mople.meet.repository.impl.comment.CommentRepositorySupport;
@@ -52,13 +52,13 @@ import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
 @Service
 @RequiredArgsConstructor
-public class CommentService {
+public class PostCommentService {
 
     private static final int COMMENT_CURSOR_FIELD_COUNT = 1;
 
     private final MeetPlanRepository planRepository;
     private final UserRepository userRepository;
-    private final PlanCommentRepository commentRepository;
+    private final MeetCommentRepository commentRepository;
     private final CommentRepositorySupport commentRepositorySupport;
     private final CommentReportRepository commentReportRepository;
     private final CommentStatsRepository statsRepository;
@@ -77,15 +77,15 @@ public class CommentService {
         commentValidator.validateMember(userId, meetId);
 
         int size = request.getSafeSize();
-        List<CommentResponse> commentResponses = getComments(userId, postId, request.cursor(), size);
+        List<PostCommentResponse> postCommentRespons = getComments(userId, postId, request.cursor(), size);
 
         return FlatCursorPageResponse.of(
                 commentRepositorySupport.countComments(postId),
-                buildCommentCursorPage(size, commentResponses)
+                buildCommentCursorPage(size, postCommentRespons)
         );
     }
 
-    private List<CommentResponse> getComments(Long userId, Long postId, String encodedCursor, int size) {
+    private List<PostCommentResponse> getComments(Long userId, Long postId, String encodedCursor, int size) {
 
         Long cursorId = null;
 
@@ -96,7 +96,7 @@ public class CommentService {
             commentValidator.validateCursor(cursorId);
         }
 
-        List<PlanComment> commentPage = commentRepositorySupport.findCommentPage(postId, cursorId, size);
+        List<MeetComment> commentPage = commentRepositorySupport.findCommentPage(postId, cursorId, size);
         return mapToResponsesWithLikedByMe(userId, commentPage);
     }
 
@@ -109,14 +109,14 @@ public class CommentService {
         reader.findComment(commentId);
 
         int size = request.getSafeSize();
-        List<CommentResponse> commentResponses = getCommentReplies(userId, postId, commentId, request.cursor(), size);
+        List<PostCommentResponse> postCommentRespons = getCommentReplies(userId, postId, commentId, request.cursor(), size);
 
-        return buildCommentCursorPage(size, commentResponses);
+        return buildCommentCursorPage(size, postCommentRespons);
     }
 
-    private CursorPageResponse<CommentClientResponse> buildCommentCursorPage(int size, List<CommentResponse> commentResponses) {
+    private CursorPageResponse<CommentClientResponse> buildCommentCursorPage(int size, List<PostCommentResponse> postCommentRespons) {
         return buildCursorPage(
-                commentResponses,
+                postCommentRespons,
                 size,
                 c -> new String[]{
                         c.commentId().toString()
@@ -125,7 +125,7 @@ public class CommentService {
         );
     }
 
-    private List<CommentResponse> getCommentReplies(Long userId, Long postId, Long commentId, String encodedCursor, int size) {
+    private List<PostCommentResponse> getCommentReplies(Long userId, Long postId, Long commentId, String encodedCursor, int size) {
 
         Long cursorId = null;
 
@@ -136,17 +136,17 @@ public class CommentService {
             commentValidator.validateCursor(cursorId);
         }
 
-        List<PlanComment> commentReplyPage = commentRepositorySupport.findCommentReplyPage(postId, commentId, cursorId, size);
+        List<MeetComment> commentReplyPage = commentRepositorySupport.findCommentReplyPage(postId, commentId, cursorId, size);
         return mapToResponsesWithLikedByMe(userId, commentReplyPage);
     }
 
-    private List<CommentResponse> mapToResponsesWithLikedByMe(Long userId, List<PlanComment> comments) {
+    private List<PostCommentResponse> mapToResponsesWithLikedByMe(Long userId, List<MeetComment> comments) {
         List<Long> commentIds = comments.stream()
-                .map(PlanComment::getId)
+                .map(MeetComment::getId)
                 .toList();
 
         List<Long> writerIds = comments.stream()
-                .map(PlanComment::getWriterId)
+                .map(MeetComment::getWriterId)
                 .distinct()
                 .toList();
 
@@ -161,7 +161,7 @@ public class CommentService {
         List<Long> likedCommentIds = likeService.findLikedCommentIds(userId, commentIds);
 
         return comments.stream()
-                .map(comment -> new CommentResponse(
+                .map(comment -> new PostCommentResponse(
                         comment,
                         statsMap.get(comment.getId()),
                         userMap.get(comment.getWriterId()),
@@ -179,7 +179,7 @@ public class CommentService {
         Long meetId = getMeetId(postId);
         commentValidator.validateMember(userId, meetId);
 
-        PlanComment comment = PlanComment.ofParent(
+        MeetComment comment = MeetComment.ofParent(
                 request.contents(),
                 postId,
                 LocalDateTime.now(),
@@ -205,7 +205,7 @@ public class CommentService {
         return getCommentClientResponse(comment, likedByMe);
     }
 
-    private CommentClientResponse getCommentClientResponse(PlanComment comment, boolean likedByMe) {
+    private CommentClientResponse getCommentClientResponse(MeetComment comment, boolean likedByMe) {
         List<User> mentionedUsers = mentionService.findMentionedUsers(comment.getId());
 
         CommentStats stats = statsRepository.findById(comment.getId())
@@ -213,7 +213,7 @@ public class CommentService {
 
         User writer = reader.findUser(comment.getWriterId());
 
-        return ofComment(new CommentResponse(comment, stats, writer, mentionedUsers, likedByMe));
+        return ofComment(new PostCommentResponse(comment, stats, writer, mentionedUsers, likedByMe));
     }
 
     @Transactional
@@ -226,9 +226,9 @@ public class CommentService {
         commentValidator.validateMember(userId, meetId);
         commentValidator.validateParentComment(parentCommentId, postId);
 
-        PlanComment parentComment = reader.findComment(parentCommentId);
+        MeetComment parentComment = reader.findComment(parentCommentId);
 
-        PlanComment comment = PlanComment.ofChild(
+        MeetComment comment = MeetComment.ofChild(
                 request.contents(),
                 postId,
                 parentCommentId,
@@ -263,7 +263,7 @@ public class CommentService {
             Long commentId,
             CommentUpdateRequest request
     ) {
-        PlanComment comment = reader.findComment(commentId);
+        MeetComment comment = reader.findComment(commentId);
         reader.findUser(userId);
 
         commentValidator.validateWriter(comment, userId);
@@ -287,7 +287,7 @@ public class CommentService {
 
         if (request.mentions() != null && !request.mentions().isEmpty()) {
             CommentMentionAddedEvent addedEvent = CommentMentionAddedEvent.builder()
-                    .postId(comment.getPostId())
+                    .postId(comment.getTargetId())
                     .commentId(comment.getId())
                     .commentWriterId(comment.getWriterId())
                     .originMentions(originMentions)
@@ -300,22 +300,22 @@ public class CommentService {
         return getCommentUpdateClientResponse(userId, comment);
     }
 
-    private CommentClientResponse getCommentUpdateClientResponse(Long userId, PlanComment comment) {
+    private CommentClientResponse getCommentUpdateClientResponse(Long userId, MeetComment comment) {
         User user = reader.findUser(userId);
         CommentStats stats = statsRepository.findById(comment.getId())
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_COMMENT_STATS));
         List<User> mentionedUsers = mentionService.findMentionedUsers(comment.getId());
         boolean likedByMe = likeService.likedByMe(userId, comment.getId());
 
-        return ofUpdate(new CommentUpdateResponse(comment, user, stats, mentionedUsers, likedByMe));
+        return ofUpdate(new PostCommentUpdateResponse(comment, user, stats, mentionedUsers, likedByMe));
     }
 
 
     @Transactional
     public void deleteComment(Long userId, Long commentId) {
         reader.findUser(userId);
-        PlanComment comment = reader.findComment(commentId);
-        Meet meet = reader.findMeet(getMeetId(comment.getPostId()));
+        MeetComment comment = reader.findComment(commentId);
+        Meet meet = reader.findMeet(getMeetId(comment.getTargetId()));
 
         commentValidator.validateDeletion(comment, meet.getHostId(), userId);
 
@@ -337,14 +337,14 @@ public class CommentService {
         commentIdsToDelete.add(commentId);
 
         if (comment.isChildComment()) {
-            PlanComment parentComment = reader.findComment(comment.getParentId());
+            MeetComment parentComment = reader.findComment(comment.getParentId());
             CommentStats stats = statsRepository.findById(parentComment.getId())
                     .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_COMMENT_STATS));
 
             if (stats.canDecreaseReplyCount()){
                 statsRepository.decreaseReplyCount(parentComment.getId());
                 commentRepository.softDeleteAll(Status.DELETED, commentIdsToDelete, userId, LocalDateTime.now());
-                generateCommentsDeletedEvent(commentIdsToDelete, comment.getPostId(), userId);
+                generateCommentsDeletedEvent(commentIdsToDelete, comment.getTargetId(), userId);
             }
             return;
         }
@@ -356,7 +356,7 @@ public class CommentService {
         }
 
         commentRepository.softDeleteAll(Status.DELETED, commentIdsToDelete, userId, LocalDateTime.now());
-        generateCommentsDeletedEvent(commentIdsToDelete, comment.getPostId(), userId);
+        generateCommentsDeletedEvent(commentIdsToDelete, comment.getTargetId(), userId);
     }
 
     private void generateCommentsDeletedEvent(List<Long> commentIds, Long postId, Long writerId) {
@@ -371,11 +371,11 @@ public class CommentService {
 
     @Transactional
     public CommentClientResponse toggleLike(Long userId, Long commentId) {
-        PlanComment comment = reader.findComment(commentId);
+        MeetComment comment = reader.findComment(commentId);
         reader.findUser(userId);
 
         boolean likedByMe = likeService.toggleLike(userId, comment);
-        PlanComment updatedComment = reader.findComment(commentId);
+        MeetComment updatedComment = reader.findComment(commentId);
 
         return getCommentClientResponse(updatedComment, likedByMe);
     }

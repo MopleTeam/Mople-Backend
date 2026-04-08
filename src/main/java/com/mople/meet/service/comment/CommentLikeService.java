@@ -3,7 +3,7 @@ package com.mople.meet.service.comment;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.entity.meet.comment.CommentLike;
 import com.mople.entity.meet.comment.CommentStats;
-import com.mople.entity.meet.comment.PlanComment;
+import com.mople.entity.meet.comment.MeetComment;
 import com.mople.global.enums.ExceptionReturnCode;
 import com.mople.meet.repository.comment.CommentLikeRepository;
 import com.mople.meet.repository.comment.CommentStatsRepository;
@@ -22,7 +22,7 @@ public class CommentLikeService {
     private final CommentStatsRepository statsRepository;
 
     @Transactional
-    public boolean toggleLike(Long userId, PlanComment comment) {
+    public boolean toggleLike(Long userId, MeetComment comment) {
         CommentStats stats = statsRepository.findById(comment.getId())
                 .orElseThrow(() -> new ResourceNotFoundException(ExceptionReturnCode.NOT_FOUND_COMMENT_STATS));
 

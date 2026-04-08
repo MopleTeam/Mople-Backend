@@ -7,7 +7,7 @@ import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
-import com.mople.meet.service.comment.CommentService;
+import com.mople.meet.service.comment.PostCommentService;
 import com.mople.dto.request.meet.comment.CommentCreateRequest;
 import com.mople.dto.request.meet.comment.CommentReportRequest;
 
@@ -26,13 +26,13 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/comment")
-@Tag(name = "COMMENT", description = "댓글 API")
-public class CommentController {
-    private final CommentService commentService;
+@Tag(name = "COMMENT", description = "게시글 댓글 API")
+public class PostCommentController {
+    private final PostCommentService postCommentService;
 
     @Operation(
-            summary = "댓글 조회 API",
-            description = "모든 댓글을 조회합니다. 후기의 경우 후기의 ID가 아닌 Post Id를 Path Variable로 전송합니다."
+            summary = "게시글 댓글 조회 API",
+            description = "게시글 모든 댓글을 조회합니다. 후기의 경우 후기의 ID가 아닌 Post Id를 Path Variable로 전송합니다."
     )
     @GetMapping("/{postId}")
     public ResponseEntity<FlatCursorPageResponse<CommentClientResponse>> commentList(
@@ -40,12 +40,12 @@ public class CommentController {
             @PathVariable Long postId,
             @ParameterObject @Valid CursorPageRequest request
     ) {
-        return ResponseEntity.ok(commentService.getCommentList(user.id(), postId, request));
+        return ResponseEntity.ok(postCommentService.getCommentList(user.id(), postId, request));
     }
 
     @Operation(
-            summary = "답글 조회 API",
-            description = "모든 답글을 조회합니다. 후기의 경우 후기의 ID가 아닌 Post Id를 Path Variable로 전송합니다."
+            summary = "게시글 답글 조회 API",
+            description = "게시글 모든 답글을 조회합니다. 후기의 경우 후기의 ID가 아닌 Post Id를 Path Variable로 전송합니다."
     )
     @GetMapping("/{postId}/{commentId}")
     public ResponseEntity<CursorPageResponse<CommentClientResponse>> commentList(
@@ -54,12 +54,12 @@ public class CommentController {
             @PathVariable Long commentId,
             @ParameterObject @Valid CursorPageRequest request
     ) {
-        return ResponseEntity.ok(commentService.getCommentReplyList(user.id(), postId, commentId, request));
+        return ResponseEntity.ok(postCommentService.getCommentReplyList(user.id(), postId, commentId, request));
     }
 
     @Operation(
-            summary = "댓글 생성 API",
-            description = "댓글을 작성합니다."
+            summary = "게시글 댓글 생성 API",
+            description = "게시글 댓글을 작성합니다."
     )
     @PostMapping("/{postId}")
     public ResponseEntity<CommentClientResponse> createComment(
@@ -67,7 +67,7 @@ public class CommentController {
             @PathVariable Long postId,
             @RequestBody @Valid CommentCreateRequest commentCreateRequest
     ) {
-        var body = commentService.createComment(user.id(), postId, commentCreateRequest);
+        var body = postCommentService.createComment(user.id(), postId, commentCreateRequest);
 
         return ResponseEntity.ok()
                 .eTag("\"" + body.getVersion() + "\"")
@@ -75,8 +75,8 @@ public class CommentController {
     }
 
     @Operation(
-            summary = "답글 생성 API",
-            description = "답글을 작성합니다."
+            summary = "게시글 답글 생성 API",
+            description = "게시글 답글을 작성합니다."
     )
     @PostMapping("/{postId}/{commentId}")
     public ResponseEntity<CommentClientResponse> createCommentReply(
@@ -85,7 +85,7 @@ public class CommentController {
             @PathVariable Long commentId,
             @RequestBody @Valid CommentCreateRequest commentCreateRequest
     ) {
-        var body = commentService.createCommentReply(user.id(), postId, commentId, commentCreateRequest);
+        var body = postCommentService.createCommentReply(user.id(), postId, commentId, commentCreateRequest);
 
         return ResponseEntity.ok()
                 .eTag("\"" + body.getVersion() + "\"")
@@ -93,8 +93,8 @@ public class CommentController {
     }
 
     @Operation(
-            summary = "댓글/답글 수정 API",
-            description = "댓글 ID를 통해 댓글/답글을 수정합니다."
+            summary = "게시글 댓글/답글 수정 API",
+            description = "게시글 댓글 ID를 통해 댓글/답글을 수정합니다."
     )
     @PatchMapping("/{commentId}")
     public ResponseEntity<CommentClientResponse> updateComment(
@@ -102,7 +102,7 @@ public class CommentController {
             @PathVariable Long commentId,
             @RequestBody @Valid CommentUpdateRequest commentUpdateRequest
     ) {
-        var body = commentService.updateComment(user.id(), commentId, commentUpdateRequest);
+        var body = postCommentService.updateComment(user.id(), commentId, commentUpdateRequest);
 
         return ResponseEntity.ok()
                 .eTag("\"" + body.getVersion() + "\"")
@@ -118,12 +118,12 @@ public class CommentController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long commentId
     ) {
-        commentService.deleteComment(user.id(), commentId);
+        postCommentService.deleteComment(user.id(), commentId);
         return ResponseEntity.ok().build();
     }
 
     @Operation(
-            summary = "댓글/답글 좋아요 토글 API",
+            summary = "게시글 댓글/답글 좋아요 토글 API",
             description = "댓글/답글에 좋아요를 추가하거나 취소합니다."
     )
     @PostMapping("/{commentId}/likes")
@@ -131,19 +131,19 @@ public class CommentController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long commentId
     ) {
-        return ResponseEntity.ok(commentService.toggleLike(user.id(), commentId));
+        return ResponseEntity.ok(postCommentService.toggleLike(user.id(), commentId));
     }
 
     @Operation(
             summary = "댓글/답글 신고 API",
-            description = "유저가 댓글/답글을 신고하고 Admin Page에서 조회합니다."
+            description = "유저가 게시글 댓글/답글을 신고하고 Admin Page에서 조회합니다."
     )
     @PostMapping("/report")
     public ResponseEntity<Void> reportComment(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @RequestBody CommentReportRequest CommentReportRequest
     ) {
-        commentService.commentReport(user.id(), CommentReportRequest);
+        postCommentService.commentReport(user.id(), CommentReportRequest);
         return ResponseEntity.ok().build();
     }
 }

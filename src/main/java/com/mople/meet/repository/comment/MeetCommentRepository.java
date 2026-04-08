@@ -1,6 +1,6 @@
 package com.mople.meet.repository.comment;
 
-import com.mople.entity.meet.comment.PlanComment;
+import com.mople.entity.meet.comment.MeetComment;
 import com.mople.global.enums.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -10,11 +10,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-public interface PlanCommentRepository extends JpaRepository<PlanComment, Long> {
+public interface MeetCommentRepository extends JpaRepository<MeetComment, Long> {
 
     @Modifying(flushAutomatically = true)
     @Query(
-            "update PlanComment c " +
+            "update MeetComment c " +
             "   set c.status = :status, " +
             "       c.deletedAt = :deletedAt, " +
             "       c.deletedBy = :userId " +
@@ -23,19 +23,19 @@ public interface PlanCommentRepository extends JpaRepository<PlanComment, Long> 
     )
     int softDeleteAll(Status status, List<Long> commentIds, Long userId, LocalDateTime deletedAt);
 
-    @Query("select c.id from PlanComment c where c.parentId = :parentId and c.status = com.mople.global.enums.Status.ACTIVE")
+    @Query("select c.id from MeetComment c where c.parentId = :parentId and c.status = com.mople.global.enums.Status.ACTIVE")
     List<Long> findChildIds(Long parentId);
 
-    @Query("select c.id from PlanComment c where c.postId = :postId and c.status = com.mople.global.enums.Status.ACTIVE")
+    @Query("select c.id from MeetComment c where c.postId = :postId and c.status = com.mople.global.enums.Status.ACTIVE")
     List<Long> findIdByPostId(Long postId);
 
-    @Query("select c from PlanComment c where c.id = :id and c.status = :status")
-    Optional<PlanComment> findByIdAndStatus(Long id, Status status);
+    @Query("select c from MeetComment c where c.id = :id and c.status = :status")
+    Optional<MeetComment> findByIdAndStatus(Long id, Status status);
 
     @Modifying(flushAutomatically = true)
     @Query(
             "delete " +
-            "  from PlanComment c " +
+            "  from MeetComment c " +
             " where c.id in :commentIds " +
             "   and c.status = com.mople.global.enums.Status.DELETED"
     )

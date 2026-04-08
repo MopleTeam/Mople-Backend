@@ -2,7 +2,7 @@ package com.mople.global.event.handler.domain.impl.comment.delete.purge;
 
 import com.mople.dto.event.data.domain.comment.CommentsPurgeEvent;
 import com.mople.global.event.handler.domain.DomainEventHandler;
-import com.mople.meet.repository.comment.PlanCommentRepository;
+import com.mople.meet.repository.comment.MeetCommentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CommentsPurgeHandler implements DomainEventHandler<CommentsPurgeEvent> {
 
-    private final PlanCommentRepository commentRepository;
+    private final MeetCommentRepository commentRepository;
 
     @Override
     public Class<CommentsPurgeEvent> getHandledType() {

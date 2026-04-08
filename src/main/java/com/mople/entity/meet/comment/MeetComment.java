@@ -1,5 +1,6 @@
 package com.mople.entity.meet.comment;
 
+import com.mople.global.enums.CommentTargetType;
 import com.mople.global.enums.Status;
 
 import jakarta.persistence.*;
@@ -10,10 +11,10 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "plan_comment")
+@Table(name = "meet_comment")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PlanComment {
+public class MeetComment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -27,8 +28,12 @@ public class PlanComment {
     @Column(name = "content", nullable = false, columnDefinition = "text")
     private String content;
 
-    @Column(name = "post_id")
-    private Long postId;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "target_type", nullable = false, length = 30)
+    private CommentTargetType targetType;
+
+    @Column(name = "target_id", nullable = false)
+    private Long targetId;
 
     @Column(name = "parent_id", updatable = false)
     private Long parentId = null;
@@ -50,37 +55,65 @@ public class PlanComment {
     private Long deletedBy;
 
     @Builder
-    private PlanComment(String content, Long postId, Long parentId,
-                       LocalDateTime writeTime, Long writerId) {
+    private MeetComment(
+            String content, CommentTargetType targetType, Long targetId,
+            Long parentId, LocalDateTime writeTime, Long writerId
+    ) {
+
         this.content = content;
-        this.postId = postId;
+        this.targetType = targetType;
+        this.targetId = targetId;
         this.parentId = parentId;
         this.writeTime = writeTime;
         this.status = Status.ACTIVE;
         this.writerId = writerId;
     }
 
-    public static PlanComment ofParent(String content, Long postId, LocalDateTime writeTime, Long writerId) {
-        return PlanComment.builder()
+    public static MeetComment ofNotice(
+            String content, Long noticeId,
+            LocalDateTime writeTime, Long writerId
+    ) {
+
+        return MeetComment.builder()
                 .content(content)
-                .postId(postId)
+                .targetType(CommentTargetType.NOTICE)
+                .targetId(noticeId)
                 .writeTime(writeTime)
                 .writerId(writerId)
                 .build();
     }
 
-    public static PlanComment ofChild(String content, Long postId, Long parentId, LocalDateTime writeTime, Long writerId) {
-        return PlanComment.builder()
+    public static MeetComment ofParent(
+            String content, Long postId,
+            LocalDateTime writeTime, Long writerId
+    ) {
+
+        return MeetComment.builder()
                 .content(content)
-                .postId(postId)
+                .targetType(CommentTargetType.POST)
+                .targetId(postId)
+                .writeTime(writeTime)
+                .writerId(writerId)
+                .build();
+    }
+
+    public static MeetComment ofChild(
+            String content, Long postId,
+            Long parentId, LocalDateTime writeTime, Long writerId
+    ) {
+
+        return MeetComment.builder()
+                .content(content)
+                .targetType(CommentTargetType.POST)
+                .targetId(postId)
                 .parentId(parentId)
                 .writeTime(writeTime)
                 .writerId(writerId)
                 .build();
     }
 
-    public boolean matchWriter(Long userId) {
-        return !this.writerId.equals(userId);
+    public boolean isWriter(Long userId) {
+        return this.writerId.equals(userId);
     }
 
     public void updateContent(String content) {

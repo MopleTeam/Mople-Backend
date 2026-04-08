@@ -2,7 +2,7 @@ package com.mople.notification.reader;
 
 import com.mople.entity.meet.QMeetMember;
 import com.mople.entity.meet.comment.QCommentMention;
-import com.mople.entity.meet.comment.QPlanComment;
+import com.mople.entity.meet.comment.QMeetComment;
 import com.mople.entity.meet.plan.QPlanParticipant;
 import com.mople.entity.user.QUser;
 import com.querydsl.jpa.JPAExpressions;
@@ -80,21 +80,21 @@ public class NotificationUserReader {
     }
 
     public Long findCommentRepliedUserNoWriter(Long senderId, Long parentCommentId, Long meetId) {
-        QPlanComment planComment = QPlanComment.planComment;
+        QMeetComment meetComment = QMeetComment.meetComment;
         QMeetMember meetMember = QMeetMember.meetMember;
 
         return queryFactory
-                .select(planComment.writerId)
-                .from(planComment)
+                .select(meetComment.writerId)
+                .from(meetComment)
                 .where(
-                        planComment.id.eq(parentCommentId),
-                        planComment.writerId.ne(senderId),
+                        meetComment.id.eq(parentCommentId),
+                        meetComment.writerId.ne(senderId),
                         JPAExpressions
                                 .selectOne()
                                 .from(meetMember)
                                 .where(
                                         meetMember.meetId.eq(meetId),
-                                        meetMember.userId.eq(planComment.writerId)
+                                        meetMember.userId.eq(meetComment.writerId)
                                 )
                                 .exists()
                 )

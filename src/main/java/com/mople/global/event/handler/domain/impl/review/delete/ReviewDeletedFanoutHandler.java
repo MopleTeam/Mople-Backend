@@ -3,7 +3,7 @@ package com.mople.global.event.handler.domain.impl.review.delete;
 import com.mople.dto.event.data.domain.comment.CommentsSoftDeletedEvent;
 import com.mople.dto.event.data.domain.review.ReviewSoftDeletedEvent;
 import com.mople.global.event.handler.domain.DomainEventHandler;
-import com.mople.meet.repository.comment.PlanCommentRepository;
+import com.mople.meet.repository.comment.MeetCommentRepository;
 import com.mople.outbox.service.OutboxService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -20,7 +20,7 @@ import static com.mople.global.utils.batch.Batching.chunk;
 @RequiredArgsConstructor
 public class ReviewDeletedFanoutHandler implements DomainEventHandler<ReviewSoftDeletedEvent> {
 
-    private final PlanCommentRepository commentRepository;
+    private final MeetCommentRepository commentRepository;
     private final OutboxService outboxService;
 
     @Override
