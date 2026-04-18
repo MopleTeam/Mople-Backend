@@ -1,6 +1,6 @@
 package com.mople.entity.meet.comment;
 
-import com.mople.global.enums.CommentTargetType;
+import com.mople.global.enums.CommentTarget;
 import com.mople.global.enums.Status;
 
 import jakarta.persistence.*;
@@ -30,7 +30,7 @@ public class MeetComment {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "target_type", nullable = false, length = 30)
-    private CommentTargetType targetType;
+    private CommentTarget target;
 
     @Column(name = "target_id", nullable = false)
     private Long targetId;
@@ -56,12 +56,12 @@ public class MeetComment {
 
     @Builder
     private MeetComment(
-            String content, CommentTargetType targetType, Long targetId,
+            String content, CommentTarget target, Long targetId,
             Long parentId, LocalDateTime writeTime, Long writerId
     ) {
 
         this.content = content;
-        this.targetType = targetType;
+        this.target = target;
         this.targetId = targetId;
         this.parentId = parentId;
         this.writeTime = writeTime;
@@ -76,7 +76,7 @@ public class MeetComment {
 
         return MeetComment.builder()
                 .content(content)
-                .targetType(CommentTargetType.NOTICE)
+                .target(CommentTarget.NOTICE)
                 .targetId(noticeId)
                 .writeTime(writeTime)
                 .writerId(writerId)
@@ -90,7 +90,7 @@ public class MeetComment {
 
         return MeetComment.builder()
                 .content(content)
-                .targetType(CommentTargetType.POST)
+                .target(CommentTarget.POST)
                 .targetId(postId)
                 .writeTime(writeTime)
                 .writerId(writerId)
@@ -104,7 +104,7 @@ public class MeetComment {
 
         return MeetComment.builder()
                 .content(content)
-                .targetType(CommentTargetType.POST)
+                .target(CommentTarget.POST)
                 .targetId(postId)
                 .parentId(parentId)
                 .writeTime(writeTime)

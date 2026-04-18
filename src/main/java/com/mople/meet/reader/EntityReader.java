@@ -4,12 +4,14 @@ import com.mople.core.exception.custom.AuthException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.comment.MeetComment;
+import com.mople.entity.meet.notice.MeetNotice;
 import com.mople.entity.meet.plan.MeetPlan;
 import com.mople.entity.meet.review.PlanReview;
 import com.mople.entity.user.User;
 import com.mople.global.enums.Status;
 import com.mople.meet.repository.MeetRepository;
 import com.mople.meet.repository.comment.MeetCommentRepository;
+import com.mople.meet.repository.notice.MeetNoticeRepository;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.meet.repository.review.PlanReviewRepository;
 import com.mople.user.repository.UserRepository;
@@ -27,6 +29,7 @@ public class EntityReader {
     private final MeetPlanRepository planRepository;
     private final PlanReviewRepository planReviewRepository;
     private final MeetCommentRepository commentRepository;
+    private final MeetNoticeRepository noticeRepository;
 
     public User findUser(Long userId) {
         return userRepository.findByIdAndStatus(userId, Status.ACTIVE)
@@ -56,5 +59,10 @@ public class EntityReader {
     public MeetComment findComment(Long commentId) {
         return commentRepository.findByIdAndStatus(commentId, Status.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_COMMENT));
+    }
+
+    public MeetNotice findNotice(Long noticeId) {
+        return noticeRepository.findByIdAndStatus(noticeId, Status.ACTIVE)
+                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_NOTICE));
     }
 }

@@ -67,7 +67,7 @@ public class CommentValidator {
         }
     }
 
-    public void validateDeletion(MeetComment comment, Long hostId, Long userId) {
+    public void validateDeletionAuth(MeetComment comment, Long hostId, Long userId) {
         if (!comment.isWriter(userId) && !hostId.equals(userId)) {
             throw new AuthException(UNAUTHORIZED_DELETE);
         }

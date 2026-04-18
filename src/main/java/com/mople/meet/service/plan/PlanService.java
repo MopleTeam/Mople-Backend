@@ -17,6 +17,7 @@ import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.dto.response.user.UserInfo;
 import com.mople.entity.user.User;
+import com.mople.global.enums.CommentTarget;
 import com.mople.global.enums.Status;
 import com.mople.global.enums.event.DeletionCause;
 import com.mople.global.utils.cursor.custom.UserCursor;
@@ -178,7 +179,7 @@ public class PlanService {
                         participantCount
                 ),
                 true,
-                commentRepositorySupport.countComment(plan.getId()));
+                commentRepositorySupport.countTotalComment(CommentTarget.POST, plan.getId()));
     }
 
     @Transactional
@@ -245,7 +246,7 @@ public class PlanService {
                         participantCount
                 ),
                 true,
-                commentRepositorySupport.countComment(plan.getId()));
+                commentRepositorySupport.countTotalComment(CommentTarget.POST, plan.getId()));
     }
 
     @InvalidateCache(
@@ -305,7 +306,7 @@ public class PlanService {
                         participantCount
                 ),
                 participantRepository.existsByPlanIdAndUserId(planId, userId),
-                commentRepositorySupport.countComment(plan.getId())
+                commentRepositorySupport.countTotalComment(CommentTarget.POST, plan.getId())
         );
     }
 

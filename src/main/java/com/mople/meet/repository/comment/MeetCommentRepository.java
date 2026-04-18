@@ -1,6 +1,7 @@
 package com.mople.meet.repository.comment;
 
 import com.mople.entity.meet.comment.MeetComment;
+import com.mople.global.enums.CommentTarget;
 import com.mople.global.enums.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -26,8 +27,8 @@ public interface MeetCommentRepository extends JpaRepository<MeetComment, Long> 
     @Query("select c.id from MeetComment c where c.parentId = :parentId and c.status = com.mople.global.enums.Status.ACTIVE")
     List<Long> findChildIds(Long parentId);
 
-    @Query("select c.id from MeetComment c where c.postId = :postId and c.status = com.mople.global.enums.Status.ACTIVE")
-    List<Long> findIdByPostId(Long postId);
+    @Query("select c.id from MeetComment c where c.target = :target and c.targetId = :targetId and c.status = com.mople.global.enums.Status.ACTIVE")
+    List<Long> findIdByTargetAndTargetId(CommentTarget target, Long targetId);
 
     @Query("select c from MeetComment c where c.id = :id and c.status = :status")
     Optional<MeetComment> findByIdAndStatus(Long id, Status status);
@@ -41,6 +42,6 @@ public interface MeetCommentRepository extends JpaRepository<MeetComment, Long> 
     )
     void hardDeleteById(List<Long> commentIds);
 
-    @Query(value = "select version from plan_comment where comment_id = :commentId", nativeQuery = true)
+    @Query(value = "select version from meet_comment where comment_id = :commentId", nativeQuery = true)
     long findVersion(Long commentId);
 }

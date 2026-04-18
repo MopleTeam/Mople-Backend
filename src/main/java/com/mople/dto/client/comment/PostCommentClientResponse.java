@@ -1,4 +1,4 @@
-package com.mople.dto.client;
+package com.mople.dto.client.comment;
 
 import com.mople.dto.response.meet.comment.PostCommentResponse;
 import com.mople.dto.response.meet.comment.PostCommentUpdateResponse;
@@ -13,7 +13,7 @@ import java.util.List;
 
 @Getter
 @Builder
-public class CommentClientResponse {
+public class PostCommentClientResponse implements CommentClientResponse {
     private final Long commentId;
     private final Long version;
     private final String content;
@@ -26,12 +26,12 @@ public class CommentClientResponse {
     private final List<UserInfo> mentions;
     private final LocalDateTime time;
 
-    public static List<CommentClientResponse> ofComments(List<PostCommentResponse> postCommentRespons) {
-        return postCommentRespons.stream().map(CommentClientResponse::ofComment).toList();
+    public static List<PostCommentClientResponse> ofPostComments(List<PostCommentResponse> postCommentRespons) {
+        return postCommentRespons.stream().map(PostCommentClientResponse::ofPostComment).toList();
     }
 
-    public static CommentClientResponse ofComment(PostCommentResponse postCommentResponse) {
-        return CommentClientResponse.builder()
+    public static PostCommentClientResponse ofPostComment(PostCommentResponse postCommentResponse) {
+        return PostCommentClientResponse.builder()
                 .commentId(postCommentResponse.commentId())
                 .version(postCommentResponse.version())
                 .content(postCommentResponse.content())
@@ -46,8 +46,8 @@ public class CommentClientResponse {
                 .build();
     }
 
-    public static CommentClientResponse ofUpdate(PostCommentUpdateResponse updateResponse) {
-        return CommentClientResponse.builder()
+    public static PostCommentClientResponse ofUpdate(PostCommentUpdateResponse updateResponse) {
+        return PostCommentClientResponse.builder()
                 .commentId(updateResponse.commentId())
                 .version(updateResponse.version())
                 .content(updateResponse.content())

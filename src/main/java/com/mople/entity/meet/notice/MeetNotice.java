@@ -1,6 +1,7 @@
 package com.mople.entity.meet.notice;
 
 import com.mople.entity.common.BaseTimeEntity;
+import com.mople.global.enums.Status;
 import com.mople.global.enums.notice.NoticeType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -40,6 +41,16 @@ public class MeetNotice extends BaseTimeEntity {
     @Column(name = "meet_id", nullable = false)
     private Long meetId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 10)
+    private Status status;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "deleted_by")
+    private Long deletedBy;
+
     @Builder
     public MeetNotice(NoticeType type, String content, Long creatorId, Long meetId) {
         this.type = type;
@@ -47,6 +58,7 @@ public class MeetNotice extends BaseTimeEntity {
         this.creatorId = creatorId;
         this.meetId = meetId;
         this.pinnedAt = null;
+        this.status = Status.ACTIVE;
     }
 
     public static MeetNotice ofCustom(String content, Long creatorId, Long meetId) {
@@ -93,5 +105,15 @@ public class MeetNotice extends BaseTimeEntity {
         }
 
         this.pinnedAt = null;
+    }
+
+    public void softDelete(Long deletedBy) {
+        if (status == Status.DELETED) {
+            return;
+        }
+
+        this.status = Status.DELETED;
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
     }
 }

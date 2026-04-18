@@ -1,5 +1,5 @@
 package com.mople.global.enums;
 
-public enum CommentTargetType {
+public enum CommentTarget {
     POST, NOTICE
 }
