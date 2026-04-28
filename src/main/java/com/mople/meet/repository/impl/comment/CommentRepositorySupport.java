@@ -1,7 +1,8 @@
 package com.mople.meet.repository.impl.comment;
 
-import com.mople.entity.meet.comment.PlanComment;
-import com.mople.entity.meet.comment.QPlanComment;
+import com.mople.entity.meet.comment.MeetComment;
+import com.mople.entity.meet.comment.QMeetComment;
+import com.mople.global.enums.CommentTarget;
 import com.mople.global.enums.Status;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.Expressions;
@@ -17,12 +18,13 @@ import java.util.List;
 public class CommentRepositorySupport {
     private final JPAQueryFactory queryFactory;
 
-    public List<PlanComment> findCommentPage(Long postId, Long cursorId, int size) {
-        QPlanComment comment = QPlanComment.planComment;
+    public List<MeetComment> findCommentPage(CommentTarget target, Long targetId, Long cursorId, int size) {
+        QMeetComment comment = QMeetComment.meetComment;
 
         BooleanBuilder whereCondition = new BooleanBuilder()
                 .and(comment.status.eq(Status.ACTIVE))
-                .and(comment.postId.eq(postId))
+                .and(comment.target.eq(target))
+                .and(comment.targetId.eq(targetId))
                 .and(comment.parentId.isNull());
 
         if (cursorId != null) {
@@ -48,15 +50,16 @@ public class CommentRepositorySupport {
                 .fetch();
     }
 
-    public Integer countComments(Long postId) {
-        QPlanComment comment = QPlanComment.planComment;
+    public Integer countParentComments(CommentTarget target, Long targetId) {
+        QMeetComment comment = QMeetComment.meetComment;
 
         Long count = queryFactory
                 .select(comment.count())
                 .from(comment)
                 .where(
                         comment.status.eq(Status.ACTIVE),
-                        comment.postId.eq(postId),
+                        comment.target.eq(target),
+                        comment.targetId.eq(targetId),
                         comment.parentId.isNull()
                 )
                 .fetchOne();
@@ -64,12 +67,13 @@ public class CommentRepositorySupport {
         return Math.toIntExact(count != null ? count : 0L);
     }
 
-    public List<PlanComment> findCommentReplyPage(Long postId, Long commentId, Long cursorId, int size) {
-        QPlanComment comment = QPlanComment.planComment;
+    public List<MeetComment> findCommentReplyPage(CommentTarget target, Long targetId, Long commentId, Long cursorId, int size) {
+        QMeetComment comment = QMeetComment.meetComment;
 
         BooleanBuilder whereCondition = new BooleanBuilder()
                 .and(comment.status.eq(Status.ACTIVE))
-                .and(comment.postId.eq(postId))
+                .and(comment.target.eq(target))
+                .and(comment.targetId.eq(targetId))
                 .and(comment.parentId.eq(commentId));
 
         if (cursorId != null) {
@@ -95,15 +99,16 @@ public class CommentRepositorySupport {
                 .fetch();
     }
 
-    public Integer countComment(Long postId) {
-        QPlanComment comment = QPlanComment.planComment;
+    public Integer countTotalComment(CommentTarget target, Long targetId) {
+        QMeetComment comment = QMeetComment.meetComment;
 
         Long result = queryFactory
                 .select(comment.count())
                 .from(comment)
                 .where(
                         comment.status.eq(Status.ACTIVE),
-                        comment.postId.eq(postId)
+                        comment.target.eq(target),
+                        comment.targetId.eq(targetId)
                 )
                 .fetchOne();
 
@@ -111,7 +116,7 @@ public class CommentRepositorySupport {
     }
 
     public boolean isCursorInvalid(Long cursorId) {
-        QPlanComment comment = QPlanComment.planComment;
+        QMeetComment comment = QMeetComment.meetComment;
 
         return queryFactory
                 .selectOne()

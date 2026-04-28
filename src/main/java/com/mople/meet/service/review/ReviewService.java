@@ -14,6 +14,7 @@ import com.mople.dto.response.meet.review.ReviewImageListResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.dto.response.user.UserInfo;
+import com.mople.global.enums.CommentTarget;
 import com.mople.global.enums.Status;
 import com.mople.global.utils.cursor.custom.UserCursor;
 import com.mople.entity.meet.Meet;
@@ -156,7 +157,7 @@ public class ReviewService {
         Integer participantCount = participantRepository.countByReviewId(reviewId);
         List<ReviewImage> images = reviewImageRepository.findByReviewId(reviewId);
 
-        Integer commentCount = commentRepositorySupport.countComment(review.getPlanId());
+        Integer commentCount = commentRepositorySupport.countTotalComment(CommentTarget.POST, review.getPlanId());
 
         return ofDetail(
                 new PlanReviewDetailResponse(
@@ -178,7 +179,7 @@ public class ReviewService {
         Integer participantCount = participantRepository.countByReviewId(review.getId());
         List<ReviewImage> images = reviewImageRepository.findByReviewId(review.getId());
 
-        Integer commentCount = commentRepositorySupport.countComment(review.getPlanId());
+        Integer commentCount = commentRepositorySupport.countTotalComment(CommentTarget.POST, review.getPlanId());
 
         return ofDetail(
                 new PlanReviewDetailResponse(

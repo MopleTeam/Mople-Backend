@@ -2,8 +2,9 @@ package com.mople.global.event.handler.domain.impl.plan.delete;
 
 import com.mople.dto.event.data.domain.comment.CommentsSoftDeletedEvent;
 import com.mople.dto.event.data.domain.plan.PlanSoftDeletedEvent;
+import com.mople.global.enums.CommentTarget;
 import com.mople.global.event.handler.domain.DomainEventHandler;
-import com.mople.meet.repository.comment.PlanCommentRepository;
+import com.mople.meet.repository.comment.MeetCommentRepository;
 import com.mople.outbox.service.OutboxService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -20,7 +21,7 @@ import static com.mople.global.utils.batch.Batching.chunk;
 @RequiredArgsConstructor
 public class PlanDeletedFanoutHandler implements DomainEventHandler<PlanSoftDeletedEvent> {
 
-    private final PlanCommentRepository commentRepository;
+    private final MeetCommentRepository commentRepository;
     private final OutboxService outboxService;
 
     @Override
@@ -30,7 +31,7 @@ public class PlanDeletedFanoutHandler implements DomainEventHandler<PlanSoftDele
 
     @Override
     public void handle(PlanSoftDeletedEvent event) {
-        List<Long> commentIds = commentRepository.findIdByPostId(event.planId());
+        List<Long> commentIds = commentRepository.findIdByTargetAndTargetId(CommentTarget.POST, event.planId());
         commentRepository.softDeleteAll(DELETED, commentIds, event.planDeletedBy(), LocalDateTime.now());
 
         chunk(commentIds, ids -> {

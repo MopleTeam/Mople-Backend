@@ -1,13 +1,13 @@
 package com.mople.dto.response.meet.comment;
 
 import com.mople.entity.meet.comment.CommentStats;
-import com.mople.entity.meet.comment.PlanComment;
+import com.mople.entity.meet.comment.MeetComment;
 import com.mople.entity.user.User;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record CommentResponse(
+public record PostCommentResponse(
         Long commentId,
         Long version,
         String content,
@@ -20,12 +20,12 @@ public record CommentResponse(
         List<User> mentions,
         LocalDateTime time
 ) {
-    public CommentResponse(PlanComment comment, CommentStats stats, User writer, List<User> mentions, boolean likedByMe) {
+    public PostCommentResponse(MeetComment comment, CommentStats stats, User writer, List<User> mentions, boolean likedByMe) {
         this(
                 comment.getId(),
                 comment.getVersion(),
                 comment.getContent(),
-                comment.getPostId(),
+                comment.getTargetId(),
                 comment.getParentId(),
                 stats.getReplyCount(),
                 stats.getLikeCount(),
