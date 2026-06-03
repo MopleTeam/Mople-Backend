@@ -9,6 +9,7 @@ import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.notice.MeetNotice;
 import com.mople.global.enums.Status;
+import com.mople.global.enums.notice.NoticeType;
 import com.mople.global.utils.cursor.CursorUtils;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.MeetMemberRepository;
@@ -39,7 +40,7 @@ public class NoticeService {
     private final NoticeRepositorySupport noticeRepositorySupport;
 
     @Transactional(readOnly = true)
-    public CursorPageResponse<NoticeClientResponse> getNoticeList(Long userId, Long meetId, CursorPageRequest request) {
+    public CursorPageResponse<NoticeClientResponse> getNoticeList(Long userId, Long meetId, NoticeType type, CursorPageRequest request) {
         reader.findUser(userId);
         reader.findMeet(meetId);
 
@@ -48,12 +49,12 @@ public class NoticeService {
         }
 
         int size = request.getSafeSize();
-        List<MeetNotice> notices = getNotices(meetId, request.cursor(), size);
+        List<MeetNotice> notices = getNotices(meetId, type, request.cursor(), size);
 
         return buildNoticeCursorPage(size, notices);
     }
 
-    private List<MeetNotice> getNotices(Long meetId, String encodedCursor, int size) {
+    private List<MeetNotice> getNotices(Long meetId, NoticeType type, String encodedCursor, int size) {
 
         Long cursorId = null;
 
@@ -64,7 +65,7 @@ public class NoticeService {
             validateCursor(cursorId);
         }
 
-        return noticeRepositorySupport.findNoticePage(meetId, cursorId, size);
+        return noticeRepositorySupport.findNoticePage(meetId, type, cursorId, size);
     }
 
     private CursorPageResponse<NoticeClientResponse> buildNoticeCursorPage(int size, List<MeetNotice> notices) {
