@@ -36,7 +36,8 @@ public class ReviewDeletedFanoutHandler implements DomainEventHandler<ReviewSoft
 
         chunk(commentIds, ids -> {
             CommentsSoftDeletedEvent deleteEvent = CommentsSoftDeletedEvent.builder()
-                    .postId(event.planId())
+                    .target(CommentTarget.POST)
+                    .targetId(event.planId())
                     .commentIds(ids)
                     .commentsDeletedBy(event.reviewDeletedBy())
                     .build();

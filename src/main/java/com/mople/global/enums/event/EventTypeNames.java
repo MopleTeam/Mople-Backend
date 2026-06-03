@@ -10,6 +10,10 @@ public final class EventTypeNames {
     public static final String MEET_HOST_CHANGED = "MEET_HOST_CHANGED";
     public static final String MEET_PURGE = "MEET_PURGE";
 
+    // NOTICE
+    public static final String NOTICE_SOFT_DELETED = "NOTICE_SOFT_DELETED";
+    public static final String NOTICE_PURGE = "NOTICE_PURGE";
+
     // PLAN
     public static final String PLAN_CREATED = "PLAN_CREATED";
     public static final String PLAN_SOFT_DELETED = "PLAN_SOFT_DELETED";  // 작성자로 탈퇴 시 작성자 PLAN 모두 삭제

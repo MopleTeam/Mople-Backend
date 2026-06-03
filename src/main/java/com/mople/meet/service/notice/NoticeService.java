@@ -2,6 +2,7 @@ package com.mople.meet.service.notice;
 
 import com.mople.core.exception.custom.*;
 import com.mople.dto.client.NoticeClientResponse;
+import com.mople.dto.event.data.domain.notice.NoticeSoftDeletedEvent;
 import com.mople.dto.request.meet.notice.NoticeCreateRequest;
 import com.mople.dto.request.meet.notice.NoticeUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
@@ -15,6 +16,7 @@ import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.MeetMemberRepository;
 import com.mople.meet.repository.impl.notice.NoticeRepositorySupport;
 import com.mople.meet.repository.notice.MeetNoticeRepository;
+import com.mople.outbox.service.OutboxService;
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.StaleObjectStateException;
@@ -26,6 +28,8 @@ import java.util.List;
 
 import static com.mople.dto.client.NoticeClientResponse.ofNotice;
 import static com.mople.global.enums.ExceptionReturnCode.*;
+import static com.mople.global.enums.event.AggregateType.NOTICE;
+import static com.mople.global.enums.event.EventTypeNames.NOTICE_SOFT_DELETED;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
 @Service
@@ -38,6 +42,7 @@ public class NoticeService {
     private final MeetNoticeRepository meetNoticeRepository;
     private final MeetMemberRepository memberRepository;
     private final NoticeRepositorySupport noticeRepositorySupport;
+    private final OutboxService outboxService;
 
     @Transactional(readOnly = true)
     public CursorPageResponse<NoticeClientResponse> getNoticeList(Long userId, Long meetId, NoticeType type, CursorPageRequest request) {
@@ -164,8 +169,14 @@ public class NoticeService {
             throw new AuthException(NOT_HOST);
         }
 
-        meet.softDelete(userId);
-        //todo. purge 이벤트 발행
+        customNotice.softDelete(userId);
+
+        NoticeSoftDeletedEvent deleteEvent = NoticeSoftDeletedEvent.builder()
+                .noticeId(customNotice.getId())
+                .noticeDeletedBy(userId)
+                .build();
+
+        outboxService.save(NOTICE_SOFT_DELETED, NOTICE, customNotice.getId(), deleteEvent);
     }
 
     @Transactional

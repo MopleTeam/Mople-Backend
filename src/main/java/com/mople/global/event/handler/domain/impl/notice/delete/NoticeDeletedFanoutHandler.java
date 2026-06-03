@@ -1,7 +1,7 @@
-package com.mople.global.event.handler.domain.impl.plan.delete;
+package com.mople.global.event.handler.domain.impl.notice.delete;
 
 import com.mople.dto.event.data.domain.comment.CommentsSoftDeletedEvent;
-import com.mople.dto.event.data.domain.plan.PlanSoftDeletedEvent;
+import com.mople.dto.event.data.domain.notice.NoticeSoftDeletedEvent;
 import com.mople.global.enums.CommentTarget;
 import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.comment.MeetCommentRepository;
@@ -13,36 +13,36 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.mople.global.enums.Status.DELETED;
-import static com.mople.global.enums.event.AggregateType.POST;
+import static com.mople.global.enums.event.AggregateType.NOTICE;
 import static com.mople.global.enums.event.EventTypeNames.COMMENTS_SOFT_DELETED;
 import static com.mople.global.utils.batch.Batching.chunk;
 
 @Component
 @RequiredArgsConstructor
-public class PlanDeletedFanoutHandler implements DomainEventHandler<PlanSoftDeletedEvent> {
+public class NoticeDeletedFanoutHandler implements DomainEventHandler<NoticeSoftDeletedEvent> {
 
     private final MeetCommentRepository commentRepository;
     private final OutboxService outboxService;
 
     @Override
-    public Class<PlanSoftDeletedEvent> getHandledType() {
-        return PlanSoftDeletedEvent.class;
+    public Class<NoticeSoftDeletedEvent> getHandledType() {
+        return NoticeSoftDeletedEvent.class;
     }
 
     @Override
-    public void handle(PlanSoftDeletedEvent event) {
-        List<Long> commentIds = commentRepository.findIdByTargetAndTargetId(CommentTarget.POST, event.planId());
-        commentRepository.softDeleteAll(DELETED, commentIds, event.planDeletedBy(), LocalDateTime.now());
+    public void handle(NoticeSoftDeletedEvent event) {
+        List<Long> commentIds = commentRepository.findIdByTargetAndTargetId(CommentTarget.NOTICE, event.noticeId());
+        commentRepository.softDeleteAll(DELETED, commentIds, event.noticeDeletedBy(), LocalDateTime.now());
 
         chunk(commentIds, ids -> {
             CommentsSoftDeletedEvent deleteEvent = CommentsSoftDeletedEvent.builder()
-                    .target(CommentTarget.POST)
-                    .targetId(event.planId())
+                    .target(CommentTarget.NOTICE)
+                    .targetId(event.noticeId())
                     .commentIds(ids)
-                    .commentsDeletedBy(event.planDeletedBy())
+                    .commentsDeletedBy(event.noticeDeletedBy())
                     .build();
 
-            outboxService.save(COMMENTS_SOFT_DELETED, POST, event.planId(), deleteEvent);
+            outboxService.save(COMMENTS_SOFT_DELETED, NOTICE, event.noticeId(), deleteEvent);
         });
     }
 }
