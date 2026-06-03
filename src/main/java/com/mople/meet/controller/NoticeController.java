@@ -39,6 +39,22 @@ public class NoticeController {
     }
 
     @Operation(
+            summary = "특정 공지 조회 API",
+            description = "모임의 특정 공지를 상세 조회합니다."
+    )
+    @GetMapping("/detail/{noticeId}")
+    public ResponseEntity<NoticeClientResponse> getMeetingPlanDetail(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @PathVariable Long noticeId
+    ) {
+        var body = noticeService.getSpecNotice(user.id(), noticeId);
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.getVersion() + "\"")
+                .body(body);
+    }
+
+    @Operation(
             summary = "공지 생성 API",
             description = "모임장이 공지를 생성하고, 생성된 공지 정보를 반환합니다."
     )

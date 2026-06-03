@@ -8,6 +8,7 @@ import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.notice.MeetNotice;
+import com.mople.global.enums.Status;
 import com.mople.global.utils.cursor.CursorUtils;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.MeetMemberRepository;
@@ -77,6 +78,19 @@ public class NoticeService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public NoticeClientResponse getSpecNotice(Long userId, Long noticeId) {
+        reader.findUser(userId);
+        MeetNotice notice = reader.findNotice(noticeId);
+        Long meetId = notice.getMeetId();
+
+        if (!memberRepository.existsByMeetIdAndUserId(meetId, userId)) {
+            throw new AuthException(NOT_MEMBER);
+        }
+
+        return ofNotice(notice);
+    }
+
     private void validateCursor(Long cursorId) {
         if (noticeRepositorySupport.isCursorInvalid(cursorId)) {
             throw new CursorException(INVALID_CURSOR);
@@ -112,7 +126,7 @@ public class NoticeService {
             throw new AuthException(NOT_HOST);
         }
 
-        MeetNotice customNotice = meetNoticeRepository.findById(noticeId)
+        MeetNotice customNotice = meetNoticeRepository.findByIdAndStatus(noticeId, Status.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_NOTICE));
 
         if (!customNotice.getMeetId().equals(meetId)) {
@@ -140,7 +154,7 @@ public class NoticeService {
     public void removeNotice(Long userId, Long noticeId) {
         reader.findUser(userId);
 
-        MeetNotice customNotice = meetNoticeRepository.findById(noticeId)
+        MeetNotice customNotice = meetNoticeRepository.findByIdAndStatus(noticeId, Status.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_NOTICE));
 
         Meet meet = reader.findMeet(customNotice.getMeetId());
@@ -149,14 +163,15 @@ public class NoticeService {
             throw new AuthException(NOT_HOST);
         }
 
-        meetNoticeRepository.delete(customNotice);
+        meet.softDelete(userId);
+        //todo. purge 이벤트 발행
     }
 
     @Transactional
     public NoticeClientResponse pinNotice(Long userId, Long noticeId) {
         reader.findUser(userId);
 
-        MeetNotice notice = meetNoticeRepository.findById(noticeId)
+        MeetNotice notice = meetNoticeRepository.findByIdAndStatus(noticeId, Status.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_NOTICE));
 
         Meet meet = reader.findMeet(notice.getMeetId());
@@ -181,7 +196,7 @@ public class NoticeService {
     public NoticeClientResponse unpinNotice(Long userId, Long noticeId) {
         reader.findUser(userId);
 
-        MeetNotice notice = meetNoticeRepository.findById(noticeId)
+        MeetNotice notice = meetNoticeRepository.findByIdAndStatus(noticeId, Status.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_NOTICE));
 
         Meet meet = reader.findMeet(notice.getMeetId());
