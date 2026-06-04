@@ -2,17 +2,21 @@ package com.mople.meet.service.notice;
 
 import com.mople.core.exception.custom.*;
 import com.mople.dto.client.NoticeClientResponse;
+import com.mople.dto.event.data.domain.notice.NoticeSoftDeletedEvent;
 import com.mople.dto.request.meet.notice.NoticeCreateRequest;
 import com.mople.dto.request.meet.notice.NoticeUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.notice.MeetNotice;
+import com.mople.global.enums.Status;
+import com.mople.global.enums.notice.NoticeType;
 import com.mople.global.utils.cursor.CursorUtils;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.MeetMemberRepository;
 import com.mople.meet.repository.impl.notice.NoticeRepositorySupport;
 import com.mople.meet.repository.notice.MeetNoticeRepository;
+import com.mople.outbox.service.OutboxService;
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.StaleObjectStateException;
@@ -24,6 +28,8 @@ import java.util.List;
 
 import static com.mople.dto.client.NoticeClientResponse.ofNotice;
 import static com.mople.global.enums.ExceptionReturnCode.*;
+import static com.mople.global.enums.event.AggregateType.NOTICE;
+import static com.mople.global.enums.event.EventTypeNames.NOTICE_SOFT_DELETED;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
 @Service
@@ -36,9 +42,10 @@ public class NoticeService {
     private final MeetNoticeRepository meetNoticeRepository;
     private final MeetMemberRepository memberRepository;
     private final NoticeRepositorySupport noticeRepositorySupport;
+    private final OutboxService outboxService;
 
     @Transactional(readOnly = true)
-    public CursorPageResponse<NoticeClientResponse> getNoticeList(Long userId, Long meetId, CursorPageRequest request) {
+    public CursorPageResponse<NoticeClientResponse> getNoticeList(Long userId, Long meetId, NoticeType type, CursorPageRequest request) {
         reader.findUser(userId);
         reader.findMeet(meetId);
 
@@ -47,12 +54,12 @@ public class NoticeService {
         }
 
         int size = request.getSafeSize();
-        List<MeetNotice> notices = getNotices(meetId, request.cursor(), size);
+        List<MeetNotice> notices = getNotices(meetId, type, request.cursor(), size);
 
         return buildNoticeCursorPage(size, notices);
     }
 
-    private List<MeetNotice> getNotices(Long meetId, String encodedCursor, int size) {
+    private List<MeetNotice> getNotices(Long meetId, NoticeType type, String encodedCursor, int size) {
 
         Long cursorId = null;
 
@@ -63,7 +70,7 @@ public class NoticeService {
             validateCursor(cursorId);
         }
 
-        return noticeRepositorySupport.findNoticePage(meetId, cursorId, size);
+        return noticeRepositorySupport.findNoticePage(meetId, type, cursorId, size);
     }
 
     private CursorPageResponse<NoticeClientResponse> buildNoticeCursorPage(int size, List<MeetNotice> notices) {
@@ -75,6 +82,19 @@ public class NoticeService {
                 },
                 NoticeClientResponse::ofNotices
         );
+    }
+
+    @Transactional(readOnly = true)
+    public NoticeClientResponse getSpecNotice(Long userId, Long noticeId) {
+        reader.findUser(userId);
+        MeetNotice notice = reader.findNotice(noticeId);
+        Long meetId = notice.getMeetId();
+
+        if (!memberRepository.existsByMeetIdAndUserId(meetId, userId)) {
+            throw new AuthException(NOT_MEMBER);
+        }
+
+        return ofNotice(notice);
     }
 
     private void validateCursor(Long cursorId) {
@@ -112,7 +132,7 @@ public class NoticeService {
             throw new AuthException(NOT_HOST);
         }
 
-        MeetNotice customNotice = meetNoticeRepository.findById(noticeId)
+        MeetNotice customNotice = meetNoticeRepository.findByIdAndStatus(noticeId, Status.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_NOTICE));
 
         if (!customNotice.getMeetId().equals(meetId)) {
@@ -140,7 +160,7 @@ public class NoticeService {
     public void removeNotice(Long userId, Long noticeId) {
         reader.findUser(userId);
 
-        MeetNotice customNotice = meetNoticeRepository.findById(noticeId)
+        MeetNotice customNotice = meetNoticeRepository.findByIdAndStatus(noticeId, Status.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_NOTICE));
 
         Meet meet = reader.findMeet(customNotice.getMeetId());
@@ -149,14 +169,21 @@ public class NoticeService {
             throw new AuthException(NOT_HOST);
         }
 
-        meetNoticeRepository.delete(customNotice);
+        customNotice.softDelete(userId);
+
+        NoticeSoftDeletedEvent deleteEvent = NoticeSoftDeletedEvent.builder()
+                .noticeId(customNotice.getId())
+                .noticeDeletedBy(userId)
+                .build();
+
+        outboxService.save(NOTICE_SOFT_DELETED, NOTICE, customNotice.getId(), deleteEvent);
     }
 
     @Transactional
     public NoticeClientResponse pinNotice(Long userId, Long noticeId) {
         reader.findUser(userId);
 
-        MeetNotice notice = meetNoticeRepository.findById(noticeId)
+        MeetNotice notice = meetNoticeRepository.findByIdAndStatus(noticeId, Status.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_NOTICE));
 
         Meet meet = reader.findMeet(notice.getMeetId());
@@ -181,7 +208,7 @@ public class NoticeService {
     public NoticeClientResponse unpinNotice(Long userId, Long noticeId) {
         reader.findUser(userId);
 
-        MeetNotice notice = meetNoticeRepository.findById(noticeId)
+        MeetNotice notice = meetNoticeRepository.findByIdAndStatus(noticeId, Status.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_NOTICE));
 
         Meet meet = reader.findMeet(notice.getMeetId());

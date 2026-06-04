@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.mople.global.enums.ExceptionReturnCode.*;
-import static com.mople.global.enums.event.AggregateType.POST;
 import static com.mople.global.enums.event.EventTypeNames.COMMENTS_SOFT_DELETED;
 
 @Service
@@ -115,17 +114,18 @@ public class CommentService {
         }
 
         commentRepository.softDeleteAll(Status.DELETED, commentIdsToDelete, userId, LocalDateTime.now());
-        generateCommentsDeletedEvent(commentIdsToDelete, targetId, comment.getWriterId());
+        generateCommentsDeletedEvent(commentIdsToDelete, type, targetId, comment.getWriterId());
     }
 
-    private void generateCommentsDeletedEvent(List<Long> commentIds, Long postId, Long writerId) {
+    private void generateCommentsDeletedEvent(List<Long> commentIds, CommentTarget type, Long targetId, Long writerId) {
         CommentsSoftDeletedEvent deletedEvent = CommentsSoftDeletedEvent.builder()
-                .postId(postId)
+                .target(type)
+                .targetId(targetId)
                 .commentIds(commentIds)
                 .commentsDeletedBy(writerId)
                 .build();
 
-        outboxService.save(COMMENTS_SOFT_DELETED, POST, postId, deletedEvent);
+        outboxService.save(COMMENTS_SOFT_DELETED, type.toAggregateType(), targetId, deletedEvent);
     }
 
     private Long getMeetId(CommentTarget type, Long targetId) {

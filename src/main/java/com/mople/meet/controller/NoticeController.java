@@ -7,6 +7,7 @@ import com.mople.dto.request.meet.notice.NoticeUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.response.pagination.CursorPageResponse;
+import com.mople.global.enums.notice.NoticeType;
 import com.mople.meet.service.notice.NoticeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,9 +34,26 @@ public class NoticeController {
     public ResponseEntity<CursorPageResponse<NoticeClientResponse>> getMeetNoticeList(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long meetId,
+            @RequestParam(required = false) NoticeType type,
             @ParameterObject @Valid CursorPageRequest request
     ) {
-        return ResponseEntity.ok(noticeService.getNoticeList(user.id(), meetId, request));
+        return ResponseEntity.ok(noticeService.getNoticeList(user.id(), meetId, type, request));
+    }
+
+    @Operation(
+            summary = "특정 공지 조회 API",
+            description = "모임의 특정 공지를 상세 조회합니다."
+    )
+    @GetMapping("/detail/{noticeId}")
+    public ResponseEntity<NoticeClientResponse> getMeetingPlanDetail(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @PathVariable Long noticeId
+    ) {
+        var body = noticeService.getSpecNotice(user.id(), noticeId);
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.getVersion() + "\"")
+                .body(body);
     }
 
     @Operation(

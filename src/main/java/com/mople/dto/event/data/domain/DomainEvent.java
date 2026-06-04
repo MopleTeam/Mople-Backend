@@ -9,6 +9,8 @@ import com.mople.dto.event.data.domain.comment.CommentsSoftDeletedEvent;
 import com.mople.dto.event.data.domain.image.ImageDeletedEvent;
 import com.mople.dto.event.data.domain.meet.*;
 import com.mople.dto.event.data.domain.global.NotifyRequestedEvent;
+import com.mople.dto.event.data.domain.notice.NoticePurgeEvent;
+import com.mople.dto.event.data.domain.notice.NoticeSoftDeletedEvent;
 import com.mople.dto.event.data.domain.plan.*;
 import com.mople.dto.event.data.domain.review.*;
 import com.mople.dto.event.data.domain.user.UserDeletedEvent;
@@ -36,6 +38,10 @@ import static com.mople.global.enums.event.EventTypeNames.*;
         @JsonSubTypes.Type(value = HostChangedEvent.class, name = MEET_HOST_CHANGED),
         @JsonSubTypes.Type(value = MeetJoinedEvent.class, name = MEET_JOINED),
         @JsonSubTypes.Type(value = MeetImageChangedEvent.class, name = MEET_IMAGE_CHANGED),
+
+        // Notice
+        @JsonSubTypes.Type(value = NoticeSoftDeletedEvent.class, name = NOTICE_SOFT_DELETED),
+        @JsonSubTypes.Type(value = NoticePurgeEvent.class, name = NOTICE_PURGE),
 
         // Plan
         @JsonSubTypes.Type(value = PlanSoftDeletedEvent.class, name = PLAN_SOFT_DELETED),

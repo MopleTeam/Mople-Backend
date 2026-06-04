@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
-import static com.mople.global.enums.event.AggregateType.*;
 import static com.mople.global.enums.event.EventTypeNames.COMMENTS_PURGE;
 
 @Component
@@ -31,6 +30,6 @@ public class CommentsPurgeRegisterHandler implements DomainEventHandler<Comments
                 .commentIds(event.commentIds())
                 .build();
 
-        outboxService.saveWithRunAt(COMMENTS_PURGE, POST, event.postId(), runAt, purgeEvent);
+        outboxService.saveWithRunAt(COMMENTS_PURGE, event.target().toAggregateType(), event.targetId(), runAt, purgeEvent);
     }
 }

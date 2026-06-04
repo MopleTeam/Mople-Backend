@@ -10,7 +10,6 @@ import com.mople.global.event.handler.domain.DomainEventHandler;
 import com.mople.meet.repository.MeetInviteRepository;
 import com.mople.meet.repository.MeetMemberRepository;
 import com.mople.meet.repository.MeetRepository;
-import com.mople.meet.repository.notice.MeetNoticeRepository;
 import com.mople.outbox.service.OutboxService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -25,7 +24,6 @@ public class MeetCleanupHandler implements DomainEventHandler<MeetSoftDeletedEve
     private final MeetRepository meetRepository;
     private final MeetMemberRepository memberRepository;
     private final MeetInviteRepository inviteRepository;
-    private final MeetNoticeRepository noticeRepository;
     private final OutboxService outboxService;
 
     @Override
@@ -40,7 +38,6 @@ public class MeetCleanupHandler implements DomainEventHandler<MeetSoftDeletedEve
 
         memberRepository.deleteByMeetId(event.meetId());
         inviteRepository.deleteByMeetId(event.meetId());
-        noticeRepository.deleteByMeetId(event.meetId());
 
         if (meet.getMeetImage() == null || meet.getMeetImage().isBlank()) {
             return;

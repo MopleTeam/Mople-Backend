@@ -1,10 +1,12 @@
 package com.mople.global.event.handler.domain.impl.meet.delete;
 
 import com.mople.dto.event.data.domain.meet.MeetSoftDeletedEvent;
+import com.mople.dto.event.data.domain.notice.NoticeSoftDeletedEvent;
 import com.mople.dto.event.data.domain.plan.PlanSoftDeletedEvent;
 import com.mople.dto.event.data.domain.review.ReviewSoftDeletedEvent;
 import com.mople.global.enums.event.DeletionCause;
 import com.mople.global.event.handler.domain.DomainEventHandler;
+import com.mople.meet.repository.notice.MeetNoticeRepository;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.meet.repository.review.PlanReviewRepository;
 import com.mople.outbox.service.OutboxService;
@@ -25,6 +27,7 @@ public class MeetDeletedFanoutHandler implements DomainEventHandler<MeetSoftDele
 
     private final MeetPlanRepository planRepository;
     private final PlanReviewRepository reviewRepository;
+    private final MeetNoticeRepository noticeRepository;
     private final OutboxService outboxService;
 
     @Override
@@ -36,9 +39,11 @@ public class MeetDeletedFanoutHandler implements DomainEventHandler<MeetSoftDele
     public void handle(MeetSoftDeletedEvent event) {
         List<Long> planIds = planRepository.findIdsByMeetId(event.meetId());
         List<Long> reviewIds = reviewRepository.findIdsByMeetId(event.meetId());
+        List<Long> noticeIds = noticeRepository.findIdsByMeetId(event.meetId());
 
         planRepository.softDeleteAll(DELETED, planIds, event.meetDeletedBy(), LocalDateTime.now());
         reviewRepository.softDeleteAll(DELETED, reviewIds, event.meetDeletedBy(), LocalDateTime.now());
+        noticeRepository.softDeleteAll(DELETED, noticeIds, event.meetDeletedBy(), LocalDateTime.now());
 
         chunk(planIds, ids ->
             ids.forEach(id -> {
@@ -61,6 +66,17 @@ public class MeetDeletedFanoutHandler implements DomainEventHandler<MeetSoftDele
                         .build();
 
                 outboxService.save(REVIEW_SOFT_DELETED, REVIEW, id, deleteEvent);
+            })
+        );
+
+        chunk(noticeIds, ids ->
+            ids.forEach(id -> {
+                NoticeSoftDeletedEvent deleteEvent = NoticeSoftDeletedEvent.builder()
+                        .noticeId(id)
+                        .noticeDeletedBy(event.meetDeletedBy())
+                        .build();
+
+                outboxService.save(NOTICE_SOFT_DELETED, NOTICE, id, deleteEvent);
             })
         );
     }
