@@ -7,7 +7,6 @@ import com.mople.dto.event.data.domain.comment.CommentMentionAddedEvent;
 import com.mople.dto.request.meet.comment.CommentCreateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.meet.comment.PostCommentResponse;
-import com.mople.dto.response.meet.comment.PostCommentUpdateResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.entity.meet.comment.CommentStats;
@@ -277,7 +276,7 @@ public class PostCommentService {
         List<User> mentionedUsers = mentionService.findMentionedUsers(comment.getId());
         boolean likedByMe = likeService.likedByMe(user.getId(), comment.getId());
 
-        return ofUpdate(new PostCommentUpdateResponse(comment, user, stats, mentionedUsers, likedByMe));
+        return ofPostComment(new PostCommentResponse(comment, stats, user, mentionedUsers, likedByMe));
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
