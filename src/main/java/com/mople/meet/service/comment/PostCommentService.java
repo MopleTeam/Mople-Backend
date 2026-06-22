@@ -98,9 +98,9 @@ public class PostCommentService {
         reader.findComment(commentId);
 
         int size = request.getSafeSize();
-        List<PostCommentResponse> postCommentRespons = getCommentReplies(userId, postId, commentId, request.cursor(), size);
+        List<PostCommentResponse> postCommentResponses = getCommentReplies(userId, postId, commentId, request.cursor(), size);
 
-        return buildCommentCursorPage(size, postCommentRespons);
+        return buildCommentCursorPage(size, postCommentResponses);
     }
 
     private CursorPageResponse<PostCommentClientResponse> buildCommentCursorPage(int size, List<PostCommentResponse> postCommentRespons) {

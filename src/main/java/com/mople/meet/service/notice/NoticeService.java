@@ -7,8 +7,10 @@ import com.mople.dto.request.meet.notice.NoticeCreateRequest;
 import com.mople.dto.request.meet.notice.NoticeUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.pagination.CursorPageResponse;
+import com.mople.dto.response.user.UserInfo;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.notice.MeetNotice;
+import com.mople.entity.user.User;
 import com.mople.global.enums.Status;
 import com.mople.global.enums.notice.NoticeType;
 import com.mople.global.utils.cursor.CursorUtils;
@@ -17,6 +19,7 @@ import com.mople.meet.repository.MeetMemberRepository;
 import com.mople.meet.repository.impl.notice.NoticeRepositorySupport;
 import com.mople.meet.repository.notice.MeetNoticeRepository;
 import com.mople.outbox.service.OutboxService;
+import com.mople.user.repository.UserRepository;
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.StaleObjectStateException;
@@ -25,8 +28,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.mople.dto.client.NoticeClientResponse.ofNotice;
+import static com.mople.dto.client.NoticeClientResponse.ofNotices;
+import static com.mople.dto.response.user.UserInfo.of;
+import static com.mople.dto.response.user.UserInfo.ofMap;
 import static com.mople.global.enums.ExceptionReturnCode.*;
 import static com.mople.global.enums.event.AggregateType.NOTICE;
 import static com.mople.global.enums.event.EventTypeNames.NOTICE_SOFT_DELETED;
@@ -42,6 +49,7 @@ public class NoticeService {
     private final MeetNoticeRepository meetNoticeRepository;
     private final MeetMemberRepository memberRepository;
     private final NoticeRepositorySupport noticeRepositorySupport;
+    private final UserRepository userRepository;
     private final OutboxService outboxService;
 
     @Transactional(readOnly = true)
@@ -74,13 +82,19 @@ public class NoticeService {
     }
 
     private CursorPageResponse<NoticeClientResponse> buildNoticeCursorPage(int size, List<MeetNotice> notices) {
+        List<Long> userIds = notices.stream()
+                .map(MeetNotice::getCreatorId)
+                .toList();
+
+        Map<Long, UserInfo> userInfoById = ofMap(userRepository.findByIdInAndStatus(userIds, Status.ACTIVE));
+
         return buildCursorPage(
                 notices,
                 size,
                 n -> new String[]{
                         n.getId().toString()
                 },
-                NoticeClientResponse::ofNotices
+                list -> ofNotices(list, userInfoById)
         );
     }
 
@@ -94,7 +108,9 @@ public class NoticeService {
             throw new AuthException(NOT_MEMBER);
         }
 
-        return ofNotice(notice);
+        User writer = reader.findUser(notice.getCreatorId());
+
+        return ofNotice(notice, of(writer));
     }
 
     private void validateCursor(Long cursorId) {
@@ -107,7 +123,7 @@ public class NoticeService {
     public NoticeClientResponse createNotice(Long userId, NoticeCreateRequest request) {
         Long meetId = request.meetId();
 
-        reader.findUser(userId);
+        User user = reader.findUser(userId);
         Meet meet = reader.findMeet(meetId);
 
         if (!meet.matchHost(userId)) {
@@ -118,23 +134,21 @@ public class NoticeService {
                 MeetNotice.ofCustom(request.content(), userId, meetId)
         );
 
-        return ofNotice(customNotice);
+        return ofNotice(customNotice, of(user));
     }
 
     @Transactional
     public NoticeClientResponse updateNotice(Long userId, Long noticeId, NoticeUpdateRequest request) {
         Long meetId = request.meetId();
 
-        reader.findUser(userId);
+        User user = reader.findUser(userId);
         Meet meet = reader.findMeet(meetId);
 
         if (!meet.matchHost(userId)) {
             throw new AuthException(NOT_HOST);
         }
 
-        MeetNotice customNotice = meetNoticeRepository.findByIdAndStatus(noticeId, Status.ACTIVE)
-                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_NOTICE));
-
+        MeetNotice customNotice = reader.findNotice(noticeId);
         if (!customNotice.getMeetId().equals(meetId)) {
             throw new BadRequestException(NOT_FOUND_NOTICE);
         }
@@ -153,16 +167,13 @@ public class NoticeService {
             throw new ConcurrencyConflictException(REQUEST_CONFLICT, currentVersion);
         }
 
-        return ofNotice(customNotice);
+        return ofNotice(customNotice, of(user));
     }
 
     @Transactional
     public void removeNotice(Long userId, Long noticeId) {
         reader.findUser(userId);
-
-        MeetNotice customNotice = meetNoticeRepository.findByIdAndStatus(noticeId, Status.ACTIVE)
-                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_NOTICE));
-
+        MeetNotice customNotice = reader.findNotice(noticeId);
         Meet meet = reader.findMeet(customNotice.getMeetId());
 
         if (!meet.matchHost(userId)) {
@@ -181,11 +192,8 @@ public class NoticeService {
 
     @Transactional
     public NoticeClientResponse pinNotice(Long userId, Long noticeId) {
-        reader.findUser(userId);
-
-        MeetNotice notice = meetNoticeRepository.findByIdAndStatus(noticeId, Status.ACTIVE)
-                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_NOTICE));
-
+        User user = reader.findUser(userId);
+        MeetNotice notice = reader.findNotice(noticeId);
         Meet meet = reader.findMeet(notice.getMeetId());
 
         if (!meet.matchHost(userId)) {
@@ -193,7 +201,7 @@ public class NoticeService {
         }
 
         if (notice.isPinned()) {
-            return ofNotice(notice);
+            return ofNotice(notice, of(user));
         }
 
         meetNoticeRepository.unpinAllByMeetId(meet.getId());
@@ -201,16 +209,13 @@ public class NoticeService {
         notice.pin();
         meetNoticeRepository.flush();
 
-        return ofNotice(notice);
+        return ofNotice(notice, of(user));
     }
 
     @Transactional
     public NoticeClientResponse unpinNotice(Long userId, Long noticeId) {
-        reader.findUser(userId);
-
-        MeetNotice notice = meetNoticeRepository.findByIdAndStatus(noticeId, Status.ACTIVE)
-                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND_NOTICE));
-
+        User user = reader.findUser(userId);
+        MeetNotice notice = reader.findNotice(noticeId);
         Meet meet = reader.findMeet(notice.getMeetId());
 
         if (!meet.matchHost(userId)) {
@@ -218,12 +223,12 @@ public class NoticeService {
         }
 
         if (!notice.isPinned()) {
-            return ofNotice(notice);
+            return ofNotice(notice, of(user));
         }
 
         notice.unpin();
         meetNoticeRepository.flush();
 
-        return ofNotice(notice);
+        return ofNotice(notice, of(user));
     }
 }
