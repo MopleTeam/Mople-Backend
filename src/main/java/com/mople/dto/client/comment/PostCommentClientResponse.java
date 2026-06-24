@@ -1,7 +1,6 @@
 package com.mople.dto.client.comment;
 
 import com.mople.dto.response.meet.comment.PostCommentResponse;
-import com.mople.dto.response.meet.comment.PostCommentUpdateResponse;
 
 import com.mople.dto.response.user.UserInfo;
 import com.mople.entity.user.User;
@@ -43,22 +42,6 @@ public class PostCommentClientResponse implements CommentClientResponse {
                 .writer(UserInfo.of(postCommentResponse.writer()))
                 .mentions(ofMentions(postCommentResponse.mentions()))
                 .time(postCommentResponse.time())
-                .build();
-    }
-
-    public static PostCommentClientResponse ofUpdate(PostCommentUpdateResponse updateResponse) {
-        return PostCommentClientResponse.builder()
-                .commentId(updateResponse.commentId())
-                .version(updateResponse.version())
-                .content(updateResponse.content())
-                .postId(updateResponse.postId())
-                .parentId(updateResponse.parentId())
-                .replyCount(updateResponse.replyCount())
-                .likeCount(updateResponse.likeCount())
-                .likedByMe(updateResponse.likedByMe())
-                .writer(UserInfo.of(updateResponse.writer()))
-                .mentions(ofMentions(updateResponse.mentions()))
-                .time(updateResponse.time())
                 .build();
     }
 

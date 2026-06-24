@@ -41,6 +41,7 @@ import java.util.*;
 import static com.mople.dto.client.MeetClientResponse.*;
 import static com.mople.dto.client.NoticeClientResponse.ofNotice;
 import static com.mople.dto.client.UserRoleClientResponse.ofMembers;
+import static com.mople.dto.response.user.UserInfo.of;
 import static com.mople.dto.response.user.UserInfo.ofMap;
 import static com.mople.global.enums.event.AggregateType.MEET;
 import static com.mople.global.enums.ExceptionReturnCode.*;
@@ -123,12 +124,9 @@ public class MeetService {
 
         Integer memberCount = meetRepositorySupport.countMeetMember(meet.getId());
 
-        MeetNotice pinnedNotice = meetNoticeRepository.findPinnedNotice(meet.getId());
-        NoticeClientResponse pinnedNoticeResponse = pinnedNotice != null ? ofNotice(pinnedNotice) : null;
-
         return ofMeet(
                 new MeetInfoResponse(meet, memberCount),
-                pinnedNoticeResponse
+                null
         );
     }
 
@@ -171,11 +169,18 @@ public class MeetService {
         Integer memberCount = meetRepositorySupport.countMeetMember(meet.getId());
 
         MeetNotice pinnedNotice = meetNoticeRepository.findPinnedNotice(meet.getId());
-        NoticeClientResponse pinnedNoticeResponse = pinnedNotice != null ? ofNotice(pinnedNotice) : null;
+        if (pinnedNotice == null) {
+            return ofMeet(
+                    new MeetInfoResponse(meet, memberCount),
+                    null
+            );
+        }
+
+        User noticeWriter = reader.findUser(pinnedNotice.getCreatorId());
 
         return ofMeet(
                 new MeetInfoResponse(meet, memberCount),
-                pinnedNoticeResponse
+                ofNotice(pinnedNotice, UserInfo.of(noticeWriter))
         );
     }
 
@@ -233,11 +238,18 @@ public class MeetService {
         Integer memberCount = meetRepositorySupport.countMeetMember(meetId);
 
         MeetNotice pinnedNotice = meetNoticeRepository.findPinnedNotice(meet.getId());
-        NoticeClientResponse pinnedNoticeResponse = pinnedNotice != null ? ofNotice(pinnedNotice) : null;
+        if (pinnedNotice == null) {
+            return ofMeet(
+                    new MeetInfoResponse(meet, memberCount),
+                    null
+            );
+        }
+
+        User noticeWriter = reader.findUser(pinnedNotice.getCreatorId());
 
         return ofMeet(
                 new MeetInfoResponse(meet, memberCount),
-                pinnedNoticeResponse
+                ofNotice(pinnedNotice, UserInfo.of(noticeWriter))
         );
     }
 
@@ -327,11 +339,18 @@ public class MeetService {
         Integer memberCount = meetRepositorySupport.countMeetMember(meetId);
 
         MeetNotice pinnedNotice = meetNoticeRepository.findPinnedNotice(meet.getId());
-        NoticeClientResponse pinnedNoticeResponse = pinnedNotice != null ? ofNotice(pinnedNotice) : null;
+        if (pinnedNotice == null) {
+            return ofMeet(
+                    new MeetInfoResponse(meet, memberCount),
+                    null
+            );
+        }
+
+        User noticeWriter = reader.findUser(pinnedNotice.getCreatorId());
 
         return ofMeet(
                 new MeetInfoResponse(meet, memberCount),
-                pinnedNoticeResponse
+                ofNotice(pinnedNotice, UserInfo.of(noticeWriter))
         );
     }
 
@@ -424,11 +443,18 @@ public class MeetService {
         Integer memberCount = meetRepositorySupport.countMeetMember(meet.getId());
 
         MeetNotice pinnedNotice = meetNoticeRepository.findPinnedNotice(meet.getId());
-        NoticeClientResponse pinnedNoticeResponse = pinnedNotice != null ? ofNotice(pinnedNotice) : null;
+        if (pinnedNotice == null) {
+            return ofMeet(
+                    new MeetInfoResponse(meet, memberCount),
+                    null
+            );
+        }
+
+        User noticeWriter = reader.findUser(pinnedNotice.getCreatorId());
 
         return ofMeet(
                 new MeetInfoResponse(meet, memberCount),
-                pinnedNoticeResponse
+                ofNotice(pinnedNotice, UserInfo.of(noticeWriter))
         );
     }
 

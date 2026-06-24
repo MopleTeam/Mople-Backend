@@ -7,7 +7,6 @@ import com.mople.dto.event.data.domain.comment.CommentMentionAddedEvent;
 import com.mople.dto.request.meet.comment.CommentCreateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.meet.comment.PostCommentResponse;
-import com.mople.dto.response.meet.comment.PostCommentUpdateResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
 import com.mople.entity.meet.comment.CommentStats;
@@ -99,9 +98,9 @@ public class PostCommentService {
         reader.findComment(commentId);
 
         int size = request.getSafeSize();
-        List<PostCommentResponse> postCommentRespons = getCommentReplies(userId, postId, commentId, request.cursor(), size);
+        List<PostCommentResponse> postCommentResponses = getCommentReplies(userId, postId, commentId, request.cursor(), size);
 
-        return buildCommentCursorPage(size, postCommentRespons);
+        return buildCommentCursorPage(size, postCommentResponses);
     }
 
     private CursorPageResponse<PostCommentClientResponse> buildCommentCursorPage(int size, List<PostCommentResponse> postCommentRespons) {
@@ -277,7 +276,7 @@ public class PostCommentService {
         List<User> mentionedUsers = mentionService.findMentionedUsers(comment.getId());
         boolean likedByMe = likeService.likedByMe(user.getId(), comment.getId());
 
-        return ofUpdate(new PostCommentUpdateResponse(comment, user, stats, mentionedUsers, likedByMe));
+        return ofPostComment(new PostCommentResponse(comment, stats, user, mentionedUsers, likedByMe));
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
