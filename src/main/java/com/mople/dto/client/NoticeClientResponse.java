@@ -24,7 +24,14 @@ public class NoticeClientResponse {
 
     public static List<NoticeClientResponse> ofNotices(List<MeetNotice> notices, Map<Long, UserInfo> userInfoById) {
         return notices.stream()
-                .map(notice -> ofNotice(notice, userInfoById.get(notice.getCreatorId())))
+                .map(notice -> {
+                    Long creatorId = notice.getCreatorId();
+                    UserInfo writerInfo = creatorId == null
+                            ? null
+                            : userInfoById.get(creatorId);
+
+                    return ofNotice(notice, writerInfo);
+                })
                 .toList();
     }
 

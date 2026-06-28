@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.mople.dto.client.NoticeClientResponse.ofNotice;
 import static com.mople.dto.client.NoticeClientResponse.ofNotices;
@@ -84,6 +85,8 @@ public class NoticeService {
     private CursorPageResponse<NoticeClientResponse> buildNoticeCursorPage(int size, List<MeetNotice> notices) {
         List<Long> userIds = notices.stream()
                 .map(MeetNotice::getCreatorId)
+                .filter(Objects::nonNull)
+                .distinct()
                 .toList();
 
         Map<Long, UserInfo> userInfoById = ofMap(userRepository.findByIdInAndStatus(userIds, Status.ACTIVE));
@@ -106,6 +109,10 @@ public class NoticeService {
 
         if (!memberRepository.existsByMeetIdAndUserId(meetId, userId)) {
             throw new AuthException(NOT_MEMBER);
+        }
+
+        if (notice.getType() == NoticeType.SYSTEM) {
+            return ofNotice(notice, null);
         }
 
         User writer = reader.findUser(notice.getCreatorId());
