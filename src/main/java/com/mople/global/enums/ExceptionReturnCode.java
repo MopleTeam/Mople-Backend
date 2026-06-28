@@ -57,6 +57,8 @@ public enum ExceptionReturnCode {
     NOT_FOUND_COMMENT("404", "댓글을 찾을 수 없습니다."),
     NOT_PARENT_COMMENT("400", "부모 댓글이 아닙니다."),
     NOT_FOUND_COMMENT_STATS("404", "댓글 정보를 찾을 수 없습니다."),
+    NOT_FOUND_POST_COMMENT("404", "게시글 댓글 또는 답글을 찾을 수 없습니다."),
+    NOT_FOUND_NOTICE_COMMENT("404", "공지 댓글을 찾을 수 없습니다."),
 
     // Notice
     NOT_FOUND_NOTICE("404", "공지를 찾을 수 없습니다."),

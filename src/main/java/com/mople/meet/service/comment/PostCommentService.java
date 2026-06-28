@@ -1,10 +1,12 @@
 package com.mople.meet.service.comment;
 
+import com.mople.core.exception.custom.ConcurrencyConflictException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.dto.client.comment.PostCommentClientResponse;
 import com.mople.dto.event.data.domain.comment.CommentCreatedEvent;
 import com.mople.dto.event.data.domain.comment.CommentMentionAddedEvent;
 import com.mople.dto.request.meet.comment.CommentCreateRequest;
+import com.mople.dto.request.meet.comment.PostCommentUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.meet.comment.PostCommentResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
@@ -23,8 +25,11 @@ import com.mople.meet.repository.impl.comment.CommentRepositorySupport;
 import com.mople.meet.repository.plan.MeetPlanRepository;
 import com.mople.outbox.service.OutboxService;
 import com.mople.user.repository.UserRepository;
+import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 
+import org.hibernate.StaleObjectStateException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +41,7 @@ import java.util.stream.Collectors;
 
 import static com.mople.dto.client.comment.PostCommentClientResponse.*;
 import static com.mople.global.enums.ExceptionReturnCode.NOT_FOUND_COMMENT_STATS;
+import static com.mople.global.enums.ExceptionReturnCode.REQUEST_CONFLICT;
 import static com.mople.global.enums.event.AggregateType.*;
 import static com.mople.global.enums.event.EventTypeNames.*;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
@@ -245,8 +251,32 @@ public class PostCommentService {
         return getCommentClientResponse(comment, likedByMe);
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
-    public PostCommentClientResponse handlePostCommentMentions(
+    @Transactional
+    public PostCommentClientResponse updatePostComment(Long userId, Long commentId, PostCommentUpdateRequest request) {
+        MeetComment comment = reader.findComment(commentId);
+        User writer = reader.findUser(userId);
+
+        commentValidator.validateType(comment, CommentTarget.POST);
+        commentValidator.validateWriter(comment, userId);
+
+        comment.updateContent(request.contents());
+
+        try {
+            commentRepository.flush();
+
+        } catch (
+                OptimisticLockException
+                | OptimisticLockingFailureException
+                | StaleObjectStateException e
+        ) {
+            long currentVersion = commentRepository.findVersion(comment.getId());
+            throw new ConcurrencyConflictException(REQUEST_CONFLICT, currentVersion);
+        }
+
+        return handlePostCommentMentions(writer, comment, request.mentions());
+    }
+
+    private PostCommentClientResponse handlePostCommentMentions(
             User user,
             MeetComment comment,
             List<Long> mentions

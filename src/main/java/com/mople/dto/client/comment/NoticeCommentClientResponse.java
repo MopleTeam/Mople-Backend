@@ -11,7 +11,7 @@ import java.util.List;
 
 @Getter
 @Builder
-public class NoticeCommentClientResponse implements CommentClientResponse {
+public class NoticeCommentClientResponse {
 
     private final Long commentId;
     private final Long version;

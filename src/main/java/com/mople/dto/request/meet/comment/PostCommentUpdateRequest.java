@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 
 import java.util.List;
 
-public record CommentUpdateRequest(
+public record PostCommentUpdateRequest(
         @NotBlank String contents,
         @Nullable List<Long> mentions
 ) {

@@ -4,6 +4,7 @@ import com.mople.core.exception.custom.AuthException;
 import com.mople.core.exception.custom.CursorException;
 import com.mople.core.exception.custom.ResourceNotFoundException;
 import com.mople.entity.meet.comment.MeetComment;
+import com.mople.global.enums.CommentTarget;
 import com.mople.global.enums.Status;
 import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.MeetMemberRepository;
@@ -64,6 +65,13 @@ public class CommentValidator {
     public void validateWriter(MeetComment comment, Long userId) {
         if (!comment.isWriter(userId)) {
             throw new AuthException(NOT_CREATOR);
+        }
+    }
+
+    public void validateType(MeetComment comment, CommentTarget type) {
+        if (comment.getTarget() != type) {
+            if (type == CommentTarget.POST) throw new AuthException(NOT_FOUND_POST_COMMENT);
+            if (type == CommentTarget.NOTICE) throw new AuthException(NOT_FOUND_NOTICE_COMMENT);
         }
     }
 

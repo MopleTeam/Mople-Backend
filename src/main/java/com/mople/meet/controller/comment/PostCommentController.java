@@ -3,6 +3,7 @@ package com.mople.meet.controller.comment;
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.comment.PostCommentClientResponse;
 import com.mople.dto.request.meet.comment.CommentCreateRequest;
+import com.mople.dto.request.meet.comment.PostCommentUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.response.pagination.CursorPageResponse;
@@ -60,9 +61,9 @@ public class PostCommentController {
     public ResponseEntity<PostCommentClientResponse> createComment(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
-            @RequestBody @Valid CommentCreateRequest commentCreateRequest
+            @RequestBody @Valid CommentCreateRequest request
     ) {
-        var body = postCommentService.createPostComment(user.id(), postId, commentCreateRequest);
+        var body = postCommentService.createPostComment(user.id(), postId, request);
 
         return ResponseEntity.ok()
                 .eTag("\"" + body.getVersion() + "\"")
@@ -78,9 +79,26 @@ public class PostCommentController {
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long postId,
             @PathVariable Long commentId,
-            @RequestBody @Valid CommentCreateRequest commentCreateRequest
+            @RequestBody @Valid CommentCreateRequest request
     ) {
-        var body = postCommentService.createPostCommentReply(user.id(), postId, commentId, commentCreateRequest);
+        var body = postCommentService.createPostCommentReply(user.id(), postId, commentId, request);
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.getVersion() + "\"")
+                .body(body);
+    }
+
+    @Operation(
+            summary = "게시글 댓글/답글 수정 API",
+            description = "댓글 ID를 통해 게시글 댓글/답글을 수정합니다."
+    )
+    @PatchMapping("/{commentId}")
+    public ResponseEntity<PostCommentClientResponse> updateComment(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @PathVariable Long commentId,
+            @RequestBody @Valid PostCommentUpdateRequest request
+    ) {
+        var body = postCommentService.updatePostComment(user.id(), commentId, request);
 
         return ResponseEntity.ok()
                 .eTag("\"" + body.getVersion() + "\"")

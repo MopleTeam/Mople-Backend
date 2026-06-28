@@ -1,7 +1,9 @@
 package com.mople.meet.service.comment;
 
+import com.mople.core.exception.custom.ConcurrencyConflictException;
 import com.mople.dto.client.comment.NoticeCommentClientResponse;
 import com.mople.dto.request.meet.comment.CommentCreateRequest;
+import com.mople.dto.request.meet.comment.NoticeCommentUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.response.meet.comment.NoticeCommentResponse;
 import com.mople.dto.response.pagination.CursorPageResponse;
@@ -15,9 +17,11 @@ import com.mople.meet.reader.EntityReader;
 import com.mople.meet.repository.comment.MeetCommentRepository;
 import com.mople.meet.repository.impl.comment.CommentRepositorySupport;
 import com.mople.user.repository.UserRepository;
+import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.StaleObjectStateException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -27,6 +31,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.mople.dto.client.comment.NoticeCommentClientResponse.ofNoticeComment;
+import static com.mople.global.enums.ExceptionReturnCode.REQUEST_CONFLICT;
 import static com.mople.global.utils.cursor.CursorUtils.buildCursorPage;
 
 @Service
@@ -122,11 +127,28 @@ public class NoticeCommentService {
         return ofNoticeComment(new NoticeCommentResponse(comment, writer));
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
-    public NoticeCommentClientResponse toNoticeCommentResponse(
-            User writer,
-            MeetComment comment
-    ) {
+    @Transactional
+    public NoticeCommentClientResponse updateNoticeComment(Long userId, Long commentId, NoticeCommentUpdateRequest request) {
+        MeetComment comment = reader.findComment(commentId);
+        User writer = reader.findUser(userId);
+
+        commentValidator.validateType(comment, CommentTarget.NOTICE);
+        commentValidator.validateWriter(comment, userId);
+
+        comment.updateContent(request.contents());
+
+        try {
+            commentRepository.flush();
+
+        } catch (
+                OptimisticLockException
+                | OptimisticLockingFailureException
+                | StaleObjectStateException e
+        ) {
+            long currentVersion = commentRepository.findVersion(comment.getId());
+            throw new ConcurrencyConflictException(REQUEST_CONFLICT, currentVersion);
+        }
+
         return ofNoticeComment(new NoticeCommentResponse(comment, writer));
     }
 }

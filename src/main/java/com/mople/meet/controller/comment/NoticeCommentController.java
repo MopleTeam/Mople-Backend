@@ -3,6 +3,7 @@ package com.mople.meet.controller.comment;
 import com.mople.core.annotation.auth.SignUser;
 import com.mople.dto.client.comment.NoticeCommentClientResponse;
 import com.mople.dto.request.meet.comment.CommentCreateRequest;
+import com.mople.dto.request.meet.comment.NoticeCommentUpdateRequest;
 import com.mople.dto.request.pagination.CursorPageRequest;
 import com.mople.dto.request.user.AuthUserRequest;
 import com.mople.dto.response.pagination.FlatCursorPageResponse;
@@ -45,9 +46,26 @@ public class NoticeCommentController {
     public ResponseEntity<NoticeCommentClientResponse> createComment(
             @Parameter(hidden = true) @SignUser AuthUserRequest user,
             @PathVariable Long noticeId,
-            @RequestBody @Valid CommentCreateRequest commentCreateRequest
+            @RequestBody @Valid CommentCreateRequest request
     ) {
-        var body = noticeCommentService.createNoticeComment(user.id(), noticeId, commentCreateRequest);
+        var body = noticeCommentService.createNoticeComment(user.id(), noticeId, request);
+
+        return ResponseEntity.ok()
+                .eTag("\"" + body.getVersion() + "\"")
+                .body(body);
+    }
+
+    @Operation(
+            summary = "공지 댓글 수정 API",
+            description = "댓글 ID를 통해 공지 댓글을 수정합니다."
+    )
+    @PatchMapping("/{commentId}")
+    public ResponseEntity<NoticeCommentClientResponse> updateComment(
+            @Parameter(hidden = true) @SignUser AuthUserRequest user,
+            @PathVariable Long commentId,
+            @RequestBody @Valid NoticeCommentUpdateRequest request
+    ) {
+        var body = noticeCommentService.updateNoticeComment(user.id(), commentId, request);
 
         return ResponseEntity.ok()
                 .eTag("\"" + body.getVersion() + "\"")

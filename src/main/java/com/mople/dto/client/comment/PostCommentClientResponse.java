@@ -12,7 +12,7 @@ import java.util.List;
 
 @Getter
 @Builder
-public class PostCommentClientResponse implements CommentClientResponse {
+public class PostCommentClientResponse {
     private final Long commentId;
     private final Long version;
     private final String content;

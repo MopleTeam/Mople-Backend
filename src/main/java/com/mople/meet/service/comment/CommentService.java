@@ -2,14 +2,11 @@ package com.mople.meet.service.comment;
 
 import com.mople.core.exception.custom.ConcurrencyConflictException;
 import com.mople.core.exception.custom.IllegalStatesException;
-import com.mople.dto.client.comment.CommentClientResponse;
 import com.mople.dto.event.data.domain.comment.CommentsSoftDeletedEvent;
 import com.mople.dto.request.meet.comment.CommentReportRequest;
-import com.mople.dto.request.meet.comment.CommentUpdateRequest;
 import com.mople.entity.meet.Meet;
 import com.mople.entity.meet.comment.CommentReport;
 import com.mople.entity.meet.comment.MeetComment;
-import com.mople.entity.user.User;
 import com.mople.global.enums.CommentTarget;
 import com.mople.global.enums.Status;
 import com.mople.meet.reader.EntityReader;
@@ -23,7 +20,6 @@ import org.hibernate.StaleObjectStateException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,39 +38,7 @@ public class CommentService {
     private final CommentValidator commentValidator;
 
     private final PostCommentService postCommentService;
-    private final NoticeCommentService noticeCommentService;
     private final OutboxService outboxService;
-
-    @Transactional
-    public CommentClientResponse updateComment(
-            Long userId,
-            Long commentId,
-            CommentUpdateRequest request
-    ) {
-        MeetComment comment = reader.findComment(commentId);
-        User writer = reader.findUser(userId);
-
-        commentValidator.validateWriter(comment, userId);
-
-        comment.updateContent(request.contents());
-
-        try {
-            commentRepository.flush();
-
-        } catch (
-                OptimisticLockException
-                | OptimisticLockingFailureException
-                | StaleObjectStateException e
-        ) {
-            long currentVersion = commentRepository.findVersion(comment.getId());
-            throw new ConcurrencyConflictException(REQUEST_CONFLICT, currentVersion);
-        }
-
-        return switch (comment.getTarget()) {
-            case POST -> postCommentService.handlePostCommentMentions(writer, comment, request.mentions());
-            case NOTICE -> noticeCommentService.toNoticeCommentResponse(writer, comment);
-        };
-    }
 
     @Transactional
     public void deleteComment(Long userId, Long commentId) {
