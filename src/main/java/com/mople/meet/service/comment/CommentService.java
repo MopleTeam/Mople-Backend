@@ -78,15 +78,15 @@ public class CommentService {
         }
 
         commentRepository.softDeleteAll(Status.DELETED, commentIdsToDelete, userId, LocalDateTime.now());
-        generateCommentsDeletedEvent(commentIdsToDelete, type, targetId, comment.getWriterId());
+        generateCommentsDeletedEvent(commentIdsToDelete, type, targetId, userId);
     }
 
-    private void generateCommentsDeletedEvent(List<Long> commentIds, CommentTarget type, Long targetId, Long writerId) {
+    private void generateCommentsDeletedEvent(List<Long> commentIds, CommentTarget type, Long targetId, Long deletedBy) {
         CommentsSoftDeletedEvent deletedEvent = CommentsSoftDeletedEvent.builder()
                 .target(type)
                 .targetId(targetId)
                 .commentIds(commentIds)
-                .commentsDeletedBy(writerId)
+                .commentsDeletedBy(deletedBy)
                 .build();
 
         outboxService.save(COMMENTS_SOFT_DELETED, type.toAggregateType(), targetId, deletedEvent);
